@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>++</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+</head>
+
+<body>
+  <h1>PIC++</h1>
+  <form id="simulation-form">
+    <label for="param1">Number of Electrons:</label>
+    <input type="text" id="param1" name="param1" value="50">
+    <br>
+    <label for="param2">Time Steps:</label>
+    <input type="text" id="param2" name="param2" value="50">
+    <br>
+    <label for="param3">Time Stepsize:</label>
+    <input type="text" id="param3" name="param3" value="0.1">
+    <br>
+    <label for="param4">Mode:</label>
+    <input type="text" id="param4" name="param4" value="1">
+    <br>
+    <label for="param5">Drift Velocity:</label>
+    <input type="text" id="param5" name="param5" value="1">
+    <br>
+    <label for="param6">Number of Species:</label>
+    <input type="text" id="param6" name="param6" value="1">
+    <br>
+    <label for="param7">Amplitude:</label>
+    <input type="text" id="param7" name="param7" value="1">
+    <br>
+    <label for="param8">Thermal Velocity</label>
+    <input type="text" id="param8" name="param8" value="0.00">
+    <br>
+    <label for="duration">Frame Duration (ms):</label>
+    <input type="text" id="duration" name="duration" value="100">
+    <br>
+    <label for="yMin">yMin:</label>
+    <input type="text" id="yMin" name="yMin" value="-1">
+    <br>
+    <label for="yMax">yMax:</label>
+    <input type="text" id="yMax" name="yMax" value="1">
+    <br>
+    <input type="submit" value="Run Simulation">
+    <div id="loading-container">
+      <div class="loading-spinner"></div> <!-- Add your loading spinner here -->
+    </div>
+  </form>
+  <div id="visualization"></div>
+  <!-- Animation Controls -->
+  <div id="controls">
+    <button id="play-button" class="control-button">Play</button>
+    <button id="stop-button" class="control-button">Stop</button>
+    <input type="range" id="frame-slider" step="1" value="0">
+    <button id="show-frame-button" class="control-button">Show Frame</button>
+  </div>
+
+  <script>
+
+    const loadingContainer = document.getElementById('loading-container');
+
+function showLoadingSpinner() {
+  loadingContainer.style.display = 'block';
+}
+
+function hideLoadingSpinner() {
+  loadingContainer.style.display = 'none';
+}
+    
+    $(document).ready(function () {
+
+      var yMin = $('#yMin').val();
+      var yMax = $('#yMax').val();;
+
+      var jsonData;
+      var positions;
+      var width = 900;
+      var height = 400;
+      var margin = { top: 0, right: 20, bottom: 20, left: 40 };
+
+      var ng = 32;
+
+      var svg = d3.select('#visualization')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      var xScale = d3.scaleLinear()
+        .domain([0, ng + 5])
+        .range([margin.left, width - margin.right]); // Define the range of the x-axis within the SVG container
+
+      //var yMin = -2;
+      //var yMax = 2;
+
+      var yScale = d3.scaleLinear()
+        .domain([yMin, yMax])
+        .range([height - margin.bottom, margin.top]); // Define the range of the y-axis within the SVG container
+
+      // Add axes
+      const xAxis = d3.axisBottom(xScale);
+      const yAxis = d3.axisLeft(yScale);
+
+      // Create a group element for the x-axis
+      svg.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0, ${height - margin.bottom})`)
+
+      // Create a group element for the y-axis
+      svg.append("g")
+        .attr("class", "y-axis")
+        .attr("transform", `translate(${margin.left}, 10)`)
+
+      // Call the x-axis component
+      svg.select(".x-axis")
+        .call(xAxis);
+
+      // Call the y-axis component
+      svg.select(".y-axis")
+        .call(yAxis);
+
+      // Calculate the inner width and height (excluding margins)
+      var innerWidth = width - margin.left - margin.right;
+      var innerHeight = height - margin.top - margin.bottom;
+
+      // Create a group element for the main content and apply margins
+      var g = svg.append('g')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+      // Add border to the graph
+      svg.append('rect')
+        .attr('x', margin.left)
+        .attr('y', margin.top)
+        .attr('width', innerWidth)
+        .attr('height', innerHeight)
+        .style('fill', 'none')
+        .style('stroke', 'black')
+        .style('stroke-width', '1px');
+
+      // Add x-axis label
+      svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', height)
+        .style('text-anchor', 'middle')
+        .text('Positions');
+
+      // Add y-axis label
+      svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', 15)
+        .style('text-anchor', 'middle')
+        .text('Velocities');
+
+      $('#simulation-form').submit(function (event) {
+        event.preventDefault(); // Prevent form submission
+
+        // Get form data
+        var param1 = $('#param1').val();
+        var param2 = $('#param2').val();
+        var param3 = $('#param3').val();
+        var param4 = $('#param4').val();
+        var param5 = $('#param5').val();
+        var param6 = $('#param6').val();
+        var param7 = $('#param7').val();
+        var param8 = $('#param8').val();
+
+        var duration = $('#duration').val();
+
+        document.getElementById('frame-slider').max = param2 - 1;
+        showLoadingSpinner()
+        // Make AJAX request to the API endpoint
+        $.ajax({
+          //url: 'http://localhost:8000/run-simulation/', 
+          url: 'https://picplusplus-1a5d36795027.herokuapp.com/run-simulation/?param1=2&param2=2&param3=0.1&param4=1&param5=0&param6=4&param7=0&param8=4',
+          method: 'GET',
+          data: { param1: param1, param2: param2, param3: param3, param4: param4, param5: param5, param6: param6 , param7: param7, param8: param8   },
+          success: function (response) {
+            var PICData = JSON.parse(response);
+            console.log(PICData)
+            hideLoadingSpinner();
+            startAnimation(PICData.phaseFrames, duration);
+          },
+          error: function (xhr, textStatus, errorThrown) {
+            console.log('Error:', textStatus);
+            hideLoadingSpinner();
+          }
+        });
+      });
+      function getPositionsOfSpecies(frame, species) {
+        const positions = [];
+
+        for (const particle of frame.particles) {
+          if (particle.species === species) {
+            positions.push(particle.position);
+          }
+        }
+        return positions;
+      }
+      function getVelocitiesOfSpecies(frame, species) {
+        const velocities = [];
+
+        for (const particle of frame.particles) {
+          if (particle.species === species) {
+            velocities.push(particle.velocity);
+          }
+        }
+        return velocities;
+      }
+      function showFrame(framesData, frameIndex) {
+        document.getElementById('frame-slider').value = frameIndex;
+        animate(framesData[frameIndex]);
+      }
+
+      function startAnimation(framesData, duration) {
+
+        var frameIndex = 0;
+        animate(framesData[frameIndex]);
+
+        var frameSlider = document.getElementById('frame-slider');
+        frameSlider.addEventListener('input', function () {
+          var frameIndex = parseInt(frameSlider.value);
+          showFrame(framesData, frameIndex);
+        });
+
+        var playButton = document.getElementById('play-button');
+        var stopButton = document.getElementById('stop-button');
+
+        playButton.addEventListener('click', function () {
+          playAnimation(framesData, duration);
+        });
+
+        stopButton.addEventListener('click', function () {
+          clearInterval(animationInterval);
+        });
+      }
+
+      var animationInterval;
+      var currentFrameIndex = 0;
+
+      function playAnimation(framesData, duration) {
+
+        clearInterval(animationInterval);
+
+        animationInterval = setInterval(function () {
+          currentFrameIndex = (currentFrameIndex + 1) % framesData.length;
+          showFrame(framesData, currentFrameIndex);
+        }, duration); // Adjust the duration as needed
+      }
+
+      function animate(frame) {
+        svg.selectAll('circle').remove();
+
+        const numSpecies = 3;
+        const colors = ['steelblue', 'red', 'green', 'orange'];
+        for (let species = 0; species < numSpecies; species++) {
+          // console.log("inside")
+          positions = getPositionsOfSpecies(frame, species);
+          velocities = getVelocitiesOfSpecies(frame, species);
+
+          // Create circles for each species
+          const circles = g.selectAll(`.species${species}`)
+            .data(positions);
+
+          // Update existing circles' positions
+          circles.attr('cx', (d, i) => xScale(positions[i]))
+            .attr('cy', (d, i) => yScale(velocities[i]));
+
+          // Create new circles for any new data points
+          circles.enter()
+            .append('circle')
+            .attr('class', `species${species}`)
+            .attr('cx', (d, i) => xScale(positions[i]))
+            .attr('cy', (d, i) => yScale(velocities[i]))
+            .attr('r', 5)
+            .style('fill', (d, i) => (colors[species]));
+        };
+      }
+    });
+  </script>
+  <style>
+    #container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #visualization {
+      width: 800px;
+      height: 400px;
+      margin-bottom: 20px;
+    }
+
+    #result {
+      width: 800px;
+      height: 100px;
+      background-color: lightgray;
+      padding: 10px;
+    }
+
+    /* CSS styling for the controls */
+    .control-button {
+      margin-right: 10px;
+    }
+
+    #frame-slider {
+      width: 400px;
+      margin-top: 10px;
+    }
+    @keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#loading-container {
+  display: none; /* Initially hide the loading container */
+  text-align: center;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3; /* Light gray border */
+  border-top: 4px solid #3498db; /* Blue border on top */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite; /* Apply the spinning animation */
+  margin: 0 auto; /* Center the spinner horizontally */
+}
+</style>
+</body>
+
+</html>

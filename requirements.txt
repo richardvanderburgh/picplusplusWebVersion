@@ -1,0 +1,40 @@
+# Django and its dependencies
+Django==3.2.7
+django-environ==0.4.5
+# Add other Django-related packages here
+
+# Database drivers (if applicable)
+# psycopg2-binary==2.9.1  # For PostgreSQL
+# mysqlclient==2.1.0  # For MySQL
+
+# Web framework tools
+gunicorn==20.1.0  # For serving your Django application
+
+
+conan==1.54
+
+
+# Utility packages
+# django-crispy-forms==1.12.0  # For form rendering
+# Add other utility packages here
+
+# Authentication and user management (if applicable)
+# django-allauth==0.46.0
+# Add other authentication-related packages here
+
+# For working with forms and templates
+# Pillow==8.3.1  # For image handling
+# Add other form and template-related packages here
+
+# Additional libraries (if needed)
+requests==2.26.0  # For making HTTP requests
+# Add other libraries here
+
+# Development and debugging (optional, for development environment)
+django-debug-toolbar==3.2.2
+# Add other development/debugging packages here
+
+# Your custom packages (if any)
+# Add custom packages here
+
+# Specify package versions as needed

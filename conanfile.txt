@@ -1,0 +1,10 @@
+[requires]
+boost/1.76.0
+gtest/1.13.0
+fftw/3.3.10
+nlohmann_json/3.11.2
+
+[generators]
+cmake
+cmake_find_package
+#CMakeToolchain
