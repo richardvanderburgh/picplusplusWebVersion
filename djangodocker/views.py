@@ -33,11 +33,12 @@ def run_simulation(request):
 
     # Run the C++ executable
     try:
-        executablePath = "/PIC++Main"
+        # executablePath = "/PIC++Main"
+        executablePath = "C://Users//vande//Programming//picplusplusWebApp//djangodocker//PIC++Main.exe"
         result = subprocess.run([executablePath, param1, param2, param3, param4, param5, param6, param7, param8], capture_output=True, text=True)
         output = result.stdout.strip()
 
         return JsonResponse(output, safe=False)
         #return HttpResponse("C++ program executed successfully.")
     except Exception as e:
-        return HttpResponse(f"Error executing C++ program: {str(e)}")
+        return HttpResponse(f"Error executing C++ program: {str(e)}, {executablePath}")

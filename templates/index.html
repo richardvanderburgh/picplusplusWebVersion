@@ -14,58 +14,62 @@
 </head>
 
 <body>
-</form>
-        <div id="wrapper">
-            <h1>PIC++</h1>
-            <form id="simulation-form">
-              <label for="param1">Number of Electrons:</label>
-              <input type="text" id="param1" name="param1" value="50">
-              <br>
-              <label for="param2">Time Steps:</label>
-              <input type="text" id="param2" name="param2" value="50">
-              <br>
-              <label for="param3">Time Stepsize:</label>
-              <input type="text" id="param3" name="param3" value="0.1">
-              <br>
-              <label for="param4">Mode:</label>
-              <input type="text" id="param4" name="param4" value="1">
-              <br>
-              <label for="param5">Drift Velocity:</label>
-              <input type="text" id="param5" name="param5" value="1">
-              <br>
-              <label for="param6">Number of Species:</label>
-              <input type="text" id="param6" name="param6" value="1">
-              <br>
-              <label for="param7">Amplitude:</label>
-              <input type="text" id="param7" name="param7" value="1">
-              <br>
-              <label for="param8">Thermal Velocity</label>
-              <input type="text" id="param8" name="param8" value="0.00">
-              <br>
-              <label for="duration">Frame Duration (ms):</label>
-              <input type="text" id="duration" name="duration" value="100">
-              <br>
-              <label for="yMin">yMin:</label>
-              <input type="text" id="yMin" name="yMin" value="-1">
-              <br>
-              <label for="yMax">yMax:</label>
-              <input type="text" id="yMax" name="yMax" value="1">
-              <br>
-              <input type="submit" value="Run Simulation">
-              <div id="loading-container">
+    <div id="wrapper">
+        <h1>PIC++</h1>
+        <form id="simulation-form">
+            <label for="param1">Number of Electrons:</label>
+            <input type="text" id="param1" name="param1" value="100">
+            <br>
+            <label for="param2">Time Steps:</label>
+            <input type="text" id="param2" name="param2" value="100">
+            <br>
+            <label for="param3">Time Stepsize:</label>
+            <input type="text" id="param3" name="param3" value="0.1">
+            <br>
+            <label for="param4">Mode:</label>
+            <input type="text" id="param4" name="param4" value="1">
+            <br>
+            <label for="param5">Drift Velocity:</label>
+            <input type="text" id="param5" name="param5" value="1">
+            <br>
+            <label for="param6">Number of Species:</label>
+            <input type="text" id="param6" name="param6" value="2">
+            <br>
+            <label for="param7">Amplitude:</label>
+            <input type="text" id="param7" name="param7" value="0.001">
+            <br>
+            <label for="param8">Thermal Velocity</label>
+            <input type="text" id="param8" name="param8" value="0.00">
+            <br>
+            <label for="duration">Frame Duration (ms):</label>
+            <input type="text" id="duration" name="duration" value="100">
+            <div>
+                <label for="fileInput">Upload your data:</label>
+                <input type="file" id="fileInput" name="fileInput">
+                <div>
+                    <input type="submit" value="Run Simulation">
+                </div>
+            </div>
+            <div id="loading-container">
                 <div class="loading-spinner"></div> <!-- Add your loading spinner here -->
-              </div>
-        
-              <div id="visualization"></div>
-              <!-- Animation Controls -->
-              <div id="controls">
-                <button id="play-button" class="control-button">Play</button>
-                <button id="stop-button" class="control-button">Stop</button>
-                <input type="range" id="frame-slider" step="1" value="0">
-                <button id="show-frame-button" class="control-button">Show Frame</button>
-              </div>
-        
-          </div>
+            </div>
+            <div id="frame-number-display">Frame: 0, Time: 0 s</div>
+
+            <div id="visualization"></div>
+            <!-- Animation Controls -->
+            <div id="controls-container">
+
+                <div id="controls">
+                    <button id="play-button" class="control-button" type="button">Play</button>
+                    <button id="stop-button" class="control-button" type="button">Stop</button>
+                    <input type="range" id="frame-slider" step="1" value="0">
+                </div>
+            </div>
+
+            <div id="keDiv"></div>
+            <div id="eseDiv"></div>
+
+    </div>
     <script>
         const loadingContainer = document.getElementById('loading-container');
 
@@ -84,14 +88,14 @@
 
             var jsonData;
             var positions;
-            var width = 900;
             var height = 400;
             var margin = { top: 0, right: 20, bottom: 20, left: 40 };
             var ng = 32;
 
             // Create a Plotly scatter plot
             var layout = {
-                title: 'Animated Scatter Plot',
+                title: 'Particle Phase Space',
+                width: 1000,
                 xaxis: {
                     title: 'Positions',
                     range: [0, ng + 5],
@@ -129,27 +133,25 @@
                 var param6 = $('#param6').val();
                 var param7 = $('#param7').val();
                 var param8 = $('#param8').val();
-
-                yMin = parseFloat($('#yMin').val());
-                yMax = parseFloat($('#yMax').val());
                 var duration = $('#duration').val();
-
-                //yScale.domain([yMin, yMax]);
-                //svg.select(".y-axis").call(yAxis);
 
                 document.getElementById('frame-slider').max = param2 - 1;
                 showLoadingSpinner()
                 // Make AJAX request to the API endpoint
                 $.ajax({
-                    //url: 'http://localhost:8000/run-simulation/', 
-                    url: 'https://picplusplus-1a5d36795027.herokuapp.com/run-simulation/?param1=2&param2=2&param3=0.1&param4=1&param5=0&param6=4&param7=0&param8=4',
+                    url: 'http://127.0.0.1:8000/run-simulation/?param1=2&param2=2&param3=0.1&param4=1&param5=0&param6=4&param7=0&param8=4',
+                    // url: 'https://picplusplus-1a5d36795027.herokuapp.com/run-simulation/?param1=2&param2=2&param3=0.1&param4=1&param5=0&param6=4&param7=0&param8=4',
                     method: 'GET',
                     data: { param1: param1, param2: param2, param3: param3, param4: param4, param5: param5, param6: param6, param7: param7, param8: param8 },
                     success: function (response) {
                         var PICData = JSON.parse(response);
                         console.log(PICData)
                         hideLoadingSpinner();
+                        document.getElementById('controls-container').style.display = 'block';
+
                         startAnimation(PICData.phaseFrames, duration);
+                        createKEPlot(PICData.ke)
+                        createESEPlot(PICData.ese)
                     },
                     error: function (xhr, textStatus, errorThrown) {
                         console.log('Error:', textStatus);
@@ -183,6 +185,10 @@
             function showFrame(framesData, frameIndex) {
                 document.getElementById('frame-slider').value = frameIndex;
                 animate(framesData[frameIndex]);
+                let time = frameIndex * $('#param3').val();
+                // (Math.round(time * 100) / 100).toFixed(2);
+                time = Number(time).toFixed(2)
+                document.getElementById('frame-number-display').textContent = "Frame: " + frameIndex + ", Time: " + time + " s";
             }
 
             function startAnimation(framesData, duration) {
@@ -220,7 +226,7 @@
             }
 
             function animate(frame) {
-                const numSpecies = 2;
+                const numSpecies = 3;
                 const colors = ['steelblue', 'red', 'green', 'orange'];
 
                 var framesData = [];
@@ -241,34 +247,173 @@
                         },
                         name: `Species ${species}`,
                     });
-
-
-                updatePlot(framesData);
+                    updatePlot(framesData);
                 }
             }
+
+            function createKEPlot(ke) {
+                // console.log("ke = ", ke)
+                // console.log("ke size = ", ke.length)
+                // console.log("ke species 1= ", ke[0])
+                // console.log("ke species 2 = ", ke[1])
+                var data = [];
+                let timeStepSize = $('#param3').val();
+
+                for (let species = 0; species < ke.length; species++) {
+                    const speciesKE = ke[species];
+
+                    // Creating traces for the Plotly plot
+                    const trace = {
+                        x: Array.from({ length: speciesKE.length }, (_, i) => i),  // Generate X values [1,2,3,...]
+                        y: speciesKE,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Species ' + species
+                    };
+
+                    // Combining traces
+                    data.push(trace);
+                }
+                // Plot layout configuration
+                const keLayout = {
+                    title: 'Kinetic Energy of ' + ke.length + ' Species',
+
+                    width: 1000,
+                    xaxis: {
+                        title: 'Time (s)'
+                    },
+                    yaxis: {
+                        title: 'Kinetic Energy'
+                    }
+                };
+
+                // Create the plot
+                Plotly.newPlot('keDiv', data, keLayout);
+            }
+
+            function createESEPlot(ese) {
+                console.log("ese = ", ese)
+                // console.log("ke size = ", ke.length)
+                // console.log("ke species 1= ", ke[0])
+                // console.log("ke species 2 = ", ke[1])
+                var data = [];
+                let timeStepSize = $('#param3').val();
+
+                // Creating traces for the Plotly plot
+                const trace = {
+                    x: Array.from({ length: ese.length }, (_, i) => i),  // Generate X values [1,2,3,...]
+                    y: ese,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'ESE '
+                };
+
+                // Combining traces
+                data.push(trace);
+
+                // Plot layout configuration
+                const eseLayout = {
+                    title: 'Electrostatic Energy',
+
+                    width: 1000,
+                    xaxis: {
+                        title: 'Time (s)'
+                    },
+                    yaxis: {
+                        title: 'Electrostatic Energy'
+                    }
+                };
+
+                // Create the plot
+                Plotly.newPlot('eseDiv', data, eseLayout);
+            }
+
+            $('#fileInput').on('change', function () {
+                const fileInput = this;
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        const lines = e.target.result.split('\n').filter(Boolean); // split by newline and filter out any empty lines
+                        lines.forEach(line => {
+                            const [key, value] = line.split(',').map(item => item.trim());
+                            $(`#${key}`).val(value);
+                        });
+                    };
+
+                    reader.readAsText(file);
+                }
+            });
+
         });
     </script>
-    <style>
-    #loading-container {
-      display: none;
-      /* Initially hide the loading container */
-      text-align: center;
-    }
+    <!-- ... (previous code) -->
 
-    .loading-spinner {
-      border: 4px solid #f3f3f3;
-      /* Light gray border */
-      border-top: 4px solid #3498db;
-      /* Blue border on top */
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      animation: spin 1s linear infinite;
-      /* Apply the spinning animation */
-      margin: 0 auto;
-      /* Center the spinner horizontally */
-    }
+    <style>
+        #controls-container {
+            display: none;
+        }
+
+        body {
+            margin: 0;
+            /* Reset default margin */
+            min-height: 100vh;
+            /* Ensure body takes up at least the full viewport height */
+            display: flex;
+            /* Convert body to a flex container */
+            align-items: center;
+            /* Center content vertically */
+            justify-content: center;
+            /* Center content horizontally */
+            overflow-y: auto;
+            /* Allow vertical scrolling if the content overflows */
+        }
+
+        #loading-container {
+            display: none;
+            /* Initially hide the loading container */
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            /* Light gray border */
+            border-top: 4px solid #3498db;
+            /* Blue border on top */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            /* Apply the spinning animation */
+            margin: 0 auto;
+            /* Center the spinner horizontally */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #frame-slider {
+            width: 73%;
+            /* adjust this value as desired */
+            margin: 0 auto;
+            /* centers the slider, if needed */
+        }
+
+        #frame-number-display {
+            font-size: 16px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
     </style>
+
 </body>
 
 </html>

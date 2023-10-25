@@ -1,3 +1,6 @@
+#include <math.h>
+#include <cmath>
+
 
 void fields(std::vector<double>& rho,
 	double L, int iw, double dx, 

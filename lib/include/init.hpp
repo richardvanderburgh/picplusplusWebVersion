@@ -1,4 +1,5 @@
 #pragma once
+#define _USE_MATH_DEFINES
 
 #include <fft.hpp>
 #include <fftw3.h>
@@ -7,7 +8,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <math.h>
 // #include <corecrt_math_defines.h>
+
 #include <iostream>
 #include <thread>
 #include <vector>
@@ -149,7 +152,7 @@ public:
 		// Energies
 		// Total time for plot
 		std::vector<std::vector<double>> esem(nt + 1, std::vector<double>(mplot + 1, 0.0));
-		std::vector<std::vector<double>> ke(nt + 1, std::vector<double>(nsp, 0.0));
+		std::vector<std::vector<double>> ke(nsp, std::vector<double>(nt +1, 0.0));
 		std::vector<std::vector<double>> p(nt + 1, std::vector<double>(nsp, 0.0));
 		std::vector<std::vector<double>> de(nt + 1, std::vector<double>(nsp, 0.0));
 		std::vector<std::vector<double>> therme(nt + 1, std::vector<double>(nsp, 0.0));
@@ -345,6 +348,10 @@ public:
 		fields(rho, L, iw, dx, E, t, ng, a, ael);
 		accel(nsp, dx, dt, t, q, m, ael, a, ng, N, x, vx);
 
+		for (int i = 0; i < ng + 1; i++) {
+			ESE[t] += std::pow(E[t][i],2) * 0.5 * dx;
+		}
+
 		Frame frame0;
 		std::vector<Particle> particles;
 
@@ -382,6 +389,9 @@ public:
 			move(nsp, rho, rho0, qdx, N, x, vx, ng);
 			fields(rho, L, iw, dx, E, t, ng, a, ael);
 
+			for (int i = 0; i < ng + 1; i++) {
+				ESE[t] += std::pow(E[t][i], 2) * 0.5 * dx;
+			}
 
 			frame.electricField = E[t];
 			std::vector<Particle> particles;
@@ -399,6 +409,7 @@ public:
 					particle.id = particleId;
 					particle.position = x[species][i];
 					particle.velocity = vx[species][i];
+					ke[species][t] += 0.5*std::pow((particle.velocity), 2) * m[species];
 					particle.species = species;
 
 					particles.push_back(particle);
@@ -434,6 +445,9 @@ public:
 			//matplot::hold(false);
 			//std::cout << "t = " << t << std::endl;
 		}
+
+		JSON["ke"] = ke;
+		JSON["ese"] = ESE;
 		JSON["phaseFrames"] = frames;
 
 		std::cout << JSON.dump() << std::endl;
