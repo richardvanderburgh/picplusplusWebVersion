@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import run_simulation
+from .views import run
 
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -27,5 +27,5 @@ def home(request):
 urlpatterns = [
         #path('', home, name='home'),
         path('', TemplateView.as_view(template_name="index.html")),
-        path('run-simulation/', run_simulation, name='run_simulation'),
+        path('run/', run, name='run'),
 ]

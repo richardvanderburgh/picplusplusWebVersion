@@ -8,7 +8,6 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
 </head>
@@ -17,29 +16,41 @@
     <div id="wrapper">
         <h1>PIC++</h1>
         <form id="simulation-form">
-            <label for="param1">Number of Electrons:</label>
-            <input type="text" id="param1" name="param1" value="100">
+            <label for="spatialLength">Spatial Length:</label>
+            <input type="text" id="spatialLength" name="spatialLength" value="6.28318530717958">
             <br>
-            <label for="param2">Time Steps:</label>
-            <input type="text" id="param2" name="param2" value="100">
+            <label for="numParticles">Number of Electrons:</label>
+            <input type="text" id="numParticles" name="numParticles" value="100">
             <br>
-            <label for="param3">Time Stepsize:</label>
-            <input type="text" id="param3" name="param3" value="0.1">
+            <label for="timeSteps">Time Steps:</label>
+            <input type="text" id="timeSteps" name="timeSteps" value="100">
             <br>
-            <label for="param4">Mode:</label>
-            <input type="text" id="param4" name="param4" value="1">
+            <label for="timeStepSize">Time Stepsize:</label>
+            <input type="text" id="timeStepSize" name="timeStepSize" value="0.1">
             <br>
-            <label for="param5">Drift Velocity:</label>
-            <input type="text" id="param5" name="param5" value="1">
+            <label for="numGrid">Number of Grid Cells:</label>
+            <input type="text" id="numGrid" name="numGrid" value="32">
             <br>
-            <label for="param6">Number of Species:</label>
-            <input type="text" id="param6" name="param6" value="2">
+            <label for="spatialPerturbationMode">Mode:</label>
+            <input type="text" id="spatialPerturbationMode" name="spatialPerturbationMode" value="1">
             <br>
-            <label for="param7">Amplitude:</label>
-            <input type="text" id="param7" name="param7" value="0.001">
+            <label for="driftVelocity">Drift Velocity:</label>
+            <input type="text" id="driftVelocity" name="driftVelocity" value="1">
             <br>
-            <label for="param8">Thermal Velocity</label>
-            <input type="text" id="param8" name="param8" value="0.00">
+            <label for="numSpecies">Number of Species:</label>
+            <input type="text" id="numSpecies" name="numSpecies" value="2">
+            <br>
+            <label for="spatialPerturbationAmplitude">Amplitude:</label>
+            <input type="text" id="spatialPerturbationAmplitude" name="spatialPerturbationAmplitude" value="0.001">
+            <br>
+            <label for="thermalVelocity">Thermal Velocity:</label>
+            <input type="text" id="thermalVelocity" name="thermalVelocity" value="0.00">
+            <br>
+            <label for="plasmaFrequency">Plasma Frequency:</label>
+            <input type="text" id="plasmaFrequency" name="plasmaFrequency" value="1">
+            <br>
+            <label for="chargeMassRatio">Charge Mass Ratio:</label>
+            <input type="text" id="chargeMassRatio" name="chargeMassRatio" value="-1">
             <br>
             <label for="duration">Frame Duration (ms):</label>
             <input type="text" id="duration" name="duration" value="100">
@@ -51,12 +62,12 @@
                 </div>
             </div>
             <div id="loading-container">
-                <div class="loading-spinner"></div> <!-- Add your loading spinner here -->
+                <div class="loading-spinner"></div> 
             </div>
             <div id="frame-number-display">Frame: 0, Time: 0 s</div>
 
             <div id="visualization"></div>
-            <!-- Animation Controls -->
+
             <div id="controls-container">
 
                 <div id="controls">
@@ -92,57 +103,56 @@
             var margin = { top: 0, right: 20, bottom: 20, left: 40 };
             var ng = 32;
 
-            // Create a Plotly scatter plot
             var layout = {
                 title: 'Particle Phase Space',
                 width: 1000,
                 xaxis: {
-                    title: 'Positions',
+                    title: 'Positions (arb. units)',
                     range: [0, ng + 5],
                 },
                 yaxis: {
-                    title: 'Velocities',
+                    title: 'Velocities (arb. units)',
                     range: [yMin, yMax],
                 },
             };
 
-            var config = { displayModeBar: true };  // Disable Plotly's mode bar
+            var config = { displayModeBar: true }; 
 
             var plotlyDiv = document.getElementById('visualization');
             var plotlyInitialized = false;
 
-            // Function to update the Plotly scatter plot
             function updatePlot(framesData) {
                 if (!plotlyInitialized) {
                     Plotly.newPlot(plotlyDiv, framesData, layout, config);
                     plotlyInitialized = true;
                 } else {
-                    // Use Plotly.react to update the plot with new data
                     Plotly.react(plotlyDiv, framesData, layout, config);
                 }
             }
 
             $('#simulation-form').submit(function (event) {
-                event.preventDefault(); // Prevent form submission
-                // Get form data
-                var param1 = $('#param1').val();
-                var param2 = $('#param2').val();
-                var param3 = $('#param3').val();
-                var param4 = $('#param4').val();
-                var param5 = $('#param5').val();
-                var param6 = $('#param6').val();
-                var param7 = $('#param7').val();
-                var param8 = $('#param8').val();
+                event.preventDefault(); 
+                var spatialLength = $('#spatialLength').val();
+                var numParticles = $('#numParticles').val();
+                var timeSteps = $('#timeSteps').val();
+                var timeStepSize = $('#timeStepSize').val();
+                var numGrid =  $('#numGrid').val();
+                var spatialPerturbationMode = $('#spatialPerturbationMode').val();
+                var driftVelocity = $('#driftVelocity').val();
+                var numSpecies = $('#numSpecies').val();
+                var spatialPerturbationAmplitude = $('#spatialPerturbationAmplitude').val();
+                var thermalVelocity = $('#thermalVelocity').val();
                 var duration = $('#duration').val();
+                var plasmaFrequency = $('#plasmaFrequency').val();
+                var chargeMassRatio = $('#chargeMassRatio').val();
 
-                document.getElementById('frame-slider').max = param2 - 1;
+                document.getElementById('frame-slider').max = timeSteps - 1;
                 showLoadingSpinner()
-                // Make AJAX request to the API endpoint
                 $.ajax({
-                    url: 'http://127.0.0.1:8000/run-simulation/?param1=2&param2=2&param3=0.1&param4=1&param5=0&param6=4&param7=0&param8=4',
-                    // url: 'https://picplusplus-1a5d36795027.herokuapp.com/run-simulation/?param1=2&param2=2&param3=0.1&param4=1&param5=0&param6=4&param7=0&param8=4',
+                    // url: 'http://127.0.0.1:8000/run-simulation/?spatialLength=1&numParticles=2&timeSteps=2&timeStepSize=0.1&numGrid=32&spatialPerturbationMode=1&driftVelocity=0&numSpecies=4&spatialPerturbationAmplitude=0&thermalVelocity=4&plasmaFrequency=1&chargeMassRatio=-1',
+                    url: 'https://picplusplus-1a5d36795027.herokuapp.com/run/?spatialLength=1&numParticles=2&timeSteps=2&timeStepSize=0.1&numGrid=32&spatialPerturbationMode=1&driftVelocity=0&numSpecies=4&spatialPerturbationAmplitude=0&thermalVelocity=4&plasmaFrequency=1&chargeMassRatio=-1',
                     method: 'GET',
-                    data: { param1: param1, param2: param2, param3: param3, param4: param4, param5: param5, param6: param6, param7: param7, param8: param8 },
+                    data: { spatialLength : spatialLength, numParticles: numParticles, timeSteps: timeSteps, timeStepSize: timeStepSize, numGrid : numGrid, spatialPerturbationMode: spatialPerturbationMode, driftVelocity: driftVelocity, numSpecies: numSpecies, spatialPerturbationAmplitude: spatialPerturbationAmplitude, thermalVelocity: thermalVelocity, plasmaFrequency : plasmaFrequency, chargeMassRatio :chargeMassRatio },
                     success: function (response) {
                         var PICData = JSON.parse(response);
                         console.log(PICData)
@@ -185,8 +195,7 @@
             function showFrame(framesData, frameIndex) {
                 document.getElementById('frame-slider').value = frameIndex;
                 animate(framesData[frameIndex]);
-                let time = frameIndex * $('#param3').val();
-                // (Math.round(time * 100) / 100).toFixed(2);
+                let time = frameIndex * $('#timeStepSize').val();
                 time = Number(time).toFixed(2)
                 document.getElementById('frame-number-display').textContent = "Frame: " + frameIndex + ", Time: " + time + " s";
             }
@@ -252,79 +261,63 @@
             }
 
             function createKEPlot(ke) {
-                // console.log("ke = ", ke)
-                // console.log("ke size = ", ke.length)
-                // console.log("ke species 1= ", ke[0])
-                // console.log("ke species 2 = ", ke[1])
                 var data = [];
-                let timeStepSize = $('#param3').val();
+                let timeStepSize = $('#timeStepSize').val();
 
                 for (let species = 0; species < ke.length; species++) {
                     const speciesKE = ke[species];
 
-                    // Creating traces for the Plotly plot
                     const trace = {
-                        x: Array.from({ length: speciesKE.length }, (_, i) => i),  // Generate X values [1,2,3,...]
+                        x: Array.from({ length: speciesKE.length }, (_, i) => i),  
                         y: speciesKE,
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: 'Species ' + species
                     };
 
-                    // Combining traces
                     data.push(trace);
                 }
-                // Plot layout configuration
                 const keLayout = {
                     title: 'Kinetic Energy of ' + ke.length + ' Species',
 
                     width: 1000,
                     xaxis: {
-                        title: 'Time (s)'
+                        title: 'Time (arb. units)'
                     },
                     yaxis: {
-                        title: 'Kinetic Energy'
+                        title: 'Kinetic Energy (arb. units)'
                     }
                 };
 
-                // Create the plot
                 Plotly.newPlot('keDiv', data, keLayout);
             }
 
             function createESEPlot(ese) {
-                console.log("ese = ", ese)
-                // console.log("ke size = ", ke.length)
-                // console.log("ke species 1= ", ke[0])
-                // console.log("ke species 2 = ", ke[1])
                 var data = [];
-                let timeStepSize = $('#param3').val();
+                let timeStepSize = $('#timeStepSize').val();
 
-                // Creating traces for the Plotly plot
                 const trace = {
-                    x: Array.from({ length: ese.length }, (_, i) => i),  // Generate X values [1,2,3,...]
+                    x: Array.from({ length: ese.length }, (_, i) => i),  
                     y: ese,
                     type: 'scatter',
                     mode: 'lines+markers',
                     name: 'ESE '
                 };
 
-                // Combining traces
                 data.push(trace);
 
-                // Plot layout configuration
                 const eseLayout = {
-                    title: 'Electrostatic Energy',
+                    title: 'Electrostatic Energy (arb. units)',
 
                     width: 1000,
                     xaxis: {
                         title: 'Time (s)'
                     },
                     yaxis: {
-                        title: 'Electrostatic Energy'
+                        title: 'Electrostatic Energy (arb. units)'
                     }
                 };
 
-                // Create the plot
                 Plotly.newPlot('eseDiv', data, eseLayout);
             }
 
@@ -335,7 +328,7 @@
                     const reader = new FileReader();
 
                     reader.onload = function (e) {
-                        const lines = e.target.result.split('\n').filter(Boolean); // split by newline and filter out any empty lines
+                        const lines = e.target.result.split('\n').filter(Boolean); 
                         lines.forEach(line => {
                             const [key, value] = line.split(',').map(item => item.trim());
                             $(`#${key}`).val(value);
@@ -348,7 +341,6 @@
 
         });
     </script>
-    <!-- ... (previous code) -->
 
     <style>
         #controls-container {
@@ -415,5 +407,4 @@
     </style>
 
 </body>
-
 </html>

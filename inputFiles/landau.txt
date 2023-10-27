@@ -1,0 +1,12 @@
+spatialLength, 6.28318530717958,
+numParticles, 500, 
+timeSteps, 300, 
+timeStepSize, 0.1, 
+numGrid, 256,
+spatialPerturbationMode, 1, 
+driftVelocity, 0, 
+numSpecies, 1, 
+spatialPerturbationAmplitude, 0.02, 
+thermalVelocity, 0.5,
+plasmaFrequency, 1,
+chargeMassRatio, -1

@@ -42,18 +42,18 @@ public:
 
 	PicData mPicData;
 
-	bool initialize(int N1, int nt, double dt, int MODE, double V0, int nsp, double amplitude, double VT1) {
+	bool initialize(double L, int N1, int nt, double dt, int ng, int MODE, double V0, int nsp, double amplitude, double VT1, int wp1, int qm1) {
 		
 		// Set initial input values
 		
 		std::string example = "Electron - Electron Stream";
 		// Input Variables
-		double L = 6.28318530717958; // Physical length of system in meters
+		//double L = 6.28318530717958; // Physical length of system in meters
 		//int nsp = 3; // Number of particle species
 		//int nt = 5;//600; // Number of time steps
 		//double dt = .1; // Time step in seconds
 		int epsi = 1; // 1 over epsilon naught(F / m) Epsilon normalized to 1
-		const int ng = 32; // Number of spatial grid points - only change the power of 2
+		//const int ng = 32; // Number of spatial grid points - only change the power of 2
 		int iw = 2; // 1 for nearest grid point, 2 for linear
 		int a1 = 0; // Smoothing factor
 		int a2 = 0;
@@ -70,9 +70,9 @@ public:
 		int ifvx = 0;// nt / 10 + 4;
 		int nplot = 30; // ? ?
 
-		int wp1 = 1;
+		//int wp1 = 1;
 		int wc1 = 0;
-		int qm1 = -1;
+		//int qm1 = -1;
 		//int VT1	 = 0;
 		int VT2	 = 0;
 		int NV2	 = 0;
@@ -347,6 +347,12 @@ public:
 		std::vector<double> a(ng + 1);
 		fields(rho, L, iw, dx, E, t, ng, a, ael);
 		accel(nsp, dx, dt, t, q, m, ael, a, ng, N, x, vx);
+
+		for (int species = 0; species < nsp; species++) {
+			for (int i = 0; i < N[species]; i++) {
+				ke[species][t] += 0.5 * std::pow((vx[species][i]), 2) * m[species];
+			}
+		}
 
 		for (int i = 0; i < ng + 1; i++) {
 			ESE[t] += std::pow(E[t][i],2) * 0.5 * dx;

@@ -7,35 +7,41 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def run_simulation(request):
-    logger.info('run_simulation view called.')
+def run(request):
+    logger.info('run view called.')
 
     if request.method == 'GET':
-        param1 = request.GET.get('param1')
-        param2 = request.GET.get('param2')       
-        param3 = request.GET.get('param3')
-        param4 = request.GET.get('param4')
-        param5 = request.GET.get('param5')
-        param6 = request.GET.get('param6')
-        param7 = request.GET.get('param7')
-        param8 = request.GET.get('param8')
-
+        spatialLength =  request.GET.get('spatialLength')
+        numParticles = request.GET.get('numParticles')
+        timeSteps = request.GET.get('timeSteps')       
+        timeStepSize = request.GET.get('timeStepSize')
+        numGrid = request.GET.get('numGrid')
+        spatialPerturbationMode = request.GET.get('spatialPerturbationMode')
+        driftVelocity = request.GET.get('driftVelocity')
+        numSpecies = request.GET.get('numSpecies')
+        spatialPerturbationAmplitude = request.GET.get('spatialPerturbationAmplitude')
+        thermalVelocity = request.GET.get('thermalVelocity')
+        plasmaFrequency = request.GET.get('plasmaFrequency')
+        chargeMassRatio= request.GET.get('chargeMassRatio')
 
     else:
-        param1 = request.POST.get('param1')
-        param2 = request.POST.get('param2')
-        param3 = request.POST.get('param3')
-        param4 = request.POST.get('param4')
-        param5 = request.POST.get('param5')
-        param6 = request.POST.get('param6')
-        param7 = request.POST.get('param7')
-        param8 = request.POST.get('param8')
+        spatialLength =  request.POST.get('spatialLength')
+        numParticles = request.POST.get('numParticles')
+        timeSteps = request.POST.get('timeSteps')
+        timeStepSize = request.POST.get('timeStepSize')
+        numGrid = request.POST.get('numGrid')
+        spatialPerturbationMode = request.POST.get('spatialPerturbationMode')
+        driftVelocity = request.POST.get('driftVelocity')
+        numSpecies = request.POST.get('numSpecies')
+        spatialPerturbationAmplitude = request.POST.get('spatialPerturbationAmplitude')
+        thermalVelocity = request.POST.get('thermalVelocity')
+        plasmaFrequency = request.POST.get('plasmaFrequency')
+        chargeMassRatio= request.POST.get('chargeMassRatio')
 
     # Run the C++ executable
     try:
-        # executablePath = "/PIC++Main"
-        executablePath = "C://Users//vande//Programming//picplusplusWebApp//djangodocker//PIC++Main.exe"
-        result = subprocess.run([executablePath, param1, param2, param3, param4, param5, param6, param7, param8], capture_output=True, text=True)
+        executablePath = "/PIC++Main"
+        result = subprocess.run([executablePath, spatialLength, numParticles, timeSteps, timeStepSize, numGrid, spatialPerturbationMode, driftVelocity, numSpecies, spatialPerturbationAmplitude, thermalVelocity, plasmaFrequency, chargeMassRatio], capture_output=True, text=True)
         output = result.stdout.strip()
 
         return JsonResponse(output, safe=False)
