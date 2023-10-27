@@ -149,8 +149,8 @@
                 document.getElementById('frame-slider').max = timeSteps - 1;
                 showLoadingSpinner()
                 $.ajax({
-                    // url: 'http://127.0.0.1:8000/run-simulation/?spatialLength=1&numParticles=2&timeSteps=2&timeStepSize=0.1&numGrid=32&spatialPerturbationMode=1&driftVelocity=0&numSpecies=4&spatialPerturbationAmplitude=0&thermalVelocity=4&plasmaFrequency=1&chargeMassRatio=-1',
-                    url: 'https://picplusplus-1a5d36795027.herokuapp.com/run/?spatialLength=1&numParticles=2&timeSteps=2&timeStepSize=0.1&numGrid=32&spatialPerturbationMode=1&driftVelocity=0&numSpecies=4&spatialPerturbationAmplitude=0&thermalVelocity=4&plasmaFrequency=1&chargeMassRatio=-1',
+                    url: 'http://127.0.0.1:8000/run/?spatialLength=1&numParticles=2&timeSteps=2&timeStepSize=0.1&numGrid=32&spatialPerturbationMode=1&driftVelocity=0&numSpecies=4&spatialPerturbationAmplitude=0&thermalVelocity=4&plasmaFrequency=1&chargeMassRatio=-1',
+                    // url: 'https://picplusplus-1a5d36795027.herokuapp.com/run/?spatialLength=1&numParticles=2&timeSteps=2&timeStepSize=0.1&numGrid=32&spatialPerturbationMode=1&driftVelocity=0&numSpecies=4&spatialPerturbationAmplitude=0&thermalVelocity=4&plasmaFrequency=1&chargeMassRatio=-1',
                     method: 'GET',
                     data: { spatialLength : spatialLength, numParticles: numParticles, timeSteps: timeSteps, timeStepSize: timeStepSize, numGrid : numGrid, spatialPerturbationMode: spatialPerturbationMode, driftVelocity: driftVelocity, numSpecies: numSpecies, spatialPerturbationAmplitude: spatialPerturbationAmplitude, thermalVelocity: thermalVelocity, plasmaFrequency : plasmaFrequency, chargeMassRatio :chargeMassRatio },
                     success: function (response) {

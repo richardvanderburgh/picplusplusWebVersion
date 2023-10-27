@@ -40,7 +40,9 @@ def run(request):
 
     # Run the C++ executable
     try:
-        executablePath = "/PIC++Main"
+        # executablePath = "/PIC++Main"
+        executablePath = "C://Users//vande//Programming//picplusplusWebApp//buildWindows//bin//PIC++Main.exe"
+
         result = subprocess.run([executablePath, spatialLength, numParticles, timeSteps, timeStepSize, numGrid, spatialPerturbationMode, driftVelocity, numSpecies, spatialPerturbationAmplitude, thermalVelocity, plasmaFrequency, chargeMassRatio], capture_output=True, text=True)
         output = result.stdout.strip()
 
