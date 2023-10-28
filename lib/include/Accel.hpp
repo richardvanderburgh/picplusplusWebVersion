@@ -1,4 +1,4 @@
-void accel(int nsp, double dx, double dt, int t, std::vector<double> q, std::vector<double> m, double& ael, std::vector<double>& a, int ng, std::vector<int> N, std::vector <std::vector<double>>& x, std::vector <std::vector<double>>& vx) {
+void accel(int nsp, double dx, double dt, int t, std::vector<double> q, const std::vector<double>& m, double& ael, std::vector<double>& a, int ng, const std::vector<int>& N, const std::vector <std::vector<double>>& x, std::vector <std::vector<double>>& vx) {
 	/// ACCEL - Calculate force and advance velocity
 
 	const double dxdt = dx / dt;
