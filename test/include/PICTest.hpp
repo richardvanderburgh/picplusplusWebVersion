@@ -75,19 +75,21 @@ TEST(PICTest, EFrame0Test)
 {
 	Init init;
 
+	double L = 6.28318530717958;
 	int N = 5;
 	int nt = 3;
 	double dt = 0.1;
+	int ng = 32;
 
 	int mode = 1;
 	int V0 = 1;
 	int numSpecies = 2;
 	double amplitude = 0.001;
 	double VT1 = 0;
+	int wp1 = 1;
+	int qm1 = -1;
 
-	bool success = init.initialize(N, nt, dt, mode, V0, numSpecies, amplitude, VT1);
-
-	int ng = 32;
+	bool success = init.initialize(L, N, nt, dt, mode, ng, V0, numSpecies, amplitude, VT1, wp1, qm1);
 
 	std::vector<double> expectedE{
 	   0.00004269726342988,
@@ -147,19 +149,21 @@ TEST(PICTest, EFrame1Test)
 {
 	Init init;
 
+	double L = 6.28318530717958;
 	int N = 5;
 	int nt = 3;
 	double dt = 0.1;
+	int ng = 32;
 
 	int mode = 1;
 	int V0 = 1;
 	int numSpecies = 2;
 	double amplitude = 0.001;
 	double VT1 = 0;
+	int wp1 = 1;
+	int qm1 = -1;
 
-	bool success = init.initialize(N, nt, dt, mode, V0, numSpecies, amplitude, VT1);
-
-	int ng = 32;
+	bool success = init.initialize(L, N, nt, dt, mode, ng, V0, numSpecies, amplitude, VT1, wp1, qm1);
 
 	std::vector<double> expectedE{
 	 -0.0000439013224624,
@@ -219,19 +223,21 @@ TEST(PICTest, E_N_5_nt_15_Frame0Test)
 {
 	Init init;
 
+	double L = 6.28318530717958;
 	int N = 5;
 	int nt = 3;
 	double dt = 0.1;
+	int ng = 32;
 
 	int mode = 1;
 	int V0 = 1;
 	int numSpecies = 2;
 	double amplitude = 0.001;
 	double VT1 = 0;
+	int wp1 = 1;
+	int qm1 = -1;
 
-	bool success = init.initialize(N, nt, dt, mode, V0, numSpecies, amplitude, VT1);
-
-	int ng = 32;
+	bool success = init.initialize(L, N, nt, dt, mode, ng, V0, numSpecies, amplitude, VT1, wp1, qm1);
 
 	std::vector<double> expectedE{
 -0.00007128172188 ,
