@@ -1,8 +1,14 @@
-#include <math.h>
+#ifndef FIELDS_HPP
+#define FIELDS_HPP
+
 #include <cmath>
+#include <numbers>
+
+#include "complex.hpp"
+#include "fft.hpp"
 
 
-void fields(std::vector<double>& rho,
+inline void fields(std::vector<double>& rho,
 	double L, int iw, double dx, 
 	std::vector<std::vector<double>>& E, 
 	int t, const int constNg, 
@@ -62,7 +68,7 @@ void fields(std::vector<double>& rho,
 		if (ii == 0)
 			break;
 
-		complexPhik[k] = complexRhok[k] / -std::pow(2.0 * M_PI * ii / L, 2.0);
+		complexPhik[k] = complexRhok[k] / -std::pow(2.0 * std::numbers::pi * ii / L, 2.0);
 
 		//complexPhik[k][0] = complexRhok[k][0] / -std::pow(2.0 * M_PI * ii / L, 2.0);
 		//complexPhik[k][1] = complexRhok[k][1] / -std::pow(2.0 * M_PI * ii / L, 2.0);
@@ -123,3 +129,4 @@ void fields(std::vector<double>& rho,
 		a[i] = E[t][i];
 	}
 }
+#endif // !FIELDS_HPP

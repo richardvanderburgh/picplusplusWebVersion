@@ -1,4 +1,10 @@
-void accel(int nsp, double dx, double dt, int t, std::vector<double> q, const std::vector<double>& m, double& ael, std::vector<double>& a, int ng, const std::vector<int>& N, const std::vector <std::vector<double>>& x, std::vector <std::vector<double>>& vx) {
+#ifndef ACCEL_HPP
+#define ACCEL_HPP
+
+#include <cmath>
+#include <vector>
+
+inline void accel(int nsp, double dx, double dt, int t, std::vector<double> q, const std::vector<double>& m, double& ael, std::vector<double>& a, int ng, const std::vector<int>& N, const std::vector <std::vector<double>>& x, std::vector <std::vector<double>>& vx) {
 	/// ACCEL - Calculate force and advance velocity
 
 	const double dxdt = dx / dt;
@@ -19,10 +25,11 @@ void accel(int nsp, double dx, double dt, int t, std::vector<double> q, const st
 		}
 
 		for (int i = 0; i < N[species]; ++i) {
-			const int j = floor(x[species][i]);
+			const int64_t j = floor(x[species][i]);
 			const double vo = vx[species][i];
 			const double vn = vo + a[j] + (x[species][i] - j) * (a[j + 1] - a[j]);
 			vx[species][i] = vn;
 		}
 	}
 }
+#endif // !ACCEL_HPP

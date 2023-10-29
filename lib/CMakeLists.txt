@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
-project(PIC++Lib)
+project(PIC++Lib LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
 
 # find_package(Matplot++ REQUIRED HINTS $ENV{MATPLOTPP_DIR})
 
@@ -18,8 +20,8 @@ fft.cpp
 complex.cpp
 )
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
+#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+#conan_basic_setup()
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -27,9 +29,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 target_link_libraries( ${PROJECT_NAME} 
-
-${CONAN_LIBS}
-# gtest
-# Matplot++::matplot
+    #${CONAN_LIBS}
+    nlohmann_json::nlohmann_json
+    # Matplot++::matplot
 )
 

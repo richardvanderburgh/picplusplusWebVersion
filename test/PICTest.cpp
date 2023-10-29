@@ -228,6 +228,7 @@ TEST(PICTest, E_N_5_nt_15_Frame0Test)
 	int nt = 3;
 	double dt = 0.1;
 	int numGrid = 32;
+	int mode = 1;
 	int V0 = 1;
 	int numSpecies = 2;
 	double amplitude = 0.001;

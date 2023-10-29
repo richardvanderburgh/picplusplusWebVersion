@@ -1,21 +1,21 @@
-#pragma once
+#ifndef INIT_HPP
+#define INIT_HPP
+
 #define _USE_MATH_DEFINES
 
-#include <fft.hpp>
 //#include <fftw3.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <math.h>
-// #include <corecrt_math_defines.h>
-
 #include <iostream>
+#include <numbers>
 #include <thread>
 #include <vector>
 
 #include "Accel.hpp"
+#include "fft.hpp"
 #include "Fields.hpp"
 #include "SetRho.hpp"
 #include "Utils.hpp"
@@ -264,7 +264,7 @@ public:
 				for (int ith = 1; ith <= ngr; ++ith) {
 					int i1 = ith - 1 + 1;
 					double vv = vx[species][i1];
-					double theta = 2 * M_PI * x[species][i1] / lg;
+					double theta = 2 * std::numbers::pi * x[species][i1] / lg;
 					vx[species][i1] = vv * cos(theta);
 					vy[species][i1] = vv * sin(theta);
 				}
@@ -304,7 +304,7 @@ public:
 			}
 
 			for (int a = 0; a < N[species]; ++a) {
-				double theta = 2 * M_PI * mode[species] * x[species][a] / L;
+				double theta = 2 * std::numbers::pi * mode[species] * x[species][a] / L;
 				x[species][a] = x[species][a] + x1[species] * cos(theta + thetax[species]);
 				vx[species][a] = vx[species][a] + v1[species] * sin(theta + thetav[species]);
 
@@ -461,3 +461,4 @@ public:
 		return true;
 	}
 };
+#endif // !INIT_HPP

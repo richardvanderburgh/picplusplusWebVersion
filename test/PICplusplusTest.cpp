@@ -1,6 +1,4 @@
-//#include <init.hpp>
 #include <gtest/gtest.h>
-//#include "include/PICTest.hpp"
 
 
 int main(int argc, char** argv) {

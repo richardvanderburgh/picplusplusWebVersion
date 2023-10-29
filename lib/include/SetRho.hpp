@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SET_RHO_HPP
+#define SET_RHO_HPP
 
 void setRho(int species, int ng, double dx, 
 	std::vector<int> N, 
@@ -96,3 +97,4 @@ void move(int nsp, std::vector<double>& rho, std::vector<std::vector<double>> rh
 	}
 
 }
+#endif // !SET_RHO_HPP
