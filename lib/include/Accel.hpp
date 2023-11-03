@@ -25,7 +25,7 @@ inline void accel(int nsp, double dx, double dt, int t, std::vector<double> q, c
 		}
 
 		for (int i = 0; i < N[species]; ++i) {
-			const int64_t j = floor(x[species][i]);
+			const int64_t j = static_cast<int64_t>(floor(x[species][i]));
 			const double vo = vx[species][i];
 			const double vn = vo + a[j] + (x[species][i] - j) * (a[j + 1] - a[j]);
 			vx[species][i] = vn;

@@ -52,11 +52,10 @@ inline void fields(std::vector<double>& rho,
 	//fftw_execute(forwardPlan);
 	//fftw_destroy_plan(forwardPlan);
 
-	double tol = 1;
 	for (int k = 0; k < ng + 1; k++) {
-		int ii;
+		int ii = 0;
 		if (k == 0) {
-			ii = tol;
+			ii = 1;
 		}
 		else if (k <= ng / 2 && k >= 0) {
 			ii = k;
