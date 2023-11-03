@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD 20)
 add_library(${PROJECT_NAME} STATIC
 
 include/Accel.hpp
-include/First_EE.hpp
 include/Fields.hpp
 include/init.hpp
 include/fft.hpp
