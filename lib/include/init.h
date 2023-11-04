@@ -1,6 +1,7 @@
 #ifndef INIT_HPP
 #define INIT_HPP
 
+#include <optional>
 #include <vector>
 
 #include "DataStructs.h"
@@ -15,7 +16,7 @@ namespace PIC_PLUS_PLUS {
 
 		PicData mPicData;
 
-		bool initialize(
+		std::optional<nlohmann::json> initialize(
 			double spatialLength,
 			int numParticles,
 			int numTimeSteps,

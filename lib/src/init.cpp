@@ -22,7 +22,7 @@
 
 
 namespace PIC_PLUS_PLUS {
-	bool Init::initialize(
+	std::optional<nlohmann::json> Init::initialize(
 		double spatialLength,
 		int numParticles,
 		int numTimeSteps,
@@ -156,18 +156,16 @@ namespace PIC_PLUS_PLUS {
 		DATA_STRUCTS::Frame& frame0 = mPicData.frames.emplace_back();
 		std::vector<DATA_STRUCTS::Particle> particles;
 
+		int particleId = 0;
 		for (int species = 0; species < numSpecies; species++) {
 			for (int i = 0; i < speciesNumParticles[species]; i++) {
-				int particleId = 0;
 
 				DATA_STRUCTS::Particle& particle = particles.emplace_back();
 
-				particle.id = particleId;
+				particle.id = particleId++;
 				particle.position = particlePositions[species][i];
 				particle.velocity = particleXVelocities[species][i];
 				particle.species = species;
-
-				particleId++;
 			}
 		}
 
@@ -176,12 +174,8 @@ namespace PIC_PLUS_PLUS {
 		frame0.frameNumber = timeStep;
 
 		//BEGIN TIME LOOP 
-
-		nlohmann::json JSON;
-		nlohmann::json frames;
-
 		for (int timeStep = 1; timeStep <= numTimeSteps; timeStep++) {
-			DATA_STRUCTS::Frame frame;
+			DATA_STRUCTS::Frame& frame = mPicData.frames.emplace_back();
 
 			accel(numSpecies, gridStepSize, timeStepSize, timeStep, particleCharge, particleMass, ael, particleAcceleration, numGrid, speciesNumParticles, particlePositions, particleXVelocities);
 			move(numSpecies, chargeDensity, rho0, qdx, speciesNumParticles, particlePositions, particleXVelocities, numGrid);
@@ -194,8 +188,6 @@ namespace PIC_PLUS_PLUS {
 			frame.electricField = electricField[timeStep];
 			std::vector<DATA_STRUCTS::Particle> particles;
 
-			nlohmann::json JSONFrame;
-			nlohmann::json JSONParticles;
 			int particleId = 0;
 
 			for (int species = 0; species < numSpecies; species++) {
@@ -203,40 +195,25 @@ namespace PIC_PLUS_PLUS {
 
 					DATA_STRUCTS::Particle& particle = particles.emplace_back();
 
-					particle.id = particleId;
+					particle.id = particleId++;
 					particle.position = particlePositions[species][i];
 					particle.velocity = particleXVelocities[species][i];
 					particleKineticEnergy[species][timeStep] += 0.5 * std::pow((particle.velocity), 2) * particleMass[species];
 					particle.species = species;
-
-					nlohmann::json particleObject = particle;
-
-					//particleObject["position"] = particlePositions[species][i];
-					//particleObject["velocity"] = particleXVelocities[species][i];
-					//particleObject["species"] = species;
-					//particleObject["id"] = particleId;
-
-					JSONParticles.push_back(particleObject);
-
-					particleId++;
 				}
 			}
 
-			JSONFrame["particles"] = JSONParticles;
-			JSONFrame["frameNumber"] = timeStep;
-			frames.push_back(JSONFrame);
-
 			frame.particles = particles;
 			frame.frameNumber = timeStep;
-			mPicData.frames.push_back(frame);
 		}
 
+		nlohmann::json JSON;
 		JSON["ke"] = particleKineticEnergy;
 		JSON["ese"] = electrostaticEnergy;
-		JSON["phaseFrames"] = frames;
+		JSON["phaseFrames"] = mPicData.frames;
 
 		std::cout << JSON.dump() << std::endl;
 
-		return true;
+		return JSON;
 	}
 }
