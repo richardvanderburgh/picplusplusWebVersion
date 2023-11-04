@@ -109,8 +109,8 @@ public:
 		std::vector<double> particleCharge(numSpecies, 0.0);
 		std::vector<double> particleMass(numSpecies);
 
-		for (int species = 0; species < numSpecies; species++)
-		{
+		for (int species = 0; species < numSpecies; species++) {
+
 			particleCharge[species] = spatialLength * speciesPlasmaFrequency[species] * speciesPlasmaFrequency[species] / (epsi * speciesNumParticles[species] * speciesChargeMassRatio[species]);
 			particleMass[species] = particleCharge[species] / speciesChargeMassRatio[species];
 			chargeCloudWidth[species] = spatialLength / speciesNumParticles[species];
@@ -220,7 +220,6 @@ public:
 		nlohmann::json frames;
 
 		for (int timeStep = 1; timeStep <= numTimeSteps; timeStep++) {
-			Frame frame;
 
 			accel(numSpecies, gridStepSize, timeStepSize, timeStep, particleCharge, particleMass, ael, particleAcceleration, numGrid, speciesNumParticles, particlePositions, particleXVelocities);
 			move(numSpecies, chargeDensity, rho0, qdx, speciesNumParticles, particlePositions, particleXVelocities, numGrid);
@@ -230,46 +229,29 @@ public:
 				electrostaticEnergy[timeStep] += std::pow(electricField[timeStep][i], 2) * 0.5 * gridStepSize;
 			}
 
+			Frame frame;
 			frame.electricField = electricField[timeStep];
-			std::vector<Particle> particles;
 
 			nlohmann::json JSONFrame;
-			nlohmann::json JSONParticles;
-			int particleId = 0;
 
-			for (int species = 0; species < numSpecies; species++) {
-				for (int i = 0; i < speciesNumParticles[species]; i++) {
+			updateFrame(electricField,
+				numSpecies,
+				speciesNumParticles,
+				particlePositions,
+				particleXVelocities,
+				particleKineticEnergy,
+				particles,
+				timeStep,
+				particleMass,
+				frame,
+				JSONFrame);
 
-					Particle particle;
-
-					particle.id = particleId;
-					particle.position = particlePositions[species][i];
-					particle.velocity = particleXVelocities[species][i];
-					particleKineticEnergy[species][timeStep] += 0.5*std::pow((particle.velocity), 2) * particleMass[species];
-					particle.species = species;
-
-					particles.push_back(particle);
-
-					nlohmann::json particleObject;
-
-					particleObject["position"] = particlePositions[species][i];
-					particleObject["velocity"] = particleXVelocities[species][i];
-					particleObject["species"] = species;
-					particleObject["id"] = particleId;
-
-					JSONParticles.push_back(particleObject);
-
-					particleId++;
-				}
-			}
-
-			JSONFrame["particles"] = JSONParticles;
-			JSONFrame["frameNumber"] = timeStep;
 			frames.push_back(JSONFrame);
 
 			frame.particles = particles;
 			frame.frameNumber = timeStep;
 			mPicData.frames.push_back(frame);
+
 		}
 
 		JSON["ke"] = particleKineticEnergy;
@@ -277,8 +259,56 @@ public:
 		JSON["phaseFrames"] = frames;
 
 		std::cout << JSON.dump() << std::endl;
-
 		return true;
 	}
+
+	void updateFrame(std::vector<std::vector<double>>& electricField,
+		int numSpecies,
+		const std::vector<int>& speciesNumParticles, 
+		const std::vector<std::vector<double>>& particlePositions, 
+		const std::vector<std::vector<double>>& particleXVelocities, 
+		std::vector<std::vector<double>>& particleKineticEnergy,
+		std::vector<Particle>& particles,
+		const int timeStep,
+		const std::vector<double>& particleMass,
+		Frame frame,
+		nlohmann::json JSONFrame) {
+
+		nlohmann::json JSONParticles;
+
+		frame.electricField = electricField[timeStep];
+
+		for (int species = 0; species < numSpecies; species++) {
+			for (int i = 0; i < speciesNumParticles[species]; i++) {
+
+				Particle particle;
+				int particleId = 0;
+
+				particle.id = particleId;
+				particle.position = particlePositions[species][i];
+				particle.velocity = particleXVelocities[species][i];
+				particleKineticEnergy[species][timeStep] += 0.5 * std::pow((particle.velocity), 2) * particleMass[species];
+				particle.species = species;
+
+				particles.push_back(particle);
+
+				nlohmann::json particleObject;
+
+				particleObject["position"] = particlePositions[species][i];
+				particleObject["velocity"] = particleXVelocities[species][i];
+				particleObject["species"] = species;
+				particleObject["id"] = particleId;
+
+				JSONParticles.push_back(particleObject);
+
+				particleId++;
+			}
+		}
+		JSONFrame["particles"] = JSONParticles;
+		JSONFrame["frameNumber"] = timeStep;
+	}
+
 };
+
+
 #endif // !INIT_HPP
