@@ -1,10 +1,10 @@
 
-#include <init.hpp>
+#include <init.h>
 
 int main(int argc, char* argv[]) {
 
 
-	Init init;
+	PIC_PLUS_PLUS::Init init;
     double L = atoi(argv[1]);
 	int N = atoi(argv[2]);
 	int nt = atoi(argv[3]);

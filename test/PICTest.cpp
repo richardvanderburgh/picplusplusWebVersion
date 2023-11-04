@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <init.hpp>
+#include <init.h>
 
 // Define a test case
 //TEST(GTestExample, AdditionTest) {
@@ -73,7 +73,7 @@
 //
 TEST(PICTest, EFrame0Test)
 {
-	Init init;
+	PIC_PLUS_PLUS::Init init;
 
 	double spatialLength = 6.28318530717958;
 	int N = 5;
@@ -148,7 +148,7 @@ TEST(PICTest, EFrame0Test)
 
 TEST(PICTest, EFrame1Test)
 {
-	Init init;
+	PIC_PLUS_PLUS::Init init;
 
 	double spatialLength = 6.28318530717958;
 	int N = 5;
@@ -221,7 +221,7 @@ TEST(PICTest, EFrame1Test)
 
 TEST(PICTest, E_N_5_nt_15_Frame0Test)
 {
-	Init init;
+	PIC_PLUS_PLUS::Init init;
 
 	double spatialLength = 6.28318530717958;
 	int N = 5;
