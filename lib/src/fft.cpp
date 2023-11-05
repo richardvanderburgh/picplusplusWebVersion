@@ -8,7 +8,7 @@
 //   Include declaration file
 #include "fft.hpp"
 //   Include math library
-#include <math.h>
+#include <cmath>
 
 //   FORWARD FOURIER TRANSFORM
 //     Input  - input data

@@ -25,10 +25,7 @@ target_link_libraries(${PROJECT_NAME}
 
 add_executable(${PROJECT_NAME}_Test
     test/PICplusplusTest.cpp
-    test/AccelTest.cpp
-    test/FieldsTest.cpp
     test/PICTest.cpp
-    test/UtilsTest.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_Test

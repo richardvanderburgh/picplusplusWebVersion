@@ -1,10 +1,10 @@
 
-#include <init.hpp>
+#include <init.h>
 
 int main(int argc, char* argv[]) {
 
 
-	Init init;
+	PIC_PLUS_PLUS::Init init;
     double L = atoi(argv[1]);
 	int N = atoi(argv[2]);
 	int nt = atoi(argv[3]);
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 
     // 6.28318530717958 5 3 0.1 32 1 1 2 0.001 0.0 1.0 -1.0
 
-	bool success = init.initialize(L, N, nt, dt, ng, mode, V0, numSpecies, amplitude, VT1, wp1, qm1 );
+	auto jsonResult = init.initialize(L, N, nt, dt, ng, mode, V0, numSpecies, amplitude, VT1, wp1, qm1 );
 
 	return 0;
 }

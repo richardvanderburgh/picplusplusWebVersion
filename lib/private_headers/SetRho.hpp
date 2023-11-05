@@ -1,6 +1,8 @@
 #ifndef SET_RHO_HPP
 #define SET_RHO_HPP
 
+#include <vector>
+
 void setRho(int species, int ng, double dx, 
 	std::vector<int> N, 
 	std::vector<double> qdx, 
@@ -10,8 +12,8 @@ void setRho(int species, int ng, double dx,
 	std::vector<std::vector<double>>& rhos, int iw) {
 
 	//double dxi;
-	double dxi = 1.0 / dx;
-	int xn = ng;
+	const double dxi = 1.0 / dx;
+	const int xn = ng;
 
 	// If it is the first group of particles, then clear out rho.
 	if (species == 0) {
@@ -41,7 +43,7 @@ void setRho(int species, int ng, double dx,
 			if (x[species][i] > xn) {
 				x[species][i] = x[species][i] - xn;
 			}
-			int j = floor((x[species][i]) + 1 + 0.5);
+			int64_t j = static_cast<int64_t>(floor((x[species][i]) + 1 + 0.5));
 			rho[j] = rho[j] + qdx[species];
 		}
 	}
@@ -56,7 +58,7 @@ void setRho(int species, int ng, double dx,
 			if (x[species][i] > xn) {
 				x[species][i] = x[species][i] - xn;
 			}
-			int j = floor(x[species][i]);
+			int64_t j = static_cast<int64_t>(floor(x[species][i]));
 			//jdata(i, species) = j;
 			double drho = qdx[species] * (x[species][i] - j);
 			//drhodata(i, species) = drho;
@@ -89,7 +91,7 @@ void move(int nsp, std::vector<double>& rho, std::vector<std::vector<double>> rh
 				x[species][i] -= ng;
 
 
-			int j = floor(x[species][i]);
+			int64_t j = static_cast<int64_t>(floor(x[species][i]));
 			double drho = qdx[species] * (x[species][i] - j);
 			rho[j] = rho[j] - drho + qdx[species];
 			rho[j + 1] = rho[j + 1] + drho;
