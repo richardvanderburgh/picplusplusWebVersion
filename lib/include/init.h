@@ -17,18 +17,32 @@ namespace PIC_PLUS_PLUS {
 		PicData mPicData;
 
 		[[nodiscard]] std::optional<nlohmann::json> initialize(
-			double spatialLength,
-			int numParticles,
-			int numTimeSteps,
-			double timeStepSize,
-			int numGrid,
-			int spatialPerturbationMode,
-			double driftVelocity,
-			int numSpecies,
-			double spatialPerturbationAmplitude,
-			double thermalVelocity,
-			int plasmaFrequency,
-			int chargeMassRatio);
+			const double spatialLength,
+			const int numParticles,
+			const int numTimeSteps,
+			const double timeStepSize,
+			const int numGrid,
+			const int spatialPerturbationMode,
+			const double driftVelocity,
+			const int numSpecies,
+			const double spatialPerturbationAmplitude,
+			const double thermalVelocity,
+			const int plasmaFrequency,
+			const int chargeMassRatio);
+
+		void initializeLinearPositions(const int numParticles,
+			std::vector<double>& particlePositions,
+			const double chargeCloudWidth);
+
+		void addDriftVelocity(const int numParticles, std::vector<double>& particleXVelocities, const double driftVelocity);
+
+		void addThermalVelocities(const int numParticles, std::vector<double>& particleXVelocities, const double thermalVelocity);
+
+		void applySpatialPerturbation(const int numParticles,
+			const int spatialPerturbationMode, 
+			std::vector<double>& particlePositions, 
+			const double spatialLength, 
+			const double spatialPerturbationAmplitude);
 
 		[[nodiscard]] std::vector<DATA_STRUCTS::Particle> updateFrameParticles(
 			int numSpecies,
@@ -41,4 +55,4 @@ namespace PIC_PLUS_PLUS {
 		);
 	};
 }
-#endif // !INIT_HPP
+#endif
