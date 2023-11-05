@@ -4,8 +4,8 @@
 #include <vector>
 
 void setRho(int species, int ng, double dx, 
-	std::vector<int> N, 
-	std::vector<double> qdx, 
+	const std::vector<int>& N, 
+	const std::vector<double>& qdx, 
 	std::vector<double>& rho, 
 	std::vector<std::vector<double>>& x, 
 	std::vector<std::vector<double>>& rho0, 
@@ -69,7 +69,7 @@ void setRho(int species, int ng, double dx,
 }
 
 
-void move(int nsp, std::vector<double>& rho, std::vector<std::vector<double>> rho0, std::vector<double> qdx, std::vector<int> N, std::vector <std::vector<double>>& x, std::vector <std::vector<double>>& vx, int ng) {
+void move(int nsp, std::vector<double>& rho, const std::vector<std::vector<double>>& rho0, const std::vector<double>& qdx, const std::vector<int>& N, std::vector <std::vector<double>>& x, const std::vector <std::vector<double>>& vx, int ng) {
 	//MOVE - Advances position one time step and accumulates charge density.
 	for (int species = 0; species < nsp; species++) {
 		// Clear out old charge density.
