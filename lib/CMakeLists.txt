@@ -3,33 +3,42 @@ project(PIC++Lib LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# find_package(Matplot++ REQUIRED HINTS $ENV{MATPLOTPP_DIR})
-
-add_library(${PROJECT_NAME} STATIC
-
-include/Accel.hpp
-include/Fields.hpp
-include/init.hpp
-include/fft.hpp
-include/complex.hpp
-include/SetRho.hpp
-include/Utils.hpp
-
-fft.cpp
-complex.cpp
+set(PUBLIC_HEADERS
+	./include/DataStructs.h
+	./include/init.h
 )
 
-#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-#conan_basic_setup()
+set(PRIVATE_HEADERS
+    ./private_headers/Accel.hpp
+    ./private_headers/Fields.hpp
+    ./private_headers/fft.hpp
+    ./private_headers/complex.hpp
+    ./private_headers/SetRho.hpp
+    ./private_headers/Utils.hpp
+)
 
+set(SOURCE_FILES
+	./src/complex.cpp
+	./src/fft.cpp
+    ./src/init.cpp
+)
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+add_library(${PROJECT_NAME} STATIC
+	${PUBLIC_HEADERS}
+	${PRIVATE_HEADERS}
+	${SOURCE_FILES}
+)
+
+target_include_directories(${PROJECT_NAME}
+	PUBLIC
+	  ${CMAKE_CURRENT_SOURCE_DIR}/include
+	PRIVATE
+	  ${CMAKE_CURRENT_SOURCE_DIR}/private_headers
 )
 
 target_link_libraries( ${PROJECT_NAME} 
-    #${CONAN_LIBS}
     nlohmann_json::nlohmann_json
-    # Matplot++::matplot
 )
+
+add_subdirectory(test)
 

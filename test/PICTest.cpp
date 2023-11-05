@@ -1,79 +1,95 @@
 #include <gtest/gtest.h>
-#include <init.hpp>
 
-// Define a test case
-//TEST(GTestExample, AdditionTest) {
-//    // Test assertion
-//    
-//    EXPECT_EQ(2 + 2, 4);
-//}
+#include <nlohmann/json.hpp>
 
-//TEST(FFTTest, fftTest) {
-//
-//	const int ng = 128;
-//	std::vector<double> rhoRE(ng, 0.0);
-//	std::vector<double> rhoCO(ng, 0.0);
-//	std::vector<double> rhokRE(ng, 0.0);
-//	std::vector<double> rhokCO(ng, 0.0);
-//
-//	std::vector<double> phiRE(ng, 0.0);
-//	std::vector<double> phiCO(ng, 0.0);
-//
-//	std::vector<double> space(ng, 0.0);
-//
-//	space = linspace(0, 2*M_PI, ng);
-//
-//	double val = sin(55);
-//
-//	complex complexRho[ng];
-//	complex complexRhok[ng];
-//	complex complexPhik[ng];
-//	complex complexPhi[ng];
-//
-//	for (int i = 0; i < ng; i++) {
-//		complexRho[i] = sin(space[i]);
-//		rhoRE[i] = complexRho[i].re();
-//		rhoCO[i] = complexRho[i].im();
-//
-//		std::cout << "rhoRE[" << i << "] = " << rhoRE[i] << std::endl;
-//		std::cout << "rhoCO[" << i << "] = " << rhoCO[i] << std::endl;
-//	}
-//
-//	matplot::scatter(space, rhoRE, 1);
-//	matplot::scatter(space, rhoCO, 1);
-//
-//	CFFT::Forward(complexRho, complexRhok, ng);
-//
-//	for (int i = 0; i < ng; i++) {
-//		//complexRho[i] = sin(space[i]);
-//		rhokRE[i] = complexRhok[i].re();
-//		rhokCO[i] = complexRhok[i].im();
-//
-//		std::cout << "rhokRE[" << i << "] = " << rhokRE[i] << std::endl;
-//		std::cout << "rhokCO[" << i << "] = " << rhokCO[i] << std::endl;
-//	}
-//
-//	matplot::scatter(space, rhokRE, 1);
-//	matplot::scatter(space, rhokCO, 1);
-//
-//	CFFT::Inverse(complexRhok, complexPhi, ng);
-//
-//	for (int i = 0; i < ng; i++) {
-//		//complexRho[i] = sin(space[i]);
-//		phiRE[i] = complexPhi[i].re();
-//		phiCO[i] = complexPhi[i].im();
-//
-//		std::cout << "phiRE[" << i << "] = " << phiRE[i] << std::endl;
-//		std::cout << "phiCO[" << i << "] = " << phiCO[i] << std::endl;
-//	}
-//
-//	matplot::scatter(space, phiRE, 1);
-//	matplot::scatter(space, phiCO, 1);
-//}
-//
+#include <DataStructs.h>
+#include <init.h>
+
+namespace {
+	using DBL_VEC = std::vector<double>;
+	using JSON_VEC = std::vector<nlohmann::json>;
+
+	nlohmann::json BuildFrame0Json()
+	{
+		return nlohmann::json{{"frameNumber", 0},
+							  {"electricField", DBL_VEC{4.269726342988564e-05, 0.4006171522662996, 0.6912961592305251, 0.15270125999750908, -0.5885835102475788, -0.5346927398323591, -0.15700368113595964, 0.23764672981919863, 0.5872089012479687, 0.4427683181503034, -0.297877426013351, -0.639649378263841, -0.3183821408694944, 0.07641105814515342, 0.48233137539586185, 0.7362282465584438, -0.005776330175579284, -0.7426950810757155, -0.482927497567314, -0.07637179844676961, 0.31841567826749095, 0.6392353377015277, 0.29429815402774046, -0.446328250596279, -0.5876514331693549, -0.2375537535953244, 0.15685674017510404, 0.535805549923767, 0.5979322783690139, -0.14335563303744897, -0.6901799647985029, -0.400767017714465, 4.269726342988564e-05}},
+							  {"particles", JSON_VEC{
+												{{"id", 0}, {"position", 3.204120289718404}, {"species", 0}, {"velocity", 0.5093312139007288}},
+												{{"id", 1}, {"position", 9.598426189371066}, {"species", 0}, {"velocity", 0.5092842698099325}},
+												{{"id", 2}, {"position", 15.994907041821058}, {"species", 0}, {"velocity", 0.5092449562549437}},
+												{{"id", 3}, {"position", 22.398426189371065}, {"species", 0}, {"velocity", 0.5092757821427519}},
+												{{"id", 4}, {"position", 28.804120289718405}, {"species", 0}, {"velocity", 0.5093428673619713}},
+												{{"id", 5}, {"position", 3.204120289718404}, {"species", 1}, {"velocity", -0.5092604218874025}},
+												{{"id", 6}, {"position", 9.598426189371066}, {"species", 1}, {"velocity", -0.5093073659781988}},
+												{{"id", 7}, {"position", 15.994907041821058}, {"species", 1}, {"velocity", -0.5093466795331876}},
+												{{"id", 8}, {"position", 22.398426189371065}, {"species", 1}, {"velocity", -0.5093158536453793}},
+												{{"id", 9}, {"position", 28.804120289718405}, {"species", 1}, {"velocity", -0.50924876842616}}}}};
+	}
+
+	nlohmann::json BuildFrame1Json()
+	{
+		return nlohmann::json{{"frameNumber", 1},
+							  {"electricField", DBL_VEC{-4.3901322461342085e-05, 0.3788884122956493, 0.538041721408119, 0.15307399483873943, -0.4363518996148244, -0.5113511230499866, -0.16084694536770308, 0.24016415462226148, 0.5782959113535082, 0.389572729535889, -0.29860059203145506, -0.5846991593056291, -0.3123233273425894, 0.08071799146453694, 0.44474609414072663, 0.4840209388191416, -0.0057212846921197635, -0.49041666096222714, -0.4453481847763724, -0.08064669750433388, 0.3121236745094752, 0.5827285304205461, 0.295061489891298, -0.3915460838758385, -0.578485955641389, -0.24013485540531948, 0.16079792250320965, 0.5118367972706173, 0.44152584889690005, -0.14381569874610328, -0.5328705719143222, -0.378393270417943, -4.3901322461342085e-05}},
+							  {"particles", JSON_VEC{
+												{{"id", 0}, {"position", 3.7133807116058066}, {"species", 0}, {"velocity", 0.5092604218874025}},
+												{{"id", 1}, {"position", 10.107733555349265}, {"species", 0}, {"velocity", 0.5093073659781989}},
+												{{"id", 2}, {"position", 16.504253721354246}, {"species", 0}, {"velocity", 0.5093466795331877}},
+												{{"id", 3}, {"position", 22.907742043016444}, {"species", 0}, {"velocity", 0.5093158536453791}},
+												{{"id", 4}, {"position", 29.313369058144566}, {"species", 0}, {"velocity", 0.50924876842616}},
+												{{"id", 5}, {"position", 2.6947890758176754}, {"species", 1}, {"velocity", -0.5093312139007288}},
+												{{"id", 6}, {"position", 9.089141919561134}, {"species", 1}, {"velocity", -0.5092842698099324}},
+												{{"id", 7}, {"position", 15.485662085566114}, {"species", 1}, {"velocity", -0.5092449562549436}},
+												{{"id", 8}, {"position", 21.889150407228314}, {"species", 1}, {"velocity", -0.5092757821427522}},
+												{{"id", 9}, {"position", 28.294777422356432}, {"species", 1}, {"velocity", -0.5093428673619713}}}}};
+	}
+
+	nlohmann::json BuildFrame2Json()
+	{
+		return nlohmann::json{{"frameNumber", 2},
+							  {"electricField", DBL_VEC{-7.128172187758459e-05, 0.3436343333187128, 0.25798036035268507, 0.035110765995305174, -0.17492056009884052, -0.35437214364456043, -0.14620560851484807, 0.21259948643448578, 0.31998452983464865, 0.12698150956722631, -0.08068314890847027, -0.2878643701487316, -0.2790730819433162, 0.07963121207180539, 0.38881510288118526, 0.2207868581561343, -0.0006593331122882585, -0.22625195450654836, -0.39439842648401086, -0.08025083508865681, 0.2789403507796752, 0.2861850421896325, 0.0788131586543521, -0.12894715121960149, -0.3216836572108103, -0.21288820391491628, 0.14679100015775073, 0.35883716565893686, 0.17998365440102762, -0.030128508997190877, -0.25361305906686255, -0.34306320587203326, -7.128172187758459e-05}},
+							  {"particles", JSON_VEC{
+												{{"id", 0}, {"position", 4.236260267412681}, {"species", 0}, {"velocity", 0.5228795558068746}},
+												{{"id", 1}, {"position", 10.633818297349798}, {"species", 0}, {"velocity", 0.5260847420005327}},
+												{{"id", 2}, {"position", 17.026339454455755}, {"species", 0}, {"velocity", 0.5220857331015083}},
+												{{"id", 3}, {"position", 23.43377303999503}, {"species", 0}, {"velocity", 0.5260309969785861}},
+												{{"id", 4}, {"position", 29.83615152044991}, {"species", 0}, {"velocity", 0.5227824623053451}},
+												{{"id", 5}, {"position", 2.1716778271241517}, {"species", 1}, {"velocity", -0.5231112486935235}},
+												{{"id", 6}, {"position", 8.563141153382492}, {"species", 1}, {"velocity", -0.5260007661786419}},
+												{{"id", 7}, {"position", 14.963879707115325}, {"species", 1}, {"velocity", -0.5217823784507886}},
+												{{"id", 8}, {"position", 21.363223235794123}, {"species", 1}, {"velocity", -0.5259271714341911}},
+												{{"id", 9}, {"position", 27.77173549692073}, {"species", 1}, {"velocity", -0.5230419254357017}}}}};
+	}
+
+	nlohmann::json BuildFrame3Json()
+	{
+		return nlohmann::json{{"frameNumber", 3},
+							  {"electricField", DBL_VEC{0.00048611652793800227, 0.12486578690253407, -0.048241322416612546, -0.05152435356781079, 0.12017387971269856, -0.05254602946667631, -0.10615708008743974, 0.17274652702089568, 0.014771533002604689, -0.1553839279452945, 0.10359012009747204, 0.019130542133291885, -0.15427685478175282, 0.05221627969517066, 0.08703164021148174, -0.08589210980149622, -0.0006210014556194892, 0.08069261111846183, -0.09230027776019586, -0.05301134986936989, 0.15278304188257313, -0.020686110679284365, -0.10396259300278209, 0.15369654852543807, -0.01645534177997643, -0.17300322661546264, 0.10668724656003992, 0.05689858912338888, -0.11588310866014291, 0.052524745393571354, 0.05237400194971378, -0.12072452196735774, 0.00048611652793800227}},
+							  {"particles", JSON_VEC{
+												{{"id", 0}, {"position", 4.7702077298861525}, {"species", 0}, {"velocity", 0.5339474624734711}},
+												{{"id", 1}, {"position", 11.170700029090199}, {"species", 0}, {"velocity", 0.5368817317404001}},
+												{{"id", 2}, {"position", 17.560173666308433}, {"species", 0}, {"velocity", 0.5338342118526795}},
+												{{"id", 3}, {"position", 23.970629173127335}, {"species", 0}, {"velocity", 0.5368561331323038}},
+												{{"id", 4}, {"position", 30.369985470545668}, {"species", 0}, {"velocity", 0.5338339500957591}},
+												{{"id", 5}, {"position", 1.6373764023950277}, {"species", 1}, {"velocity", -0.534301424729124}},
+												{{"id", 6}, {"position", 8.026379140425227}, {"species", 1}, {"velocity", -0.5367620129572658}},
+												{{"id", 7}, {"position", 14.430543642998291}, {"species", 1}, {"velocity", -0.5333360641170333}},
+												{{"id", 8}, {"position", 20.826556912400264}, {"species", 1}, {"velocity", -0.5366663233938587}},
+												{{"id", 9}, {"position", 27.2374478328234}, {"species", 1}, {"velocity", -0.5342876640973317}}}}};
+	}
+
+	nlohmann::json BuildExpectedJson()
+	{
+		return nlohmann::json{
+			{"ese", DBL_VEC{0.6490120680288294, 0.4801652664534216, 0.1777764530230646, 0.03045331428993565}},
+			{"ke", std::vector<DBL_VEC>{DBL_VEC{0.8148733127700093, 0.8148733127700092, 0.8625254009474299, 0.899446802247833}, DBL_VEC{0.8148733127700093, 0.8148733127700093, 0.8625250675472964, 0.899446068825189}}},
+			{"phaseFrames", JSON_VEC{BuildFrame0Json(), BuildFrame1Json(), BuildFrame2Json(), BuildFrame3Json()}}};
+	}
+}
+
+
 TEST(PICTest, EFrame0Test)
 {
-	Init init;
+	PIC_PLUS_PLUS::Init init;
 
 	double spatialLength = 6.28318530717958;
 	int N = 5;
@@ -88,206 +104,8 @@ TEST(PICTest, EFrame0Test)
 	double plasmaFrequency = 1.0;
 	double chargeMassRatio = -1.0;
 
-	bool success = init.initialize(spatialLength, N, nt, dt, numGrid, mode, V0, numSpecies, amplitude, VT1, plasmaFrequency, chargeMassRatio);
+	auto jsonResult = init.initialize(spatialLength, N, nt, dt, numGrid, mode, V0, numSpecies, amplitude, VT1, plasmaFrequency, chargeMassRatio);
+	EXPECT_TRUE(jsonResult.has_value());
 
-	int ng = 32;
-
-	std::vector<double> expectedE{
-	   0.00004269726342988,
-	   0.40061715226629907, 
-	   0.69129615923052634, 
-	   0.15270125999750908, 
-	 - 0.58858351024757993, 
-	 - 0.53469273983236021, 
-	 - 0.15700368113596019, 
-	   0.23764672981919918, 
-	   0.5872089012479681 ,
-	   0.44276831815030276, 
-	 - 0.29787742601334988, 
-	 - 0.63964937826384105, 
-	 - 0.31838214086949496, 
-	   0.07641105814515342,
-	   0.48233137539586241, 
-	   0.73622824655844488, 
-	 - 0.00577633017558041,
-	 - 0.74269508107571602, 
-	 - 0.4829274975673129 ,
-	 - 0.07637179844676961,
-	   0.31841567826749095, 
-	   0.63923533770152829, 
-	   0.29429815402774046, 
-	 - 0.44632825059627845, 
-	 - 0.58765143316935486, 
-	 - 0.23755375359532441, 
-	   0.15685674017510517, 
-	   0.5358055499237665 ,
-	   0.59793227836901386, 
-	 - 0.14335563303744897, 
-	 - 0.69017996479850396, 
-	 - 0.40076701771446444, 
-	   0.00004269726342988
-	};
-
-	bool fieldsMatch = true;
-	double precision = 10E-12;
-
-	double actualE;
-	for (int i = 0; i < ng; i++) {
-
-		actualE = init.mPicData.frames[0].electricField[i];
-
-		if ((actualE - expectedE[i]) > precision) {
-			fieldsMatch = false;
-		}
-
-	}
-
-
-	EXPECT_TRUE(fieldsMatch);
-}
-
-TEST(PICTest, EFrame1Test)
-{
-	Init init;
-
-	double spatialLength = 6.28318530717958;
-	int N = 5;
-	int nt = 3;
-	double dt = 0.1;
-	int numGrid = 32;
-	int mode = 1;
-	int V0 = 1;
-	int numSpecies = 2;
-	double amplitude = 0.001;
-	double VT1 = 0;
-	double plasmaFrequency = 1.0;
-	double chargeMassRatio = -1.0;
-
-	bool success = init.initialize(spatialLength, N, nt, dt, numGrid, mode, V0, numSpecies, amplitude, VT1, plasmaFrequency, chargeMassRatio);
-
-	std::vector<double> expectedE{
-	 -0.0000439013224624,
-	  0.3788884122956504,
-	  0.5380417214081206,
-	  0.1530739948387394,
-	-0.4363518996148261,
-	-0.5113511230499872,
-	-0.1608469453677030,
-	  0.2401641546222603,
-	  0.5782959113535076,
-	  0.3895727295358895,
-	-0.2986005920314539,
-	-0.5846991593056296,
-	-0.3123233273425899,
-	  0.0807179914645374,
-	  0.4447460941407272,
-	  0.4840209388191416,
-	-0.0057212846921208,
-	-0.4904166609622277,
-	-0.4453481847763712,
-	-0.0806466975043333,
-	  0.3121236745094740,
-	  0.5827285304205471,
-	  0.2950614898913002,
-	-0.3915460838758390,
-	-0.5784859556413913,
-	-0.2401348554053200,
-	  0.1607979225032119,
-	  0.5118367972706172,
-	  0.4415258488968978,
-	-0.1438156987461032,
-	-0.5328705719143205,
-	-0.3783932704179430,
-	  0.0000439013224624
-	};
-
-	bool fieldsMatch = true;
-	double precision = 10E-12;
-
-	double actualE;
-	for (int i = 0; i < numGrid; i++) {
-
-		actualE = init.mPicData.frames[1].electricField[i];
-
-		if ((actualE - expectedE[i]) > precision) {
-			fieldsMatch = false;
-		}
-
-	}
-
-
-	EXPECT_TRUE(fieldsMatch);
-}
-
-TEST(PICTest, E_N_5_nt_15_Frame0Test)
-{
-	Init init;
-
-	double spatialLength = 6.28318530717958;
-	int N = 5;
-	int nt = 3;
-	double dt = 0.1;
-	int numGrid = 32;
-	int mode = 1;
-	int V0 = 1;
-	int numSpecies = 2;
-	double amplitude = 0.001;
-	double VT1 = 0;
-	double plasmaFrequency = 1.0;
-	double chargeMassRatio = -1.0;
-
-	bool success = init.initialize(spatialLength, N, nt, dt, numGrid, mode, V0, numSpecies, amplitude, VT1, plasmaFrequency, chargeMassRatio);
-
-	std::vector<double> expectedE{
--0.00007128172188 ,
-0.34363433331871  ,
-0.25798036035269  ,
-0.03511076599531  ,
-- 0.17492056009884,
-- 0.35437214364456,
-- 0.14620560851485,
-0.21259948643449  ,
-0.31998452983465  ,
-0.12698150956722  ,
-- 0.08068314890847,
-- 0.28786437014873,
-- 0.27907308194332,
-0.07963121207181  ,
-0.38881510288119  ,
-0.22078685815613  ,
-- 0.00065933311229,
-- 0.22625195450655,
-- 0.39439842648401,
-- 0.08025083508866,
-0.27894035077967  ,
-0.28618504218963  ,
-0.07881315865435  ,
-- 0.12894715121960,
-- 0.32168365721081,
-- 0.21288820391492,
-0.14679100015775  ,
-0.35883716565894  ,
-0.17998365440103  ,
-- 0.03012850899719,
-- 0.25361305906686,
-- 0.34306320587203,
-- 0.00007128172188
-	};
-
-	bool fieldsMatch = true;
-	double precision = 10E-12;
-
-	double actualE;
-	for (int i = 0; i < numGrid; i++) {
-
-		actualE = init.mPicData.frames[2].electricField[i];
-
-		if ((actualE - expectedE[i]) > precision) {
-			fieldsMatch = false;
-		}
-
-	}
-
-
-	EXPECT_TRUE(fieldsMatch);
+	EXPECT_EQ(jsonResult.value(), BuildExpectedJson());
 }
