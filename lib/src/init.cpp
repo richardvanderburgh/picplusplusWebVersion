@@ -185,7 +185,6 @@ namespace PIC_PLUS_PLUS {
 				electrostaticEnergy[timeStep] += std::pow(electricField[timeStep][i], 2) * 0.5 * gridStepSize;
 			}
 
-			Frame frame;
 			frame.electricField = electricField[timeStep];
 			std::vector<DATA_STRUCTS::Particle> particles;
 
@@ -203,8 +202,6 @@ namespace PIC_PLUS_PLUS {
 				frame,
 				JSONFrame);
 
-			frames.push_back(JSONFrame);
-
 			frame.particles = particles;
 			frame.frameNumber = timeStep;
 
@@ -219,27 +216,26 @@ namespace PIC_PLUS_PLUS {
 		return JSON;
 	}
 
-	void updateFrame(std::vector<std::vector<double>>& electricField,
+	void Init::updateFrame(std::vector<std::vector<double>>& electricField,
 		int numSpecies,
 		const std::vector<int>& speciesNumParticles, 
 		const std::vector<std::vector<double>>& particlePositions, 
 		const std::vector<std::vector<double>>& particleXVelocities, 
 		std::vector<std::vector<double>>& particleKineticEnergy,
-		std::vector<Particle>& particles,
+		std::vector<DATA_STRUCTS::Particle>& particles,
 		const int timeStep,
 		const std::vector<double>& particleMass,
-		Frame frame,
+		DATA_STRUCTS::Frame frame,
 		nlohmann::json JSONFrame) {
 
 		nlohmann::json JSONParticles;
 
 		frame.electricField = electricField[timeStep];
+		int particleId = 0;
 
 		for (int species = 0; species < numSpecies; species++) {
 			for (int i = 0; i < speciesNumParticles[species]; i++) {
 
-				Particle particle;
-				int particleId = 0;
 				DATA_STRUCTS::Particle& particle = particles.emplace_back();
 
 				particle.id = particleId;
@@ -248,18 +244,16 @@ namespace PIC_PLUS_PLUS {
 				particleKineticEnergy[species][timeStep] += 0.5 * std::pow((particle.velocity), 2) * particleMass[species];
 				particle.species = species;
 
-				particles.push_back(particle);
-
 				nlohmann::json particleObject;
 
 				particleObject["position"] = particlePositions[species][i];
 				particleObject["velocity"] = particleXVelocities[species][i];
 				particleObject["species"] = species;
 				particleObject["id"] = particleId;
+				particleId++;
 
 				JSONParticles.push_back(particleObject);
 
-				particleId++;
 			}
 		}
 		JSONFrame["particles"] = JSONParticles;
@@ -267,6 +261,3 @@ namespace PIC_PLUS_PLUS {
 	}
 
 };
-
-
-#endif // !INIT_HPP
