@@ -5,9 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 enable_testing()
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
-
 find_package(GTest REQUIRED)
 #find_package(FFTW3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
@@ -35,5 +32,5 @@ target_link_libraries(${PROJECT_NAME}_Test
 )
 
 add_test(NAME "${PROJECT_NAME}"
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}
           COMMAND ${PROJECT_NAME}_Test)

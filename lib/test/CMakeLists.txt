@@ -17,5 +17,5 @@ target_link_libraries(${PROJECT_NAME}_Test
 )
 
 add_test(NAME "${PROJECT_NAME}"
-         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}
          COMMAND ${PROJECT_NAME}_Test)
