@@ -16,7 +16,7 @@ namespace PIC_PLUS_PLUS {
 
 		PicData mPicData;
 
-		std::optional<nlohmann::json> initialize(
+		[[nodiscard]] std::optional<nlohmann::json> initialize(
 			double spatialLength,
 			int numParticles,
 			int numTimeSteps,
@@ -30,17 +30,15 @@ namespace PIC_PLUS_PLUS {
 			int plasmaFrequency,
 			int chargeMassRatio);
 
-		void updateFrame(std::vector<std::vector<double>>& electricField,
+		[[nodiscard]] std::vector<DATA_STRUCTS::Particle> updateFrameParticles(
 			int numSpecies,
 			const std::vector<int>& speciesNumParticles,
 			const std::vector<std::vector<double>>& particlePositions,
 			const std::vector<std::vector<double>>& particleXVelocities,
 			std::vector<std::vector<double>>& particleKineticEnergy,
-			std::vector<DATA_STRUCTS::Particle>& particles,
 			const int timeStep,
-			const std::vector<double>& particleMass,
-			DATA_STRUCTS::Frame frame,
-			nlohmann::json JSONFrame);
+			const std::vector<double>& particleMass
+		);
 	};
 }
 #endif // !INIT_HPP
