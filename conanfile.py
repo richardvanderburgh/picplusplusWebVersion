@@ -1,5 +1,4 @@
-from conans import ConanFile
-from conans.tools import download, unzip, check_md5, check_sha1, check_sha256
+from conan import ConanFile
 from conan.tools.cmake import cmake_layout, CMake
 import os
 import shutil
@@ -7,7 +6,7 @@ import shutil
 class pic_plus_plus(ConanFile):
     name = "PIC++"
     version = "0.0.1"
-    generators = "CMakeToolchain"
+    generators = "CMakeDeps", "CMakeToolchain"
     settings = "os", "compiler", "build_type", "arch"
 
     def requirements(self):
@@ -19,4 +18,4 @@ class pic_plus_plus(ConanFile):
         cmake.configure()
         cmake.build()
         # here you can run CTest, launch your binaries, etc
-        cmake.test(target="RUN_TESTS")
+        cmake.test()
