@@ -30,17 +30,17 @@ namespace PIC_PLUS_PLUS {
 			const int plasmaFrequency,
 			const int chargeMassRatio);
 
-		void initializeLinearPositions(const int numParticles,
-			std::vector<double>& particlePositions,
+		void initializeLinearPositions(std::vector<double>& inOutParticlePositions,
+			const int numParticles,
 			const double chargeCloudWidth);
 
-		void addDriftVelocity(const int numParticles, std::vector<double>& particleXVelocities, const double driftVelocity);
+		void addDriftVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity);
 
-		void addThermalVelocities(const int numParticles, std::vector<double>& particleXVelocities, const double thermalVelocity);
+		void addThermalVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity);
 
-		void applySpatialPerturbation(const int numParticles,
+		void applySpatialPerturbation(std::vector<double>& inOutParticlePositions, 
+			const int numParticles, 
 			const int spatialPerturbationMode, 
-			std::vector<double>& particlePositions, 
 			const double spatialLength, 
 			const double spatialPerturbationAmplitude);
 

@@ -85,18 +85,18 @@ namespace PIC_PLUS_PLUS {
 			particleMass[species] = particleCharge[species] / speciesChargeMassRatio[species];
 			chargeCloudWidth[species] = spatialLength / speciesNumParticles[species];
 
-			initializeLinearPositions(speciesNumParticles[species], particlePositions[species], chargeCloudWidth[species]);
+			initializeLinearPositions(particlePositions[species], speciesNumParticles[species], chargeCloudWidth[species]);
 
 			if (speciesDriftVelocity[species] != 0) {
-				addDriftVelocity(speciesNumParticles[species], particleXVelocities[species], speciesDriftVelocity[species]);
+				addDriftVelocity(particleXVelocities[species], speciesNumParticles[species], speciesDriftVelocity[species]);
 			}
 
 			if (speciesThermalVelocity[species] != 0) {
-				addThermalVelocities(speciesNumParticles[species], particleXVelocities[species], speciesThermalVelocity[species]);
+				addThermalVelocities(particleXVelocities[species], speciesNumParticles[species], speciesThermalVelocity[species]);
 			}
 
 			if (speciesSpatialPerturbationAmplitude[species] != 0) {
-				applySpatialPerturbation(speciesNumParticles[species], speciesSpatialPerturbationMode[species], particlePositions[species], spatialLength, speciesSpatialPerturbationAmplitude[species]);
+				applySpatialPerturbation(particlePositions[species], speciesNumParticles[species], speciesSpatialPerturbationMode[species], spatialLength, speciesSpatialPerturbationAmplitude[species]);
 			}
 
 			qdx[species] = particleCharge[species] / gridStepSize;
@@ -179,19 +179,19 @@ namespace PIC_PLUS_PLUS {
 		return JSON;
 	}
 
-	void Init::initializeLinearPositions(const int numParticles, std::vector<double>& particlePositions, const double chargeCloudWidth) {
+	void Init::initializeLinearPositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
 		for (int I = 1; I < numParticles + 1; I++) {
-			particlePositions[I - 1] = (I - 0.5) * chargeCloudWidth;
+			inOutParticlePositions[I - 1] = (I - 0.5) * chargeCloudWidth;
 		}
 	}
 
-	void Init::addDriftVelocity(const int numParticles, std::vector<double>& particleXVelocities, const double driftVelocity) {
+	void Init::addDriftVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity) {
 		for (int I = 0; I < numParticles; I++) {
-			particleXVelocities[I] = driftVelocity;
+			inOutParticleXVelocities[I] = driftVelocity;
 		}
 	}
 
-	void Init::addThermalVelocities(const int numParticles, std::vector<double>& particleXVelocities, const double thermalVelocity) {
+	void Init::addThermalVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
 
 		for (int I = 0; I < numParticles; ++I) {
 			double rm = 0;
@@ -200,20 +200,20 @@ namespace PIC_PLUS_PLUS {
 			}
 			rm -= 6;
 
-			particleXVelocities[I] += thermalVelocity * rm;
+			inOutParticleXVelocities[I] += thermalVelocity * rm;
 		}
 	}
 
-	void Init::applySpatialPerturbation(const int numParticles, const int spatialPerturbationMode, std::vector<double>& particlePositions, const double spatialLength, const double spatialPerturbationAmplitude) {
+	void Init::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialLength, const double spatialPerturbationAmplitude) {
 		for (int a = 0; a < numParticles; ++a) {
-			double theta = 2 * std::numbers::pi * spatialPerturbationMode * particlePositions[a] / spatialLength;
-			particlePositions[a] = particlePositions[a] + spatialPerturbationAmplitude * cos(theta);
+			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / spatialLength;
+			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
 
-			if (particlePositions[a] >= spatialLength) {
-				particlePositions[a] = particlePositions[a] - spatialLength;
+			if (inOutParticlePositions[a] >= spatialLength) {
+				inOutParticlePositions[a] = inOutParticlePositions[a] - spatialLength;
 			}
-			if (particlePositions[a] < 0) {
-				particlePositions[a] = particlePositions[a] + spatialLength;
+			if (inOutParticlePositions[a] < 0) {
+				inOutParticlePositions[a] = inOutParticlePositions[a] + spatialLength;
 			}
 		}
 	}
