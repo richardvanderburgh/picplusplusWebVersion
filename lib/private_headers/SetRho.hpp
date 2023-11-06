@@ -3,13 +3,13 @@
 
 #include <vector>
 
-void setRho(int species, int ng, double dx, 
-	const std::vector<int>& N, 
-	const std::vector<double>& qdx, 
-	std::vector<double>& rho, 
-	std::vector<std::vector<double>>& x, 
-	std::vector<std::vector<double>>& rho0, 
-	std::vector<std::vector<double>>& rhos, int iw) {
+void setRho(int species, int ng, double dx,
+	const std::vector<int>& N,
+	const std::vector<double>& qdx,
+	std::vector<double>& rho,
+	std::vector<std::vector<double>>& x,
+	std::vector<std::vector<double>>& rho0,
+	std::vector<std::vector<double>>& rhos) {
 
 	//double dxi;
 	const double dxi = 1.0 / dx;
@@ -33,38 +33,21 @@ void setRho(int species, int ng, double dx,
 		rho[j] = rho[j] - rhos[species][j];
 	}
 
-	// NGP
-	if (iw == 1) {
-		for (int i = 1; i <= N[species]; i++) {
-			x[species][i] = x[species][i] * dxi;
-			if (x[species][i] < 0) {
-				x[species][i] = x[species][i] + xn;
-			}
-			if (x[species][i] > xn) {
-				x[species][i] = x[species][i] - xn;
-			}
-			int64_t j = static_cast<int64_t>(floor((x[species][i]) + 1 + 0.5));
-			rho[j] = rho[j] + qdx[species];
-		}
-	}
 
-	// Linear
-	else if (iw == 2) {
-		for (int i = 0; i < N[species]; i++) {
-			x[species][i] = x[species][i] * dxi;
-			if (x[species][i] < 0) {
-				x[species][i] = x[species][i] + xn;
-			}
-			if (x[species][i] > xn) {
-				x[species][i] = x[species][i] - xn;
-			}
-			int64_t j = static_cast<int64_t>(floor(x[species][i]));
-			//jdata(i, species) = j;
-			double drho = qdx[species] * (x[species][i] - j);
-			//drhodata(i, species) = drho;
-			rho[j] = rho[j] - drho + qdx[species];
-			rho[j + 1] = rho[j + 1] + drho;
+	for (int i = 0; i < N[species]; i++) {
+		x[species][i] = x[species][i] * dxi;
+		if (x[species][i] < 0) {
+			x[species][i] = x[species][i] + xn;
 		}
+		if (x[species][i] > xn) {
+			x[species][i] = x[species][i] - xn;
+		}
+		int64_t j = static_cast<int64_t>(floor(x[species][i]));
+		//jdata(i, species) = j;
+		double drho = qdx[species] * (x[species][i] - j);
+		//drhodata(i, species) = drho;
+		rho[j] = rho[j] - drho + qdx[species];
+		rho[j + 1] = rho[j + 1] + drho;
 	}
 }
 
