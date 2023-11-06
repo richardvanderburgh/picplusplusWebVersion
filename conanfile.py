@@ -1,5 +1,4 @@
-from conans import ConanFile
-from conans.tools import download, unzip, check_md5, check_sha1, check_sha256
+from conan import ConanFile
 from conan.tools.cmake import cmake_layout, CMake
 import os
 import shutil

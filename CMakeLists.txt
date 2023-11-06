@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(PIC++Main LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 enable_testing()
 
@@ -32,5 +33,5 @@ target_link_libraries(${PROJECT_NAME}_Test
 )
 
 add_test(NAME "${PROJECT_NAME}"
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
           COMMAND ${PROJECT_NAME}_Test)

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <fields.hpp>
+#include <Fields.hpp>
 
 TEST(FieldsTest, fields) {
 	std::vector<double> rho(33, 1.0);
