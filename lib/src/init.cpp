@@ -171,7 +171,7 @@ namespace PIC_PLUS_PLUS {
 		JSON["ese"] = electrostaticEnergy;
 		JSON["phaseFrames"] = mPicData.frames;
 
-		//std::cout << JSON.dump() << std::endl;
+		std::cout << JSON.dump() << std::endl;
 		return JSON;
 	}
 
