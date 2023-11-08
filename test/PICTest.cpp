@@ -89,7 +89,7 @@ namespace {
 
 TEST(PICTest, EFrame0Test)
 {
-	PIC_PLUS_PLUS::Init init;
+	PIC_PLUS_PLUS::PICPlusPlus init;
 
 	double spatialLength = 6.28318530717958;
 	int N = 5;

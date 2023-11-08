@@ -7,7 +7,7 @@
 #include "DataStructs.h"
 
 namespace PIC_PLUS_PLUS {
-	class Init {
+	class PICPlusPlus {
 	public:
 
 		struct PicData {

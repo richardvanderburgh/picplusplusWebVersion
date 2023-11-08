@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[]) {
 
-	PIC_PLUS_PLUS::Init init;
+	PIC_PLUS_PLUS::PICPlusPlus init;
 
     const double defaultL = 6.28318530717958;
     const int defaultN = 500;

@@ -22,7 +22,7 @@
 
 
 namespace PIC_PLUS_PLUS {
-	std::optional<nlohmann::json> Init::initialize(
+	std::optional<nlohmann::json> PICPlusPlus::initialize(
 		const double spatialLength,
 		const int numParticles,
 		const int numTimeSteps,
@@ -172,7 +172,7 @@ namespace PIC_PLUS_PLUS {
 		return JSON;
 	}
 
-	void Init::initializeSpecies(double& particleCharge, double& particleMass, double& chargeCloudWidth, std::vector<double>& particlePositions, std::vector<double>& particleXVelocities,
+	void PICPlusPlus::initializeSpecies(double& particleCharge, double& particleMass, double& chargeCloudWidth, std::vector<double>& particlePositions, std::vector<double>& particleXVelocities,
 		const double spatialLength, 
 		const double plasmaFrequency, 
 		const int numParticles, 
@@ -195,19 +195,19 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void Init::initializeLinearPositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
+	void PICPlusPlus::initializeLinearPositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
 		for (int I = 1; I < numParticles + 1; I++) {
 			inOutParticlePositions[I - 1] = (I - 0.5) * chargeCloudWidth;
 		}
 	}
 
-	void Init::addDriftVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity) {
+	void PICPlusPlus::addDriftVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity) {
 		for (int I = 0; I < numParticles; I++) {
 			inOutParticleXVelocities[I] = driftVelocity;
 		}
 	}
 
-	void Init::addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
+	void PICPlusPlus::addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
 
 		for (int I = 0; I < numParticles; ++I) {
 			double rm = 0;
@@ -220,7 +220,7 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void Init::addInitialVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity) {
+	void PICPlusPlus::addInitialVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity) {
 		if (driftVelocity != 0) {
 			addDriftVelocity(inOutParticleXVelocities, numParticles, driftVelocity);
 		}
@@ -230,7 +230,7 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void Init::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialLength, const double spatialPerturbationAmplitude) {
+	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialLength, const double spatialPerturbationAmplitude) {
 		for (int a = 0; a < numParticles; ++a) {
 			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / spatialLength;
 			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
@@ -244,7 +244,7 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void Init::calculateEnergies(
+	void PICPlusPlus::calculateEnergies(
 		std::vector<std::vector<double>>& inOutParticleKineticEnergy,
 		std::vector<double>& inOutElectrostaticEnergy,
 		const int numSpecies,
@@ -268,7 +268,7 @@ namespace PIC_PLUS_PLUS {
 
 	}
 
-	std::vector<DATA_STRUCTS::Particle> Init::updateFrameParticles(
+	std::vector<DATA_STRUCTS::Particle> PICPlusPlus::updateFrameParticles(
 		int numSpecies,
 		const std::vector<int>& speciesNumParticles,
 		const std::vector<std::vector<double>>& particlePositions,
@@ -294,7 +294,7 @@ namespace PIC_PLUS_PLUS {
 		return particles;
 	}
 
-	DATA_STRUCTS::Frame Init::updateFrame(
+	DATA_STRUCTS::Frame PICPlusPlus::updateFrame(
 		const std::vector<std::vector<double>>& electricField,
 		const int timeStep, const int numSpecies,
 		const std::vector<int>& speciesNumParticles,
