@@ -73,9 +73,6 @@ namespace PIC_PLUS_PLUS {
 
 		std::vector<std::vector<double>> rhos(numSpecies, std::vector<double>(numGrid + 1, 0.0));
 		std::vector<std::vector<double>> rho0(numSpecies, std::vector<double>(numGrid + 1, 0.0));
-		std::vector<std::vector<double>> qjdata(numSpecies, std::vector<double>(numGrid + 1, 0.0));
-		std::vector<std::vector<double>> qjp1data(numSpecies, std::vector<double>(numGrid + 1, 0.0));
-		std::vector<std::vector<double>> drhodata(numSpecies, std::vector<double>(numGrid + 1, 0.0));
 
 		for (int species = 0; species < numSpecies; species++) {
 
