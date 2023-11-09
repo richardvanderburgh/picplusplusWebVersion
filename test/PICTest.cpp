@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include <DataStructs.h>
-#include <init.h>
+#include <PICPlusPlus.h>
 
 namespace {
 	using DBL_VEC = std::vector<double>;
