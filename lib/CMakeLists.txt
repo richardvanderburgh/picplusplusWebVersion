@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(PUBLIC_HEADERS
 	./include/DataStructs.h
-	./include/init.h
+	./include/PICPlusPlus.h
 )
 
 set(PRIVATE_HEADERS
@@ -20,7 +20,7 @@ set(PRIVATE_HEADERS
 set(SOURCE_FILES
 	./src/complex.cpp
 	./src/fft.cpp
-    ./src/init.cpp
+    ./src/PICPlusPlus.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC

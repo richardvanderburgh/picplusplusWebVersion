@@ -3,6 +3,24 @@
 #include <nlohmann/json.hpp>
 
 namespace DATA_STRUCTS {
+
+	struct SimulationConfig {
+		double spatialLength;
+		int numTimeSteps;
+		double timeStepSize;
+		int numGrid;
+	};
+
+	struct SpeciesProperties {
+		double plasmaFrequency = 0;
+		double chargeMassRatio = 0;
+		double thermalVelocity = 0;
+		double driftVelocity = 0;
+		int numParticles = 0;
+		int spatialPerturbationMode = 0;
+		double spatialPerturbationAmplitude = 0;
+	};
+
 	struct Particle {
 		double position = 0.0;
 		double velocity = 0.0;

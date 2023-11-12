@@ -1,22 +1,17 @@
-#ifndef INIT_HPP
-#define INIT_HPP
+#pragma once
 
 #include <optional>
 #include <vector>
 
 #include "DataStructs.h"
+#include <DataStructs.h>
 
 namespace PIC_PLUS_PLUS {
-	class Init {
+
+	class PICPlusPlus {
+
 	public:
-
-		struct PicData {
-			std::vector<DATA_STRUCTS::Frame> frames;
-		};
-
-		PicData mPicData;
-
-		[[nodiscard]] std::optional<nlohmann::json> initialize(
+		PICPlusPlus(
 			const double spatialLength,
 			const int numParticles,
 			const int numTimeSteps,
@@ -30,15 +25,51 @@ namespace PIC_PLUS_PLUS {
 			const int plasmaFrequency,
 			const int chargeMassRatio);
 
-		void initializeSpecies(double& particleCharge, double& particleMass, double& chargeCloudWidth, std::vector<double>& particlePositions, std::vector<double>& particleXVelocities,
-			const double spatialLength,
+
+		[[nodiscard]] std::optional<nlohmann::json> initialize();
+
+	private:
+		const double m_spatialLength;
+		const int m_numParticles;
+		const int m_numTimeSteps;
+		const double m_timeStepSize;
+		const int m_numGrid;
+		const int m_spatialPerturbationMode;
+		const double m_driftVelocity;
+		const int m_numSpecies;
+		const double m_spatialPerturbationAmplitude;
+		const double m_thermalVelocity;
+		const int m_plasmaFrequency;
+		const int m_chargeMassRatio;
+
+		double m_gridStepSize;
+		double m_dtdx;
+
+
+		std::vector<DATA_STRUCTS::SpeciesProperties> m_speciesProperties;
+
+		// Simulation state variables
+		std::vector<std::vector<double>> m_particleKineticEnergy;
+		std::vector<std::vector<double>> m_particleDriftEnergy;
+
+		struct PicData {
+			std::vector<DATA_STRUCTS::Frame> frames;
+		};
+
+		PicData mPicData;
+
+
+		void initializeSpecies(double& particleCharge, 
+			double& particleMass, 
+			double& chargeCloudWidth, 
+			std::vector<double>& particlePositions, 
+			std::vector<double>& particleXVelocities,
 			const double plasmaFrequency,
 			const int numParticles,
 			const double chargeMassRatio,
 			const double speciesPlasmaFrequency,
 			const double driftVelocity,
-			const double thermalVelocity,
-			const double dtdx);
+			const double thermalVelocity);
 
 		void initializeLinearPositions(std::vector<double>& inOutParticlePositions,
 			const int numParticles,
@@ -50,23 +81,19 @@ namespace PIC_PLUS_PLUS {
 
 		void addInitialVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity);
 
-		void applySpatialPerturbation(std::vector<double>& inOutParticlePositions, 
-			const int numParticles, 
-			const int spatialPerturbationMode, 
-			const double spatialLength, 
+		void applySpatialPerturbation(std::vector<double>& inOutParticlePositions,
+			const int numParticles,
+			const int spatialPerturbationMode,
 			const double spatialPerturbationAmplitude);
-		
+
 		void calculateEnergies(
 			std::vector<std::vector<double>>& inOutParticleKineticEnergy,
 			std::vector<double>& inOutElectrostaticEnergy,
-			const int numSpecies,
 			const int timeStep,
 			const std::vector<int>& speciesNumParticles,
 			const std::vector<std::vector<double>>& particleXVelocities,
 			const std::vector<double>& particleMass,
-			const int numGrid,
-			const std::vector<std::vector<double>>& electricField,
-			const double gridStepSize);
+			const std::vector<std::vector<double>>& electricField);
 
 		[[nodiscard]] std::vector<DATA_STRUCTS::Particle> updateFrameParticles(
 			int numSpecies,
@@ -85,4 +112,3 @@ namespace PIC_PLUS_PLUS {
 			const std::vector<double>& particleMass);
 	};
 }
-#endif

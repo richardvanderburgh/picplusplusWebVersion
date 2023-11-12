@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include <DataStructs.h>
-#include <init.h>
+#include <PICPlusPlus.h>
 
 namespace {
 	using DBL_VEC = std::vector<double>;
@@ -89,22 +89,33 @@ namespace {
 
 TEST(PICTest, EFrame0Test)
 {
-	PIC_PLUS_PLUS::Init init;
-
 	double spatialLength = 6.28318530717958;
-	int N = 5;
-	int nt = 3;
-	double dt = 0.1;
+	int numParticles = 5;
+	int numTimeSteps = 3;
+	double timeStepSize = 0.1;
 	int numGrid = 32;
-	int mode = 1;
-	int V0 = 1;
+	int spatialPerturbationMode = 1;
+	int driftVelocity = 1;
 	int numSpecies = 2;
-	double amplitude = 0.001;
-	double VT1 = 0;
+	double spatialPerturbationAmplitude = 0.001;
+	double thermalVelocity = 0;
 	double plasmaFrequency = 1.0;
 	double chargeMassRatio = -1.0;
 
-	auto jsonResult = init.initialize(spatialLength, N, nt, dt, numGrid, mode, V0, numSpecies, amplitude, VT1, plasmaFrequency, chargeMassRatio);
+	PIC_PLUS_PLUS::PICPlusPlus init(spatialLength,
+		numParticles,
+		numTimeSteps,
+		timeStepSize,
+		numGrid,
+		spatialPerturbationMode,
+		driftVelocity,
+		numSpecies,
+		spatialPerturbationAmplitude,
+		thermalVelocity,
+		plasmaFrequency,
+		chargeMassRatio);
+
+	auto jsonResult = init.initialize();
 	EXPECT_TRUE(jsonResult.has_value());
 
 	EXPECT_EQ(jsonResult.value(), BuildExpectedJson());
