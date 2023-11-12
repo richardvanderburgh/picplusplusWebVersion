@@ -55,8 +55,6 @@ namespace PIC_PLUS_PLUS {
 
 	std::optional<nlohmann::json> PICPlusPlus::initialize() {
 
-		double dtdx = m_timeStepSize / m_gridStepSize;
-
 		std::vector<int> speciesNumParticles(m_numSpecies, m_numParticles);
 		std::vector<double> speciesPlasmaFrequency(m_numSpecies, m_plasmaFrequency);
 		std::vector<double> speciesChargeMassRatio(m_numSpecies, m_chargeMassRatio);
@@ -103,8 +101,7 @@ namespace PIC_PLUS_PLUS {
 				speciesChargeMassRatio[species],
 				speciesPlasmaFrequency[species],
 				speciesDriftVelocity[species],
-				speciesThermalVelocity[species],
-				dtdx);
+				speciesThermalVelocity[species]);
 
 			if (speciesSpatialPerturbationAmplitude[species] != 0) {
 				applySpatialPerturbation(particlePositions[species], 
@@ -185,7 +182,7 @@ namespace PIC_PLUS_PLUS {
 		JSON["ese"] = electrostaticEnergy;
 		JSON["phaseFrames"] = mPicData.frames;
 
-		std::cout << JSON.dump() << std::endl;
+		//std::cout << JSON.dump() << std::endl;
 		return JSON;
 	}
 
@@ -199,8 +196,7 @@ namespace PIC_PLUS_PLUS {
 		const double chargeMassRatio,  
 		const double speciesPlasmaFrequency, 
 		const double driftVelocity, 
-		const double thermalVelocity, 
-		const double dtdx) {
+		const double thermalVelocity) {
 		
 		particleCharge = m_spatialLength * plasmaFrequency * plasmaFrequency / (numParticles * chargeMassRatio);
 		particleMass = particleCharge / chargeMassRatio;
@@ -211,7 +207,7 @@ namespace PIC_PLUS_PLUS {
 		addInitialVelocities(particleXVelocities, numParticles, driftVelocity, thermalVelocity);
 
 		for (int K = 0; K < numParticles; ++K) {
-			particleXVelocities[K] *= dtdx;
+			particleXVelocities[K] *= m_dtdx;
 		}
 	}
 

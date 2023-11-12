@@ -69,8 +69,7 @@ namespace PIC_PLUS_PLUS {
 			const double chargeMassRatio,
 			const double speciesPlasmaFrequency,
 			const double driftVelocity,
-			const double thermalVelocity,
-			const double dtdx);
+			const double thermalVelocity);
 
 		void initializeLinearPositions(std::vector<double>& inOutParticlePositions,
 			const int numParticles,
