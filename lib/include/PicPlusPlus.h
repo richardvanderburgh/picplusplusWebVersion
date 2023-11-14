@@ -42,15 +42,39 @@ namespace PIC_PLUS_PLUS {
 		const int m_plasmaFrequency;
 		const int m_chargeMassRatio;
 
+		std::vector<double> m_chargeCloudWidth;
+		std::vector<double> m_particleCharge;
+		std::vector<double> m_particleMass;
+		std::vector<double> m_qdx;
+
+		std::vector<int>    m_speciesNumParticles;
+
+		std::vector<std::vector<double>> m_particlePositions;
+		std::vector<std::vector<double>> m_particleXVelocities;
+
+		std::vector<std::vector<double>> m_rhos;
+		std::vector<std::vector<double>> m_rho0;
+		
 		double m_gridStepSize;
 		double m_dtdx;
 
+		int m_timeStep;
+
+		double m_ael;
+
+		std::vector<double> m_particleAcceleration;
+		std::vector<std::vector<double>> m_electricField;
+
+		std::vector<double> m_chargeDensity;
 
 		std::vector<DATA_STRUCTS::SpeciesProperties> m_speciesProperties;
 
 		// Simulation state variables
 		std::vector<std::vector<double>> m_particleKineticEnergy;
 		std::vector<std::vector<double>> m_particleDriftEnergy;
+
+		std::vector<double> m_electrostaticEnergy;
+		std::vector<double> m_totalEnergy;
 
 		struct PicData {
 			std::vector<DATA_STRUCTS::Frame> frames;
@@ -71,6 +95,8 @@ namespace PIC_PLUS_PLUS {
 			const double driftVelocity,
 			const double thermalVelocity);
 
+		void runTimeLoop();
+
 		void initializeLinearPositions(std::vector<double>& inOutParticlePositions,
 			const int numParticles,
 			const double chargeCloudWidth);
@@ -87,25 +113,17 @@ namespace PIC_PLUS_PLUS {
 			const double spatialPerturbationAmplitude);
 
 		void calculateEnergies(
-			std::vector<std::vector<double>>& inOutParticleKineticEnergy,
-			std::vector<double>& inOutElectrostaticEnergy,
-			const int timeStep,
-			const std::vector<int>& speciesNumParticles,
 			const std::vector<std::vector<double>>& particleXVelocities,
-			const std::vector<double>& particleMass,
-			const std::vector<std::vector<double>>& electricField);
+			const std::vector<double>& particleMass);
 
 		[[nodiscard]] std::vector<DATA_STRUCTS::Particle> updateFrameParticles(
 			int numSpecies,
 			const std::vector<int>& speciesNumParticles,
 			const std::vector<std::vector<double>>& particlePositions,
 			const std::vector<std::vector<double>>& particleXVelocities,
-			const int timeStep,
 			const std::vector<double>& particleMass
 		);
-		DATA_STRUCTS::Frame updateFrame(
-			const std::vector<std::vector<double>>& electricField,
-			const int timeStep, const int numSpecies,
+		DATA_STRUCTS::Frame updateFrame(const int numSpecies,
 			const std::vector<int>& speciesNumParticles,
 			const std::vector<std::vector<double>>& particlePositions,
 			const std::vector<std::vector<double>>& particleXVelocities,
