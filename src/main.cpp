@@ -55,7 +55,12 @@ int main(int argc, char* argv[]) {
     auto finish = std::chrono::high_resolution_clock::now();
 
     auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
-    std::cout << "Finished in " << microseconds.count() << " micro secs\n";
+    std::cout << "numParticles: " << numParticles << std::endl;
+    std::cout << "numTimeSteps: " << numTimeSteps << std::endl;
+    std::cout << "numGrid: "      << numGrid << std::endl;
+    std::cout << "numSpecies: "   << numSpecies << std::endl;
+
+    std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
 
 	return 0;
 }
