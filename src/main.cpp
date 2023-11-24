@@ -1,10 +1,14 @@
 #include <chrono>
+#include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
+
 
 #include <PICPlusPlus.h>
 
-int main(int argc, char* argv[]) {
+using json = nlohmann::json;
 
+int main(int argc, char* argv[]) {
 
     const double defaultL = 6.28318530717958;
     const int defaultN = 500;
@@ -19,21 +23,36 @@ int main(int argc, char* argv[]) {
     const int defaultWp1 = 1;
     const int defaultQm1 = -1;
 
-    // Initialize variables with default values or command line arguments
-    const double spatialLength = argc > 1 ? std::stod(argv[1]) : defaultL;
-    const int numParticles = argc > 2 ? atoi(argv[2]) : defaultN;
-    const int numTimeSteps = argc > 3 ? atoi(argv[3]) : defaultNt;
-    const double timeStepSize = argc > 4 ? std::stod(argv[4]) : defaultDt;
-    const int numGrid = argc > 5 ? atoi(argv[5]) : defaultNg;
-    const int spatialPerturbationMode = argc > 6 ? std::stoi(argv[6]) : defaultMode;
-    const double driftVelocity = argc > 7 ? std::stod(argv[7]) : defaultV0;
-    const int numSpecies = argc > 8 ? std::stoi(argv[8]) : defaultNumSpecies;
-    const double spatialPerturbationAmplitude = argc > 9 ? std::stod(argv[9]) : defaultAmplitude;
-    const double thermalVelocity = argc > 10 ? std::stod(argv[10]) : defaultVT1;
-    const int plasmaFrequency = argc > 11 ? std::stoi(argv[11]) : defaultWp1;
-    const int chargeMassRatio = argc > 12 ? std::stoi(argv[12]) : defaultQm1;
+    // Check if a JSON file is provided as a command line argument
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <config.json>\n";
+        return 1;
+    }
 
-    // 6.28318530717958 5 3 0.1 32 1 1 2 0.001 0.0 1.0 -1.0
+    // Read the JSON file
+    std::ifstream configFile(argv[1]);
+    if (!configFile.is_open()) {
+        std::cerr << "Error opening file: " << argv[1] << "\n";
+        return 1;
+    }
+
+    json config;
+    configFile >> config;
+
+
+    // Initialize variables with default values or values from the JSON file
+    const double spatialLength = config.value("spatialLength", defaultL);
+    const int numParticles = config.value("numParticles", defaultN);
+    const int numTimeSteps = config.value("numTimeSteps", defaultNt);
+    const double timeStepSize = config.value("timeStepSize", defaultDt);
+    const int numGrid = config.value("numGrid", defaultNg);
+    const int spatialPerturbationMode = config.value("spatialPerturbationMode", defaultMode);
+    const double driftVelocity = config.value("driftVelocity", defaultV0);
+    const int numSpecies = config.value("numSpecies", defaultNumSpecies);
+    const double spatialPerturbationAmplitude = config.value("spatialPerturbationAmplitude", defaultAmplitude);
+    const double thermalVelocity = config.value("thermalVelocity", defaultVT1);
+    const int plasmaFrequency = config.value("plasmaFrequency", defaultWp1);
+    const int chargeMassRatio = config.value("chargeMassRatio", defaultQm1);
 
     auto start = std::chrono::high_resolution_clock::now();
 
