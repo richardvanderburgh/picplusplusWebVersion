@@ -30,9 +30,6 @@ namespace PIC_PLUS_PLUS {
 
 		std::vector<int>    m_speciesNumParticles;
 
-		std::vector<std::vector<double>> m_particlePositions;
-		std::vector<std::vector<double>> m_particleXVelocities;
-
 		std::vector<std::vector<double>> m_rhos;
 		std::vector<std::vector<double>> m_rho0;
 
@@ -76,21 +73,10 @@ namespace PIC_PLUS_PLUS {
 			const int spatialPerturbationMode,
 			const double spatialPerturbationAmplitude);
 
-		void calculateEnergies(
-			const std::vector<std::vector<double>>& particleXVelocities,
-			const std::vector<double>& particleMass);
+		void calculateEnergies();
 
-		[[nodiscard]] std::vector<DATA_STRUCTS::Particle> updateFrameParticles(
-			int numSpecies,
-			const std::vector<int>& speciesNumParticles,
-			const std::vector<std::vector<double>>& particlePositions,
-			const std::vector<std::vector<double>>& particleXVelocities,
-			const std::vector<double>& particleMass
-		);
-		DATA_STRUCTS::Frame updateFrame(const int numSpecies,
-			const std::vector<int>& speciesNumParticles,
-			const std::vector<std::vector<double>>& particlePositions,
-			const std::vector<std::vector<double>>& particleXVelocities,
-			const std::vector<double>& particleMass);
+		DATA_STRUCTS::Frame updateFrame();
+
+		[[nodiscard]] std::vector<DATA_STRUCTS::Particle> updateFrameParticles();
 	};
 }

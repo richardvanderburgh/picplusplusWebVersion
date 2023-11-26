@@ -61,14 +61,12 @@ namespace PIC_PLUS_PLUS {
 				speciesData.particleXVelocities[K] *= m_dtdx;
 			}
 
-			m_particlePositions.push_back(speciesData.particlePositions);
-			m_particleXVelocities.push_back(speciesData.particleXVelocities);
 			m_particleCharge.push_back(speciesData.particleCharge);
 			m_particleMass.push_back(speciesData.particleMass);
 			m_speciesNumParticles.push_back(allSpeciesData[species].numParticles);
 
 			if (m_allSpeciesData[species].spatialPerturbationAmplitude != 0) {
-				applySpatialPerturbation(m_particlePositions[species],
+				applySpatialPerturbation(m_allSpeciesData[species].particlePositions,
 					m_allSpeciesData[species].numParticles,
 					m_allSpeciesData[species].spatialPerturbationMode,
 					m_allSpeciesData[species].spatialPerturbationAmplitude);
@@ -76,8 +74,13 @@ namespace PIC_PLUS_PLUS {
 
 			m_qdx[species] = m_allSpeciesData[species].particleCharge / m_simulationParams.gridStepSize;
 
-			setRho(species, m_simulationParams.numGrid, m_simulationParams.gridStepSize, m_allSpeciesData[species].numParticles,
-				m_qdx, m_chargeDensity, m_particlePositions, m_rho0, m_rhos);
+			setRho(species, 
+				m_simulationParams,
+				m_allSpeciesData,
+				m_qdx, 
+				m_chargeDensity,
+				m_rho0, 
+				m_rhos);
 		}
 	};
 
@@ -90,30 +93,17 @@ namespace PIC_PLUS_PLUS {
 			m_particleAcceleration,
 			m_ael);
 
-		accel(
-			m_simulationParams,
+		accel(m_simulationParams,
+			m_allSpeciesData,
 			m_particleAcceleration,
-			m_particleCharge,
 			m_timeStep,
-			m_particleMass,
-			m_ael,
-			m_speciesNumParticles, 
-			m_particlePositions, 
-			m_particleXVelocities);
+			m_ael);
 
-		calculateEnergies(
-			m_particleXVelocities,
-			m_particleMass);
+		calculateEnergies();
 
-		mPicData.frames.emplace_back() = updateFrame(
-			m_simulationParams.numSpecies,
-			m_speciesNumParticles,
-			m_particlePositions,
-			m_particleXVelocities,
-			m_particleMass);
+		mPicData.frames.emplace_back() = updateFrame();
 
 		for (m_timeStep = 1; m_timeStep <= m_simulationParams.numTimeSteps; m_timeStep++) {
-
 			runTimeLoop();
 		}
 
@@ -128,21 +118,16 @@ namespace PIC_PLUS_PLUS {
 	void PICPlusPlus::runTimeLoop() {
 
 		accel(m_simulationParams,
+			m_allSpeciesData,
 			m_particleAcceleration,
-			m_particleCharge,
 			m_timeStep,
-			m_particleMass,
-			m_ael,
-			m_speciesNumParticles,
-			m_particlePositions,
-			m_particleXVelocities);
+			m_ael);
 
 		move(m_simulationParams,
+			m_allSpeciesData,
 			m_chargeDensity,
 			m_rho0,
-			m_qdx, m_speciesNumParticles,
-			m_particlePositions,
-			m_particleXVelocities);
+			m_qdx);
 
 		fields(m_simulationParams,
 			m_chargeDensity,
@@ -151,16 +136,9 @@ namespace PIC_PLUS_PLUS {
 			m_particleAcceleration,
 			m_ael);
 
-		calculateEnergies(
-			m_particleXVelocities,
-			m_particleMass);
+		calculateEnergies();
 
-		mPicData.frames.emplace_back() = updateFrame(
-			m_simulationParams.numSpecies,
-			m_speciesNumParticles,
-			m_particlePositions,
-			m_particleXVelocities,
-			m_particleMass);
+		mPicData.frames.emplace_back() = updateFrame();
 	}
 
 	void PICPlusPlus::initializePositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
@@ -212,13 +190,11 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void PICPlusPlus::calculateEnergies(
-		const std::vector<std::vector<double>>& particleXVelocities,
-		const std::vector<double>& particleMass) {
+	void PICPlusPlus::calculateEnergies() {
 
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
 			for (int i = 0; i < m_speciesNumParticles[species]; i++) {
-				m_particleKineticEnergy[species][m_timeStep] += 0.5 * std::pow((particleXVelocities[species][i]), 2) * particleMass[species];
+				m_particleKineticEnergy[species][m_timeStep] += 0.5 * std::pow((m_allSpeciesData[species].particleXVelocities[i]), 2) * m_allSpeciesData[species].particleMass;
 			}
 		}
 
@@ -227,51 +203,33 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	std::vector<DATA_STRUCTS::Particle> PICPlusPlus::updateFrameParticles(
-		int numSpecies,
-		const std::vector<int>& speciesNumParticles,
-		const std::vector<std::vector<double>>& particlePositions,
-		const std::vector<std::vector<double>>& particleXVelocities,
-		const std::vector<double>& particleMass) {
-
-		int particleId = 0;
-
-		std::vector<DATA_STRUCTS::Particle> particles;
-		for (int species = 0; species < numSpecies; species++) {
-			for (int i = 0; i < speciesNumParticles[species]; i++) {
-
-				DATA_STRUCTS::Particle& particle = particles.emplace_back();
-
-				particle.id = particleId++;
-				particle.position = particlePositions[species][i];
-				particle.velocity = particleXVelocities[species][i];
-				particle.species = species;
-			}
-		}
-		return particles;
-	}
-
-	DATA_STRUCTS::Frame PICPlusPlus::updateFrame(
-		const int numSpecies,
-		const std::vector<int>& speciesNumParticles,
-		const std::vector<std::vector<double>>& particlePositions,
-		const std::vector<std::vector<double>>& particleXVelocities,
-		const std::vector<double>& particleMass) {
+	DATA_STRUCTS::Frame PICPlusPlus::updateFrame() {
 
 		DATA_STRUCTS::Frame frame;
 
 		frame.electricField = m_electricField[m_timeStep];
-
-		frame.particles = updateFrameParticles(
-			numSpecies,
-			speciesNumParticles,
-			particlePositions,
-			particleXVelocities,
-			particleMass
-		);
-
+		frame.particles = updateFrameParticles();
 		frame.frameNumber = m_timeStep;
 
 		return frame;
+	}
+
+	std::vector<DATA_STRUCTS::Particle> PICPlusPlus::updateFrameParticles() {
+
+		int particleId = 0;
+
+		std::vector<DATA_STRUCTS::Particle> particles;
+		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
+			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
+
+				DATA_STRUCTS::Particle& particle = particles.emplace_back();
+
+				particle.id = particleId++;
+				particle.position = m_allSpeciesData[species].particlePositions[i];
+				particle.velocity = m_allSpeciesData[species].particleXVelocities[i];
+				particle.species = species;
+			}
+		}
+		return particles;
 	}
 };

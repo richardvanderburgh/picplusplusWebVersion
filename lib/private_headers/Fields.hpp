@@ -11,11 +11,11 @@
 inline void fields(
 	DATA_STRUCTS::SimulationParams simulationParams,
 	std::vector<double>& inOutChargeDensity,
-	std::vector<std::vector<double>>& inOutElectricField, 
-	const int timeStep,  
-	std::vector<double>& inOutAcceleration, 
+	std::vector<std::vector<double>>& inOutElectricField,
+	const int timeStep,
+	std::vector<double>& inOutAcceleration,
 	double& ael) {
-	
+
 	const int numGrid = 32;
 	std::vector<double> electricPotential(numGrid + 1, 0.0);
 	double l = simulationParams.spatialLength;
@@ -99,17 +99,14 @@ inline void fields(
 
 	electricPotential[numGrid] = electricPotential[0];
 
-		for (int j = 1; j < numGrid; j++) {
-			inOutElectricField[timeStep][j] = (electricPotential[j - 1] - electricPotential[j + 1]) / (2.0 * simulationParams.gridStepSize);
-		}
+	for (int j = 1; j < numGrid; j++) {
+		inOutElectricField[timeStep][j] = (electricPotential[j - 1] - electricPotential[j + 1]) / (2.0 * simulationParams.gridStepSize);
+	}
 
-		inOutElectricField[timeStep][0] = (electricPotential[numGrid - 1] - electricPotential[1]) / (2.0 * simulationParams.gridStepSize);
-		inOutElectricField[timeStep][numGrid] = inOutElectricField[timeStep][0];
-
+	inOutElectricField[timeStep][0] = (electricPotential[numGrid - 1] - electricPotential[1]) / (2.0 * simulationParams.gridStepSize);
+	inOutElectricField[timeStep][numGrid] = inOutElectricField[timeStep][0];
 
 	ael = 1;
-	for (int i = 0; i <= numGrid; i++) {
-		inOutAcceleration[i] = inOutElectricField[timeStep][i];
-	}
+	inOutAcceleration = inOutElectricField[timeStep];
 }
 #endif
