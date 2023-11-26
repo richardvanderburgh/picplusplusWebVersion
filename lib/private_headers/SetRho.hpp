@@ -1,5 +1,4 @@
-#ifndef SET_RHO_HPP
-#define SET_RHO_HPP
+#pragma once 
 
 #include <vector>
 
@@ -51,27 +50,33 @@ void setRho(int species, int ng, double dx,
 	}
 }
 
+void move(
+	DATA_STRUCTS::SimulationParams simulationParams,
+	std::vector<double>& rho, 
+	const std::vector<std::vector<double>>& rho0, 
+	const std::vector<double>& qdx, 
+	const std::vector<int>& N, 
+	std::vector <std::vector<double>>& x, 
+	const std::vector <std::vector<double>>& vx) {
 
-void move(int nsp, std::vector<double>& rho, const std::vector<std::vector<double>>& rho0, const std::vector<double>& qdx, const std::vector<int>& N, std::vector <std::vector<double>>& x, const std::vector <std::vector<double>>& vx, int ng) {
-	//MOVE - Advances position one time step and accumulates charge density.
-	for (int species = 0; species < nsp; species++) {
+	for (int species = 0; species < simulationParams.numSpecies; species++) {
 		// Clear out old charge density.
-		for (int j = 1; j <= ng; j++) {
+		for (int j = 1; j <= simulationParams.numGrid; j++) {
 			rho[j] = rho0[species][j];
 		}
 		rho[0] = 0;
 	}
 
-	for (int species = 0; species < nsp; species++) {
+	for (int species = 0; species < simulationParams.numSpecies; species++) {
 		for (int i = 0; i < N[species]; i++) {
 
 			x[species][i] += vx[species][i];
 
 			if (x[species][i] < 0)
-				x[species][i] += ng;
+				x[species][i] += simulationParams.numGrid;
 
-			if (x[species][i] >= ng)
-				x[species][i] -= ng;
+			if (x[species][i] >= simulationParams.numGrid)
+				x[species][i] -= simulationParams.numGrid;
 
 
 			int64_t j = static_cast<int64_t>(floor(x[species][i]));
@@ -82,4 +87,3 @@ void move(int nsp, std::vector<double>& rho, const std::vector<std::vector<doubl
 	}
 
 }
-#endif // !SET_RHO_HPP

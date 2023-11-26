@@ -4,11 +4,13 @@
 
 namespace DATA_STRUCTS {
 
-	struct SimulationConfig {
+	struct SimulationParams {
+		int numGrid;
 		double spatialLength;
+		double gridStepSize;
 		int numTimeSteps;
 		double timeStepSize;
-		int numGrid;
+		int numSpecies;
 	};
 
 	struct SpeciesData {

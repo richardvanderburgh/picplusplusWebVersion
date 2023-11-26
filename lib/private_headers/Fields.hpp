@@ -8,17 +8,17 @@
 #include "fft.hpp"
 
 
-inline void fields(std::vector<double>& inOutChargeDensity,
-	double spatialLength, double gridWidth, 
+inline void fields(
+	DATA_STRUCTS::SimulationParams simulationParams,
+	std::vector<double>& inOutChargeDensity,
 	std::vector<std::vector<double>>& inOutElectricField, 
-	const int timeStep, 
-	const int constNg, 
+	const int timeStep,  
 	std::vector<double>& inOutAcceleration, 
 	double& ael) {
 	
 	const int numGrid = 32;
 	std::vector<double> electricPotential(numGrid + 1, 0.0);
-	double l = spatialLength;
+	double l = simulationParams.spatialLength;
 
 	inOutChargeDensity[0] += inOutChargeDensity[numGrid];
 	inOutChargeDensity[numGrid] = inOutChargeDensity[0];
@@ -66,7 +66,7 @@ inline void fields(std::vector<double>& inOutChargeDensity,
 		if (ii == 0)
 			break;
 
-		complexPotentialK[k] = complexChargeDensityK[k] / -std::pow(2.0 * std::numbers::pi * ii / spatialLength, 2.0);
+		complexPotentialK[k] = complexChargeDensityK[k] / -std::pow(2.0 * std::numbers::pi * ii / simulationParams.spatialLength, 2.0);
 
 		//complexPhik[k][0] = complexRhok[k][0] / -std::pow(2.0 * M_PI * ii / L, 2.0);
 		//complexPhik[k][1] = complexRhok[k][1] / -std::pow(2.0 * M_PI * ii / L, 2.0);
@@ -100,10 +100,10 @@ inline void fields(std::vector<double>& inOutChargeDensity,
 	electricPotential[numGrid] = electricPotential[0];
 
 		for (int j = 1; j < numGrid; j++) {
-			inOutElectricField[timeStep][j] = (electricPotential[j - 1] - electricPotential[j + 1]) / (2.0 * gridWidth);
+			inOutElectricField[timeStep][j] = (electricPotential[j - 1] - electricPotential[j + 1]) / (2.0 * simulationParams.gridStepSize);
 		}
 
-		inOutElectricField[timeStep][0] = (electricPotential[numGrid - 1] - electricPotential[1]) / (2.0 * gridWidth);
+		inOutElectricField[timeStep][0] = (electricPotential[numGrid - 1] - electricPotential[1]) / (2.0 * simulationParams.gridStepSize);
 		inOutElectricField[timeStep][numGrid] = inOutElectricField[timeStep][0];
 
 

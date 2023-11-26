@@ -11,11 +11,7 @@ namespace PIC_PLUS_PLUS {
 
 	public:
 		PICPlusPlus(
-			const double spatialLength,
-			const int numTimeSteps,
-			const double timeStepSize,
-			const int numGrid,
-			const int numSpecies,
+			DATA_STRUCTS::SimulationParams simulationParams,
 
 			std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData);
 
@@ -23,11 +19,7 @@ namespace PIC_PLUS_PLUS {
 		[[nodiscard]] std::optional<nlohmann::json> initialize();
 
 	private:
-		const double m_spatialLength;
-		const int m_numTimeSteps;
-		const double m_timeStepSize;
-		const int m_numGrid;
-		const int m_numSpecies;
+		DATA_STRUCTS::SimulationParams m_simulationParams;
 
 		std::vector<DATA_STRUCTS::SpeciesData> m_allSpeciesData;
 
@@ -44,7 +36,6 @@ namespace PIC_PLUS_PLUS {
 		std::vector<std::vector<double>> m_rhos;
 		std::vector<std::vector<double>> m_rho0;
 
-		double m_gridStepSize;
 		double m_dtdx;
 
 		int m_timeStep;
@@ -55,8 +46,7 @@ namespace PIC_PLUS_PLUS {
 		std::vector<std::vector<double>> m_electricField;
 
 		std::vector<double> m_chargeDensity;
-
-		// Simulation state variables
+		
 		std::vector<std::vector<double>> m_particleKineticEnergy;
 		std::vector<std::vector<double>> m_particleDriftEnergy;
 
@@ -71,7 +61,7 @@ namespace PIC_PLUS_PLUS {
 
 		void runTimeLoop();
 
-		void initializeLinearPositions(std::vector<double>& inOutParticlePositions,
+		void initializePositions(std::vector<double>& inOutParticlePositions,
 			const int numParticles,
 			const double chargeCloudWidth);
 
@@ -79,7 +69,7 @@ namespace PIC_PLUS_PLUS {
 
 		void addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity);
 
-		void addInitialVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity);
+		void initializeVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity);
 
 		void applySpatialPerturbation(std::vector<double>& inOutParticlePositions,
 			const int numParticles,

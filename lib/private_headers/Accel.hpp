@@ -5,30 +5,32 @@
 #include <vector>
 
 inline void accel(
+
+	DATA_STRUCTS::SimulationParams simulationParams,
 	
 	std::vector<double>& inOutAcceleration, 
-	std::vector<double> particleCharges, 
-	int nsp, double dx, double dt, int t,
+	std::vector<double> particleCharges,
+	int t,
 	const std::vector<double>& particleMasses, 
-	double& ael, int numGrid, 
+	double& ael,
 	const std::vector<int>& N, 
 	const std::vector <std::vector<double>>& particlePositions,
 	std::vector <std::vector<double>>& inOutVelocities) {
 
-	const double dxdt = dx / dt;
-	for (int species = 0; species < nsp; species++) {
+	const double dxdt = simulationParams.gridStepSize / simulationParams.timeStepSize;
+	for (int species = 0; species < simulationParams.numSpecies; species++) {
 
 		// This looks weird but it's because the first time step is -1/2 a step
 
 		if (t == 0)
 			particleCharges[species] = -0.5 * particleCharges[species];
 
-		const double ae = (particleCharges[species] / particleMasses[species]) * (dt / dxdt);
+		const double ae = (particleCharges[species] / particleMasses[species]) * (simulationParams.timeStepSize / dxdt);
 
 		//  renormalizes acceleration if need be.
 		if (ae != ael) {
 			const double tem = ae / ael;
-			for (int j = 0; j <= numGrid; j++) {
+			for (int j = 0; j <= simulationParams.numGrid; j++) {
 				inOutAcceleration[j] *= tem;
 			}
 			ael = ae;

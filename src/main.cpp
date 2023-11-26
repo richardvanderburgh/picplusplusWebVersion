@@ -10,18 +10,7 @@ using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
 
-    const double defaultL = 6.28318530717958;
-    const int defaultN = 500;
-    const int defaultNt = 300;
-    const double defaultDt = 0.1;
-    const int defaultNg = 256;
-    const int defaultMode = 1;
-    const double defaultV0 = 0;
-    const int defaultNumSpecies = 1;
-    const double defaultAmplitude = 0.02;
-    const double defaultVT1 = 0.5;
-    const int defaultWp1 = 1;
-    const int defaultQm1 = -1;
+    auto start = std::chrono::high_resolution_clock::now();
 
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <config.json>\n";
@@ -37,14 +26,18 @@ int main(int argc, char* argv[]) {
     json config;
     configFile >> config;
 
-        // Check if the 'species' key exists
     if (config.find("species") == config.end() || !config["species"].is_array()) {
         std::cerr << "Error: 'species' array not found in the JSON file.\n";
         return 1;
     }
 
-    // Extract species data
-    const int numSpecies = config.value("numSpecies", 0);
+    DATA_STRUCTS::SimulationParams simulationParams;
+    simulationParams.numGrid = config.value("numGrid", 0);
+    simulationParams.numTimeSteps = config.value("numTimeSteps", 0);
+    simulationParams.spatialLength = config.value("spatialLength", 0.0);
+    simulationParams.timeStepSize = config.value("timeStepSize", 0.0);
+    simulationParams.numSpecies = config.value("numSpecies", 0);
+
     std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData ;
 
     for (const auto& speciesConfig : config["species"]) {
@@ -68,30 +61,17 @@ int main(int argc, char* argv[]) {
         allSpeciesData.push_back(speciesData);
     }
 
-    const double spatialLength = config.value("spatialLength", 0.0);
-    const int numTimeSteps = config.value("numTimeSteps", 0);
-    const double timeStepSize = config.value("timeStepSize", 0.0);
-    const int numGrid = config.value("numGrid", 0);
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    PIC_PLUS_PLUS::PICPlusPlus init(
-        spatialLength,
-        numTimeSteps,
-        timeStepSize,
-        numGrid,
-        numSpecies,
-        allSpeciesData);
-
+    PIC_PLUS_PLUS::PICPlusPlus init(simulationParams, allSpeciesData);
 	auto jsonResult = init.initialize();
 
     auto finish = std::chrono::high_resolution_clock::now();
 
     auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
     std::cout << "numParticles: " << allSpeciesData[0].numParticles << std::endl;
-    std::cout << "numTimeSteps: " << numTimeSteps << std::endl;
-    std::cout << "numGrid: "      << numGrid << std::endl;
-    std::cout << "numSpecies: "   << numSpecies << std::endl;
+    std::cout << "numTimeSteps: " << simulationParams.numTimeSteps << std::endl;
+    std::cout << "numGrid: "      << simulationParams.numGrid << std::endl;
+    std::cout << "numSpecies: "   << simulationParams.numSpecies << std::endl;
 
     std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
 
