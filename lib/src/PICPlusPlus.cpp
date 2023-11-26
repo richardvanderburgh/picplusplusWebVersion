@@ -1,7 +1,6 @@
 
 #include "PICPlusPlus.h"
 
-//#include <fftw3.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -13,53 +12,34 @@
 #include <vector>
 
 #include "Accel.hpp"
-#include "DataStructs.h"
+#include "PicPlusPlus.h"
 #include "fft.hpp"
 #include "Fields.hpp"
 #include "SetRho.hpp"
 #include "Utils.hpp"
 
-
 namespace PIC_PLUS_PLUS {
 
 	PICPlusPlus::PICPlusPlus(
 		const double spatialLength,
-		const int numParticles,
 		const int numTimeSteps,
 		const double timeStepSize,
 		const int numGrid,
-		const int spatialPerturbationMode,
-		const double driftVelocity,
 		const int numSpecies,
-		const double spatialPerturbationAmplitude,
-		const double thermalVelocity,
-		const int plasmaFrequency,
-		const int chargeMassRatio)
+
+		std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData)
 
 		: m_spatialLength(spatialLength),
-		m_numParticles(numParticles),
 		m_numTimeSteps(numTimeSteps),
 		m_timeStepSize(timeStepSize),
 		m_numGrid(numGrid),
-
-		m_spatialPerturbationMode(spatialPerturbationMode),
-		m_driftVelocity(driftVelocity),
 		m_numSpecies(numSpecies),
-		m_spatialPerturbationAmplitude(spatialPerturbationAmplitude),
-		m_thermalVelocity(thermalVelocity),
-		m_plasmaFrequency(plasmaFrequency),
-		m_chargeMassRatio(chargeMassRatio),
+		m_allSpeciesData(allSpeciesData),
 
-	    m_chargeCloudWidth(m_numSpecies),
-	    m_particleCharge(m_numSpecies, 0.0),
-	    m_particleMass(m_numSpecies),
-	    m_qdx(m_numSpecies),
-
-		m_speciesNumParticles(m_numSpecies, m_numParticles),
+		m_qdx(m_numSpecies),
 
 		m_rhos(m_numSpecies, std::vector<double>(m_numGrid + 1, 0.0)),
 		m_rho0(m_numSpecies, std::vector<double>(m_numGrid + 1, 0.0)),
-
 
 		m_particleAcceleration(m_numGrid + 1),
 
@@ -67,56 +47,51 @@ namespace PIC_PLUS_PLUS {
 		m_particleKineticEnergy(m_numSpecies, std::vector<double>(m_numTimeSteps + 1, 0.0)),
 		m_electrostaticEnergy(m_numTimeSteps + 1, 0.0),
 		m_totalEnergy(m_numTimeSteps + 1, 0.0),
-		m_chargeDensity(m_numGrid + 1, 0.0),
-	
-		m_particlePositions(m_numSpecies, std::vector<double>(m_numSpecies * m_numParticles, 0.0)),
-		m_particleXVelocities(m_numSpecies, std::vector<double>(m_numSpecies * m_numParticles, 0.0))
+		m_chargeDensity(m_numGrid + 1, 0.0)
 	{
-
 		m_gridStepSize = m_spatialLength / m_numGrid;
 		m_dtdx = m_timeStepSize / m_gridStepSize;
 		m_timeStep = 0;
 
 		m_ael = 1;
 
+		for (int species = 0; species < m_numSpecies; species++) {
+
+			DATA_STRUCTS::SpeciesData& speciesData = m_allSpeciesData[species];
+
+			speciesData.particleCharge = m_spatialLength * speciesData.plasmaFrequency * speciesData.plasmaFrequency / (speciesData.numParticles * speciesData.chargeMassRatio);
+			speciesData.particleMass = speciesData.particleCharge / speciesData.chargeMassRatio;
+			speciesData.chargeCloudWidth = m_spatialLength / speciesData.numParticles;
+
+			initializeLinearPositions(speciesData.particlePositions, speciesData.numParticles, speciesData.chargeCloudWidth);
+
+			addInitialVelocities(speciesData.particleXVelocities, speciesData.numParticles, speciesData.driftVelocity, speciesData.thermalVelocity);
+
+			for (int K = 0; K < speciesData.numParticles; ++K) {
+				speciesData.particleXVelocities[K] *= m_dtdx;
+			}
+
+			m_particlePositions.push_back(speciesData.particlePositions);
+			m_particleXVelocities.push_back(speciesData.particleXVelocities);
+			m_particleCharge.push_back(speciesData.particleCharge);
+			m_particleMass.push_back(speciesData.particleMass);
+			m_speciesNumParticles.push_back(allSpeciesData[species].numParticles);
+
+			if (m_allSpeciesData[species].spatialPerturbationAmplitude != 0) {
+				applySpatialPerturbation(m_particlePositions[species],
+					m_allSpeciesData[species].numParticles,
+					m_allSpeciesData[species].spatialPerturbationMode,
+					m_allSpeciesData[species].spatialPerturbationAmplitude);
+			}
+
+			m_qdx[species] = m_allSpeciesData[species].particleCharge / m_gridStepSize;
+
+			setRho(species, m_numGrid, m_gridStepSize, m_allSpeciesData[species].numParticles,
+				m_qdx, m_chargeDensity, m_particlePositions, m_rho0, m_rhos);
+		}
 	};
 
 	std::optional<nlohmann::json> PICPlusPlus::initialize() {
- 
-		std::vector<int>		  speciesSpatialPerturbationMode(m_numSpecies, m_spatialPerturbationMode);
-		std::vector<double>		  speciesSpatialPerturbationAmplitude(m_numSpecies, m_spatialPerturbationAmplitude);
-
-		std::vector<double> speciesPlasmaFrequency(m_numSpecies, m_plasmaFrequency);
-		std::vector<double> speciesChargeMassRatio(m_numSpecies, m_chargeMassRatio);
-
-		const std::vector<double> speciesDriftVelocity = { m_driftVelocity, - m_driftVelocity, 0, 2 *  m_driftVelocity, -2 *  m_driftVelocity };
-
-		std::vector<double> speciesThermalVelocity(m_numSpecies, m_thermalVelocity);
-
-		for (int species = 0; species < m_numSpecies; species++) {
-
-			initializeSpecies(m_particleCharge[species], 
-				m_particleMass[species], 
-				m_chargeCloudWidth[species], 
-				m_particlePositions[species], 
-				m_particleXVelocities[species],
-				speciesPlasmaFrequency[species],
-				m_speciesNumParticles[species],
-				speciesChargeMassRatio[species],
-				speciesPlasmaFrequency[species],
-				speciesDriftVelocity[species],
-				speciesThermalVelocity[species]);
-
-			if (speciesSpatialPerturbationAmplitude[species] != 0) {
-				applySpatialPerturbation(m_particlePositions[species], 
-					m_speciesNumParticles[species], 
-					speciesSpatialPerturbationMode[species],
-					speciesSpatialPerturbationAmplitude[species]);
-			}
-
-			m_qdx[species] = m_particleCharge[species] / m_gridStepSize;
-			setRho(species, m_numGrid, m_gridStepSize, m_speciesNumParticles, m_qdx, m_chargeDensity, m_particlePositions, m_rho0, m_rhos);
-		}
 
 		fields(m_chargeDensity, m_spatialLength, m_gridStepSize, m_electricField, m_timeStep, m_numGrid, m_particleAcceleration, m_ael);
 
@@ -140,8 +115,6 @@ namespace PIC_PLUS_PLUS {
 			m_particleXVelocities,
 			m_particleMass);
 
-		//end of initializing
-		
 		for (m_timeStep = 1; m_timeStep <= m_numTimeSteps; m_timeStep++) {
 
 			runTimeLoop();
@@ -179,31 +152,6 @@ namespace PIC_PLUS_PLUS {
 				m_particlePositions,
 				m_particleXVelocities,
 				m_particleMass);
-	}
-
-	void PICPlusPlus::initializeSpecies(double& particleCharge, 
-		double& particleMass,
-		double& chargeCloudWidth, 
-		std::vector<double>& particlePositions, 
-		std::vector<double>& particleXVelocities,
-		const double plasmaFrequency, 
-		const int	 numParticles, 
-		const double chargeMassRatio,  
-		const double speciesPlasmaFrequency, 
-		const double driftVelocity, 
-		const double thermalVelocity) {
-		
-		particleCharge = m_spatialLength * plasmaFrequency * plasmaFrequency / (numParticles * chargeMassRatio);
-		particleMass = particleCharge / chargeMassRatio;
-		chargeCloudWidth = m_spatialLength / numParticles;
-
-		initializeLinearPositions(particlePositions, numParticles, chargeCloudWidth);
-
-		addInitialVelocities(particleXVelocities, numParticles, driftVelocity, thermalVelocity);
-
-		for (int K = 0; K < numParticles; ++K) {
-			particleXVelocities[K] *= m_dtdx;
-		}
 	}
 
 	void PICPlusPlus::initializeLinearPositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
@@ -275,8 +223,8 @@ namespace PIC_PLUS_PLUS {
 		const std::vector<int>& speciesNumParticles,
 		const std::vector<std::vector<double>>& particlePositions,
 		const std::vector<std::vector<double>>& particleXVelocities,
-		const std::vector<double>& particleMass
-	) {
+		const std::vector<double>& particleMass) {
+
 		int particleId = 0;
 
 		std::vector<DATA_STRUCTS::Particle> particles;
@@ -291,7 +239,6 @@ namespace PIC_PLUS_PLUS {
 				particle.species = species;
 			}
 		}
-
 		return particles;
 	}
 

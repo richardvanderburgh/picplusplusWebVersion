@@ -4,7 +4,7 @@
 #include <vector>
 
 void setRho(int species, int ng, double dx,
-	const std::vector<int>& N,
+	const int& N,
 	const std::vector<double>& qdx,
 	std::vector<double>& rho,
 	std::vector<std::vector<double>>& x,
@@ -34,7 +34,7 @@ void setRho(int species, int ng, double dx,
 	}
 
 
-	for (int i = 0; i < N[species]; i++) {
+	for (int i = 0; i < N; i++) {
 		x[species][i] = x[species][i] * dxi;
 		if (x[species][i] < 0) {
 			x[species][i] = x[species][i] + xn;

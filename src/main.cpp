@@ -23,13 +23,11 @@ int main(int argc, char* argv[]) {
     const int defaultWp1 = 1;
     const int defaultQm1 = -1;
 
-    // Check if a JSON file is provided as a command line argument
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <config.json>\n";
         return 1;
     }
 
-    // Read the JSON file
     std::ifstream configFile(argv[1]);
     if (!configFile.is_open()) {
         std::cerr << "Error opening file: " << argv[1] << "\n";
@@ -39,42 +37,58 @@ int main(int argc, char* argv[]) {
     json config;
     configFile >> config;
 
+        // Check if the 'species' key exists
+    if (config.find("species") == config.end() || !config["species"].is_array()) {
+        std::cerr << "Error: 'species' array not found in the JSON file.\n";
+        return 1;
+    }
 
-    // Initialize variables with default values or values from the JSON file
-    const double spatialLength = config.value("spatialLength", defaultL);
-    const int numParticles = config.value("numParticles", defaultN);
-    const int numTimeSteps = config.value("numTimeSteps", defaultNt);
-    const double timeStepSize = config.value("timeStepSize", defaultDt);
-    const int numGrid = config.value("numGrid", defaultNg);
-    const int spatialPerturbationMode = config.value("spatialPerturbationMode", defaultMode);
-    const double driftVelocity = config.value("driftVelocity", defaultV0);
-    const int numSpecies = config.value("numSpecies", defaultNumSpecies);
-    const double spatialPerturbationAmplitude = config.value("spatialPerturbationAmplitude", defaultAmplitude);
-    const double thermalVelocity = config.value("thermalVelocity", defaultVT1);
-    const int plasmaFrequency = config.value("plasmaFrequency", defaultWp1);
-    const int chargeMassRatio = config.value("chargeMassRatio", defaultQm1);
+    // Extract species data
+    const int numSpecies = config.value("numSpecies", 0);
+    std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData ;
+
+    for (const auto& speciesConfig : config["species"]) {
+        DATA_STRUCTS::SpeciesData speciesData;
+        speciesData.name = speciesConfig.value("name", "UnnamedSpecies");
+        speciesData.numParticles = speciesConfig.value("numParticles", 0);
+        speciesData.spatialPerturbationMode = speciesConfig.value("spatialPerturbationMode", 0);
+        speciesData.driftVelocity = speciesConfig.value("driftVelocity", 0.0);
+        speciesData.spatialPerturbationAmplitude = speciesConfig.value("spatialPerturbationAmplitude", 0.0);
+        speciesData.thermalVelocity = speciesConfig.value("thermalVelocity", 0.0);
+        speciesData.plasmaFrequency = speciesConfig.value("plasmaFrequency", 0);
+        speciesData.chargeMassRatio = speciesConfig.value("chargeMassRatio", 0);
+
+        std::vector<double> particlePositions(speciesData.numParticles, 0);
+        std::vector<double> particleXVelocities(speciesData.numParticles, 0);
+
+        speciesData.particlePositions = particlePositions;
+        speciesData.particleXVelocities = particleXVelocities;
+
+
+        allSpeciesData.push_back(speciesData);
+    }
+
+    const double spatialLength = config.value("spatialLength", 0.0);
+    const int numTimeSteps = config.value("numTimeSteps", 0);
+    const double timeStepSize = config.value("timeStepSize", 0.0);
+    const int numGrid = config.value("numGrid", 0);
 
     auto start = std::chrono::high_resolution_clock::now();
 
-	PIC_PLUS_PLUS::PICPlusPlus init(spatialLength,
-        numParticles,
+    PIC_PLUS_PLUS::PICPlusPlus init(
+        spatialLength,
         numTimeSteps,
         timeStepSize,
         numGrid,
-        spatialPerturbationMode,
-        driftVelocity,
         numSpecies,
-        spatialPerturbationAmplitude,
-        thermalVelocity,
-        plasmaFrequency,
-        chargeMassRatio);
+        allSpeciesData);
 
 	auto jsonResult = init.initialize();
 
     auto finish = std::chrono::high_resolution_clock::now();
 
     auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
-    std::cout << "numParticles: " << numParticles << std::endl;
+    std::cout << "numParticles: " << allSpeciesData[0].numParticles << std::endl;
     std::cout << "numTimeSteps: " << numTimeSteps << std::endl;
     std::cout << "numGrid: "      << numGrid << std::endl;
     std::cout << "numSpecies: "   << numSpecies << std::endl;

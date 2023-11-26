@@ -1,0 +1,30 @@
+{
+  "species": [
+    {
+      "name": "Species1",
+      "numParticles": 500,
+      "spatialPerturbationMode": 1,
+      "driftVelocity": 0.0,
+      "spatialPerturbationAmplitude": 0.02,
+      "thermalVelocity": 0.5,
+      "plasmaFrequency": 1,
+      "chargeMassRatio": -1
+    },
+    {
+      "name": "Species2",
+      "numParticles": 300,
+      "spatialPerturbationMode": 2,
+      "driftVelocity": 0.1,
+      "spatialPerturbationAmplitude": 0.01,
+      "thermalVelocity": 0.4,
+      "plasmaFrequency": 2,
+      "chargeMassRatio": -2
+    }
+  ],	
+  "spatialLength": 6.28318530717958,
+  "numTimeSteps": 300,
+  "timeStepSize": 0.1,
+  "numGrid": 256,
+  "numSpecies": 2
+}
+

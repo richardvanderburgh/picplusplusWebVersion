@@ -11,14 +11,21 @@ namespace DATA_STRUCTS {
 		int numGrid;
 	};
 
-	struct SpeciesProperties {
-		double plasmaFrequency = 0;
-		double chargeMassRatio = 0;
-		double thermalVelocity = 0;
-		double driftVelocity = 0;
-		int numParticles = 0;
-		int spatialPerturbationMode = 0;
-		double spatialPerturbationAmplitude = 0;
+	struct SpeciesData {
+		std::string name;
+		int numParticles;
+		double driftVelocity;
+		double thermalVelocity;
+		double spatialPerturbationAmplitude;
+		int spatialPerturbationMode;
+		int plasmaFrequency;
+		int chargeMassRatio;
+		double particleCharge;
+		double particleMass;
+		double chargeCloudWidth;
+
+		std::vector<double> particlePositions;
+		std::vector<double> particleXVelocities;
 	};
 
 	struct Particle {

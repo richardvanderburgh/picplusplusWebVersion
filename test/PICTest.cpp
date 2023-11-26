@@ -102,18 +102,50 @@ TEST(PICTest, EFrame0Test)
 	double plasmaFrequency = 1.0;
 	double chargeMassRatio = -1.0;
 
-	PIC_PLUS_PLUS::PICPlusPlus init(spatialLength,
-		numParticles,
+	std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData(2);
+
+	DATA_STRUCTS::SpeciesData speciesA;
+	DATA_STRUCTS::SpeciesData speciesB;
+
+	speciesA.numParticles = numParticles;
+	speciesA.spatialPerturbationMode = spatialPerturbationMode;
+	speciesA.spatialPerturbationAmplitude = spatialPerturbationAmplitude;
+	speciesA.driftVelocity = driftVelocity;
+	speciesA.thermalVelocity = thermalVelocity;
+	speciesA.plasmaFrequency = plasmaFrequency;
+	speciesA.chargeMassRatio = chargeMassRatio;
+
+	speciesB.numParticles = numParticles;
+	speciesB.spatialPerturbationMode = spatialPerturbationMode;
+	speciesB.spatialPerturbationAmplitude = spatialPerturbationAmplitude;
+	speciesB.driftVelocity = - driftVelocity;
+	speciesB.thermalVelocity = thermalVelocity;
+	speciesB.plasmaFrequency = plasmaFrequency;
+	speciesB.chargeMassRatio = chargeMassRatio;
+
+	std::vector<double> APositions(speciesA.numParticles, 0);
+	std::vector<double> AVelocities(speciesA.numParticles, 0);
+
+	std::vector<double> BPositions(speciesB.numParticles, 0);
+	std::vector<double> BVelocities(speciesB.numParticles, 0);
+
+	speciesA.particlePositions = APositions;
+	speciesA.particleXVelocities = AVelocities;
+
+	speciesB.particlePositions = BPositions;
+	speciesB.particleXVelocities = BVelocities;
+
+	allSpeciesData[0] = speciesA;
+	allSpeciesData[1] = speciesB;
+
+	PIC_PLUS_PLUS::PICPlusPlus init(
+		spatialLength,
 		numTimeSteps,
 		timeStepSize,
 		numGrid,
-		spatialPerturbationMode,
-		driftVelocity,
 		numSpecies,
-		spatialPerturbationAmplitude,
-		thermalVelocity,
-		plasmaFrequency,
-		chargeMassRatio);
+
+		allSpeciesData);
 
 	auto jsonResult = init.initialize();
 	EXPECT_TRUE(jsonResult.has_value());
