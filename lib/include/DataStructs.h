@@ -30,6 +30,12 @@ namespace DATA_STRUCTS {
 		std::vector<double> particleXVelocities;
 	};
 
+	struct InputVariables {
+		SimulationParams simulationParams;
+		std::vector<SpeciesData> allSpeciesData;
+	};
+
+
 	struct Particle {
 		double position = 0.0;
 		double velocity = 0.0;

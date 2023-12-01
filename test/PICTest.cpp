@@ -145,7 +145,11 @@ TEST(PICTest, EFrame0Test)
 	allSpeciesData[0] = speciesA;
 	allSpeciesData[1] = speciesB;
 
-	PIC_PLUS_PLUS::PICPlusPlus init(simulationParams, allSpeciesData);
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.allSpeciesData = allSpeciesData;
+	inputVariables.simulationParams = simulationParams;
+
+	PIC_PLUS_PLUS::PICPlusPlus init(inputVariables);
 
 	auto jsonResult = init.initialize();
 	EXPECT_TRUE(jsonResult.has_value());

@@ -10,7 +10,6 @@ void setRho(int species,
 	std::vector<std::vector<double>>& rho0,
 	std::vector<std::vector<double>>& rhos) {
 
-	//double dxi;
 	const double dxi = 1.0 / simulationParams.gridStepSize;
 	const int xn = simulationParams.numGrid;
 
@@ -32,7 +31,6 @@ void setRho(int species,
 		rho[j] = rho[j] - rhos[species][j];
 	}
 
-
 	for (int i = 0; i < allSpeciesData[species].numParticles; i++) {
 		allSpeciesData[species].particlePositions[i] = allSpeciesData[species].particlePositions[i] * dxi;
 		if (allSpeciesData[species].particlePositions[i] < 0) {
@@ -42,9 +40,7 @@ void setRho(int species,
 			allSpeciesData[species].particlePositions[i] = allSpeciesData[species].particlePositions[i] - xn;
 		}
 		int64_t j = static_cast<int64_t>(floor(allSpeciesData[species].particlePositions[i]));
-		//jdata(i, species) = j;
 		double drho = qdx[species] * (allSpeciesData[species].particlePositions[i] - j);
-		//drhodata(i, species) = drho;
 		rho[j] = rho[j] - drho + qdx[species];
 		rho[j + 1] = rho[j + 1] + drho;
 	}

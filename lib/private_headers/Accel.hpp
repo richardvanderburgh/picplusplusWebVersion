@@ -4,6 +4,8 @@
 #include <cmath>
 #include <vector>
 
+#include "DataStructs.h"
+
 inline void accel(
 
 	DATA_STRUCTS::SimulationParams simulationParams,

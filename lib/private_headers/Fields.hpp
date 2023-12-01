@@ -6,7 +6,7 @@
 
 #include "complex.hpp"
 #include "fft.hpp"
-
+#include <DataStructs.h>
 
 inline void fields(
 	DATA_STRUCTS::SimulationParams simulationParams,

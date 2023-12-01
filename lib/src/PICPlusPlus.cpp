@@ -20,25 +20,23 @@
 
 namespace PIC_PLUS_PLUS {
 
-	PICPlusPlus::PICPlusPlus(
-		DATA_STRUCTS::SimulationParams simulationParams,
-		std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData)
+	PICPlusPlus::PICPlusPlus(DATA_STRUCTS::InputVariables inputVariables)
 
-		: m_simulationParams(simulationParams),
-		m_allSpeciesData(allSpeciesData),
+		: m_simulationParams(inputVariables.simulationParams),
+		m_allSpeciesData(inputVariables.allSpeciesData),
 
-		m_qdx(simulationParams.numSpecies),
+		m_qdx(inputVariables.simulationParams.numSpecies),
 
-		m_rhos(simulationParams.numSpecies, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
+		m_rhos(inputVariables.simulationParams.numSpecies, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
 		m_rho0(m_simulationParams.numSpecies, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
 
+		m_chargeDensity(m_simulationParams.numGrid + 1, 0.0),
+		m_electricField(m_simulationParams.numTimeSteps + 1, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
 		m_particleAcceleration(m_simulationParams.numGrid + 1),
 
-		m_electricField(m_simulationParams.numTimeSteps + 1, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
 		m_particleKineticEnergy(m_simulationParams.numSpecies, std::vector<double>(m_simulationParams.numTimeSteps + 1, 0.0)),
 		m_electrostaticEnergy(m_simulationParams.numTimeSteps + 1, 0.0),
-		m_totalEnergy(m_simulationParams.numTimeSteps + 1, 0.0),
-		m_chargeDensity(m_simulationParams.numGrid + 1, 0.0)
+		m_totalEnergy(m_simulationParams.numTimeSteps + 1, 0.0)
 	{
 		m_simulationParams.gridStepSize = m_simulationParams.spatialLength / m_simulationParams.numGrid;
 		m_dtdx = m_simulationParams.timeStepSize / m_simulationParams.gridStepSize;
@@ -60,10 +58,6 @@ namespace PIC_PLUS_PLUS {
 			for (int K = 0; K < speciesData.numParticles; ++K) {
 				speciesData.particleXVelocities[K] *= m_dtdx;
 			}
-
-			m_particleCharge.push_back(speciesData.particleCharge);
-			m_particleMass.push_back(speciesData.particleMass);
-			m_speciesNumParticles.push_back(allSpeciesData[species].numParticles);
 
 			if (m_allSpeciesData[species].spatialPerturbationAmplitude != 0) {
 				applySpatialPerturbation(m_allSpeciesData[species].particlePositions,
@@ -149,7 +143,7 @@ namespace PIC_PLUS_PLUS {
 
 	void PICPlusPlus::addDriftVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity) {
 		for (int I = 0; I < numParticles; I++) {
-			inOutParticleXVelocities[I] = driftVelocity;
+			inOutParticleXVelocities[I] += driftVelocity;
 		}
 	}
 
@@ -193,7 +187,7 @@ namespace PIC_PLUS_PLUS {
 	void PICPlusPlus::calculateEnergies() {
 
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
-			for (int i = 0; i < m_speciesNumParticles[species]; i++) {
+			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
 				m_particleKineticEnergy[species][m_timeStep] += 0.5 * std::pow((m_allSpeciesData[species].particleXVelocities[i]), 2) * m_allSpeciesData[species].particleMass;
 			}
 		}
