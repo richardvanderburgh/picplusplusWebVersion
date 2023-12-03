@@ -1,19 +1,15 @@
 name: Build and Test C++ on macOS
-
-on:
-  push:
-    branches:
-      - gitHubCICD
+on: [push]
 
 jobs:
-  build:
+  macos-latest-build:
     runs-on: macos-latest
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
       
-  - name: Set up Conan
+    - name: Set up Conan
       run: |
         brew install conan
         conan --version
