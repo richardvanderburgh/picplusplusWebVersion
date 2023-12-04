@@ -8,6 +8,3 @@ compiler.version=13.0
 compiler.cppstd=20
 compiler.libcxx=libc++
 build_type=Debug
-[options]
-[build_requires]
-[env]
