@@ -28,5 +28,5 @@ jobs:
         conan build ..
 
     - name: Test
-      run: ./build/bin/PIC++Lib_Test
+      run: ./bin/PIC++Lib_Test
 
