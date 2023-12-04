@@ -14,9 +14,10 @@ jobs:
       uses: actions/checkout@v2
       
     - name: Set up Conan
-      run: |
-        brew install conan==1.59
-        conan --version
+      uses: conan-io/setup-conan@v1
+      with:
+        conan-version: '1.59'  # Specify the version of Conan you want to install
+
 
     - name: Install Dependencies
       run: conan install . -pr=mac_debug
