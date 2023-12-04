@@ -13,11 +13,14 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
       
-    - name: Set up Conan
-      uses: conan-io/setup-conan@v1
+    - name: Install Conan
+      id: conan
+      uses: turtlebrowser/get-conan@main
       with:
-        conan-version: '1.59'  # Specify the version of Conan you want to install
+        version: 1.59.0
 
+    - name: Conan version
+      run: echo "${{ steps.conan.outputs.version }}"
 
     - name: Install Dependencies
       run: conan install . -pr=mac_debug
