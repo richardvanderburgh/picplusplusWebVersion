@@ -19,15 +19,12 @@ jobs:
     - name: Conan version
       run: echo "${{ steps.conan.outputs.version }}"
 
-    - name: Install Dependencies
-      run: conan install . -pr=mac_debug
-
     - name: Build
       run: |
         mkdir build
-        conan install -pr:h=buildUtils/mac_debug -of build/ --build=missing .
-        conan build -of build/ .
-        cmake --build build
+        cd build
+        conan install .. --profile=../buildUtils/mac_debug --build=missing -g "make"
+        conan build ..
 
     - name: Test
       run: ./build/bin/PIC++Lib_Test
