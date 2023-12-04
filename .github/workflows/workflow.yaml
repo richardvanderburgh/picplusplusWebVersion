@@ -1,5 +1,5 @@
 
-name: Build and Test C++ on macOS
+name: Build and Test PIC++ on macOS
 on:
   push:
     branches:
