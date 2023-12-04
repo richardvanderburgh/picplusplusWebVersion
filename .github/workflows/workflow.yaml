@@ -21,9 +21,10 @@ jobs:
 
     - name: Build
       run: |
+        conan profile detect
         mkdir build
         cd build
-        conan install .. --profile=../buildUtils/mac_debug --build=missing -g "make"
+        conan install .. --profile:build=../buildUtils/mac_debug --build=missing -g "make"
         conan build ..
 
     - name: Test
