@@ -6,12 +6,8 @@ on:
       - macCICD
 
 jobs:
-  build-and-test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os:
-          - macos-11.6
+  macos-latest-build:
+    runs-on: macos-latest
 
     steps:
     - name: Checkout Repository
