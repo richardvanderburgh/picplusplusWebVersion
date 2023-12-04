@@ -1,5 +1,9 @@
+
 name: Build and Test C++ on macOS
-on: [push]
+on:
+  push:
+    branches:
+      - macCICD
 
 jobs:
   macos-latest-build:
@@ -11,23 +15,19 @@ jobs:
       
     - name: Set up Conan
       run: |
-        brew install conan
+        brew install conan==1.59
         conan --version
 
     - name: Install Dependencies
       run: conan install . -pr=mac_debug
-
-    - name: Set up Xcode
-      uses: actions/setup-xcode@v2
-      with:
-        xcode-version: '13'
 
     - name: Build
       run: |
         mkdir build
         conan install -pr:h=buildUtils/mac_debug -of build/ --build=missing .
         conan build -of build/ .
-        make
+        cmake --build build
 
     - name: Test
       run: ./build/bin/PIC++Lib_Test
+
