@@ -7,7 +7,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
-#include <numbers>
+// #include <numbers>
 #include <thread>
 #include <vector>
 
@@ -172,7 +172,7 @@ namespace PIC_PLUS_PLUS {
 
 	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialPerturbationAmplitude) {
 		for (int a = 0; a < numParticles; ++a) {
-			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / m_simulationParams.spatialLength;
+			double theta = 2 * M_PI * spatialPerturbationMode * inOutParticlePositions[a] / m_simulationParams.spatialLength;
 			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
 
 			if (inOutParticlePositions[a] >= m_simulationParams.spatialLength) {

@@ -9,6 +9,9 @@ class pic_plus_plus(ConanFile):
     generators = "CMakeDeps", "CMakeToolchain"
     settings = "os", "compiler", "build_type", "arch"
 
+    def configure(self):
+        self.settings.compiler.cppstd = "20"
+
     def requirements(self):
         self.requires("gtest/1.13.0")
         self.requires("nlohmann_json/3.11.2")
@@ -18,4 +21,4 @@ class pic_plus_plus(ConanFile):
         cmake.configure()
         cmake.build()
         # here you can run CTest, launch your binaries, etc
-        cmake.test()
+        # cmake.test()

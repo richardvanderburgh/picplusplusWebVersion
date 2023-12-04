@@ -1,11 +1,13 @@
 # conan-macos-clang-profile
 [settings]
 os=Macos
-os.version=11.6  # Specify your macOS version here
+os.version=10.15
 arch=x86_64
 compiler=apple-clang
-compiler.version=13.0  # Specify a recent Clang version here
-build_type=Debug  # Adjust based on your needs
+compiler.version=13.0
+compiler.cppstd=20
+compiler.libcxx=libc++
+build_type=Debug
 [options]
 [build_requires]
 [env]

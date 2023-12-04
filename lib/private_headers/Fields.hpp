@@ -2,7 +2,7 @@
 #define FIELDS_HPP
 
 #include <cmath>
-#include <numbers>
+// #include <numbers>
 
 #include "complex.hpp"
 #include "fft.hpp"
@@ -66,7 +66,7 @@ inline void fields(
 		if (ii == 0)
 			break;
 
-		complexPotentialK[k] = complexChargeDensityK[k] / -std::pow(2.0 * std::numbers::pi * ii / simulationParams.spatialLength, 2.0);
+		complexPotentialK[k] = complexChargeDensityK[k] / -std::pow(2.0 * M_PI * ii / simulationParams.spatialLength, 2.0);
 
 		//complexPhik[k][0] = complexRhok[k][0] / -std::pow(2.0 * M_PI * ii / L, 2.0);
 		//complexPhik[k][1] = complexRhok[k][1] / -std::pow(2.0 * M_PI * ii / L, 2.0);

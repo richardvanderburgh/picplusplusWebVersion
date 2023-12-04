@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(PIC++Lib LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PUBLIC_HEADERS
 	./include/DataStructs.h
