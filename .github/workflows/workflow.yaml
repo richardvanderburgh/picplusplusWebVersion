@@ -1,4 +1,3 @@
-
 name: Build and Test C++ on macOS
 on:
   push:
@@ -13,14 +12,13 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
       
-    - name: Install Conan
-      id: conan
-      uses: turtlebrowser/get-conan@main
+    - name: Set up Conan
+      uses: conan-io/setup-conan@v1
       with:
         version: 1.59.0
 
     - name: Conan version
-      run: echo "${{ steps.conan.outputs.version }}"
+      run: echo "${{ env.CONAN_VERSION }}"
 
     - name: Install Dependencies
       run: conan install . -pr=mac_debug
@@ -34,4 +32,3 @@ jobs:
 
     - name: Test
       run: ./build/bin/PIC++Lib_Test
-
