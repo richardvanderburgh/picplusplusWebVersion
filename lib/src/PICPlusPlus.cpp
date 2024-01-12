@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <random>
 #include <thread>
 #include <vector>
 
@@ -44,6 +45,7 @@ namespace PIC_PLUS_PLUS {
 
 		m_ael = 1;
 
+		#pragma omp parallel for
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
 
 			DATA_STRUCTS::SpeciesData& speciesData = m_allSpeciesData[species];
@@ -76,6 +78,13 @@ namespace PIC_PLUS_PLUS {
 				m_rho0, 
 				m_rhos);
 		}
+
+		m_particleKineticEnergy.reserve(m_simulationParams.numSpecies);
+		for (auto& speciesEnergy : m_particleKineticEnergy) {
+			speciesEnergy.reserve(m_simulationParams.numTimeSteps + 1);
+		}
+
+		m_electrostaticEnergy.reserve(m_simulationParams.numTimeSteps + 1);
 	};
 
 	std::optional<nlohmann::json> PICPlusPlus::initialize() {
@@ -148,15 +157,13 @@ namespace PIC_PLUS_PLUS {
 	}
 
 	void PICPlusPlus::addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
+		std::random_device rd;  
+		std::mt19937 gen(rd());
+		std::normal_distribution<> dis(0, 1);
 
-		for (int I = 0; I < numParticles; ++I) {
-			double rm = 0;
-			for (int ith = 0; ith < 12; ++ith) {
-				rm += (double)rand() / RAND_MAX;
-			}
-			rm -= 6;
-
-			inOutParticleXVelocities[I] += thermalVelocity * rm;
+		for (int i = 0; i < numParticles; ++i) {
+			double randomValue = dis(gen); 
+			inOutParticleXVelocities[i] += thermalVelocity * randomValue;
 		}
 	}
 
@@ -171,8 +178,11 @@ namespace PIC_PLUS_PLUS {
 	}
 
 	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialPerturbationAmplitude) {
+
+		double spatialPertConst = 2 * std::numbers::pi * spatialPerturbationMode / m_simulationParams.spatialLength;
+
 		for (int a = 0; a < numParticles; ++a) {
-			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / m_simulationParams.spatialLength;
+			double theta = spatialPertConst * inOutParticlePositions[a];
 			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
 
 			if (inOutParticlePositions[a] >= m_simulationParams.spatialLength) {
@@ -192,8 +202,10 @@ namespace PIC_PLUS_PLUS {
 			}
 		}
 
+		double halfGridSize = 0.5 * m_simulationParams.gridStepSize;
+
 		for (int i = 0; i < m_simulationParams.numGrid + 1; i++) {
-			m_electrostaticEnergy[m_timeStep] += std::pow(m_electricField[m_timeStep][i], 2) * 0.5 * m_simulationParams.gridStepSize;
+			m_electrostaticEnergy[m_timeStep] += std::pow(m_electricField[m_timeStep][i], 2) * halfGridSize;
 		}
 	}
 
@@ -216,12 +228,12 @@ namespace PIC_PLUS_PLUS {
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
 			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
 
-				DATA_STRUCTS::Particle& particle = particles.emplace_back();
-
-				particle.id = particleId++;
-				particle.position = m_allSpeciesData[species].particlePositions[i];
-				particle.velocity = m_allSpeciesData[species].particleXVelocities[i];
-				particle.species = species;
+				particles.emplace_back(DATA_STRUCTS::Particle{
+					m_allSpeciesData[species].particlePositions[i],
+					m_allSpeciesData[species].particleXVelocities[i],
+					species,
+					particleId++
+					});
 			}
 		}
 		return particles;

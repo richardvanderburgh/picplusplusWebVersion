@@ -68,6 +68,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	DATA_STRUCTS::InputVariables inputVariables = loadJSONFile(config);
+	std::cout << "numParticles: " << inputVariables.allSpeciesData[0].numParticles << std::endl;
+	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
+	std::cout << "numGrid: "	  << inputVariables.simulationParams.numGrid << std::endl;
+	std::cout << "numSpecies: "   << inputVariables.simulationParams.numSpecies << std::endl;
 
 	PIC_PLUS_PLUS::PICPlusPlus picPlusPlus(inputVariables);
 	auto jsonResult = picPlusPlus.initialize();
@@ -75,11 +79,6 @@ int main(int argc, char* argv[]) {
 	auto finish = std::chrono::high_resolution_clock::now();
 
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
-
-	std::cout << "numParticles: " << inputVariables.allSpeciesData[0].numParticles << std::endl;
-	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
-	std::cout << "numGrid: "	  << inputVariables.simulationParams.numGrid << std::endl;
-	std::cout << "numSpecies: "   << inputVariables.simulationParams.numSpecies << std::endl;
 
 	std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
 
