@@ -2,7 +2,7 @@
   "species": [
     {
       "name": "Species1",
-      "numParticles": 5,
+      "numParticles": 500,
       "spatialPerturbationMode": 1,
       "driftVelocity": 1,
       "spatialPerturbationAmplitude": 0.001,
@@ -12,7 +12,7 @@
     },
     {
       "name": "Species2",
-      "numParticles": 5,
+      "numParticles": 500,
       "spatialPerturbationMode": 1,
       "driftVelocity": -1,
       "spatialPerturbationAmplitude": 0.001,
@@ -22,7 +22,7 @@
     }
   ],	
   "spatialLength": 6.28318530717958,
-  "numTimeSteps": 300,
+  "numTimeSteps": 3000,
   "timeStepSize": 0.1,
   "numGrid": 256,
   "numSpecies": 2

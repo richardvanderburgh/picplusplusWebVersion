@@ -8,7 +8,11 @@ enable_testing()
 
 find_package(GTest REQUIRED)
 #find_package(FFTW3 REQUIRED)
+find_package(MPI REQUIRED)
 find_package(nlohmann_json REQUIRED)
+
+include_directories(${MPI_CXX_INCLUDE_PATH})
+
 
 add_subdirectory(lib)
 
@@ -19,6 +23,7 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
     PIC++Lib
+    ${MPI_CXX_LIBRARIES}
 )
 
 add_executable(${PROJECT_NAME}_Test

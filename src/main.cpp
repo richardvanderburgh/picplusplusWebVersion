@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <mpi.h>
 #include <nlohmann/json.hpp>
 
 #include <PICPlusPlus.h>
@@ -46,6 +47,8 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 
 int main(int argc, char* argv[]) {
 
+	MPI_Init(&argc, &argv);
+
 	auto start = std::chrono::high_resolution_clock::now();
 
 	if (argc != 2) {
@@ -81,6 +84,8 @@ int main(int argc, char* argv[]) {
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
 
 	std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
+
+	MPI_Finalize();
 
 	return 0;
 }

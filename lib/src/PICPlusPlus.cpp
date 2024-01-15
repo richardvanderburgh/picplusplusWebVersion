@@ -7,6 +7,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <mpi.h>
 #include <numbers>
 #include <random>
 #include <thread>
@@ -39,6 +40,10 @@ namespace PIC_PLUS_PLUS {
 		m_electrostaticEnergy(m_simulationParams.numTimeSteps + 1, 0.0),
 		m_totalEnergy(m_simulationParams.numTimeSteps + 1, 0.0)
 	{
+		int world_size, world_rank;
+		MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+		MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
 		m_simulationParams.gridStepSize = m_simulationParams.spatialLength / m_simulationParams.numGrid;
 		m_dtdx = m_simulationParams.timeStepSize / m_simulationParams.gridStepSize;
 		m_timeStep = 0;
