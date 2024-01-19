@@ -12,6 +12,7 @@ class pic_plus_plus(ConanFile):
     def requirements(self):
         self.requires("gtest/1.13.0")
         self.requires("nlohmann_json/3.11.2")
+        self.requires("sdl/2.28.5")
 
     def build(self):
         cmake = CMake(self)
