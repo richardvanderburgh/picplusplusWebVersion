@@ -111,9 +111,17 @@ namespace PIC_PLUS_PLUS {
 
 		mPicData.frames.emplace_back() = updateFrame();
 
+		auto start = std::chrono::high_resolution_clock::now();
+
 		for (m_timeStep = 1; m_timeStep <= m_simulationParams.numTimeSteps; m_timeStep++) {
 			runTimeLoop();
 		}
+
+		auto finish = std::chrono::high_resolution_clock::now();
+
+		auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
+		std::cout << "Time loop took " << microseconds.count() << " micro secs\n";
 
 		nlohmann::json JSON;
 		JSON["ke"] = m_particleKineticEnergy;
@@ -231,14 +239,17 @@ namespace PIC_PLUS_PLUS {
 
 		std::vector<DATA_STRUCTS::Particle> particles;
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
+			particles.resize(particles.size() + m_allSpeciesData[species].numParticles);
+
+			#pragma omp parallel for
 			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
 
-				particles.emplace_back(DATA_STRUCTS::Particle{
+				particles[i] = DATA_STRUCTS::Particle{
 					m_allSpeciesData[species].particlePositions[i],
 					m_allSpeciesData[species].particleXVelocities[i],
 					species,
 					particleId++
-					});
+					};
 			}
 		}
 		return particles;
