@@ -1,8 +1,5 @@
 add_executable(${PROJECT_NAME}_Test
-    AccelTest.cpp
-    DataStructsTest.cpp
-    FieldsTest.cpp
-    UtilsTest.cpp
+    LoggerTest.cpp
 )
 
 target_include_directories(${PROJECT_NAME}_Test
