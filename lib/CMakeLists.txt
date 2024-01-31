@@ -2,11 +2,12 @@ cmake_minimum_required(VERSION 3.5)
 project(PIC++Lib LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+find_package(SDL2 REQUIRED)
 
 set(PUBLIC_HEADERS
 	./include/DataStructs.h
 	./include/PICPlusPlus.h
-        ./include/headers/Window.hpp
+    ./include/Window.h
 )
 
 set(PRIVATE_HEADERS
@@ -21,7 +22,8 @@ set(PRIVATE_HEADERS
 set(SOURCE_FILES
 	./src/complex.cpp
 	./src/fft.cpp
-        ./src/PICPlusPlus.cpp
+    ./src/PICPlusPlus.cpp
+	./src/Window.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC
@@ -39,6 +41,7 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries( ${PROJECT_NAME} 
     nlohmann_json::nlohmann_json
+	SDL2::SDL2
 )
 
 add_subdirectory(test)

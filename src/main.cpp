@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
-
+#include <Window.h>
 #include <PICPlusPlus.h>
 
 DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
@@ -47,7 +47,8 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 int main(int argc, char* argv[]) {
 
 	auto start = std::chrono::high_resolution_clock::now();
-
+	UI::Window windowDefault;
+	windowDefault.render();
 	if (argc != 2) {
 		std::cerr << "Path: " << argv[0] << " <config.json>\n";
 		return 1;
