@@ -17,9 +17,9 @@ namespace UI {
             SDL_FreeSurface(w);
         }
     };
-    class Window {
+    class PicWindow {
     public:
-        Window();
+        PicWindow();
         int render();
     private:
         const std::string WINDOW_NAME = "PIC++";

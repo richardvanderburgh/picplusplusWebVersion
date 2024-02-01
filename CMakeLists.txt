@@ -9,6 +9,7 @@ enable_testing()
 find_package(GTest REQUIRED)
 #find_package(FFTW3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(SDL2 REQUIRED)
 
 add_subdirectory(lib)
 

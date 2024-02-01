@@ -1,8 +1,8 @@
-#include "Window.h"
+#include "PicWindow.h"
 #include <iostream>
 
 namespace UI {
-    Window::Window() {
+    PicWindow::PicWindow() {
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
         {
             std::cerr << "Failed to initialize the SDL2 library\n";
@@ -19,7 +19,7 @@ namespace UI {
             return;
         }
     }
-	int Window::render() {
+	int PicWindow::render() {
 
         mp_surface = std::unique_ptr<SDL_Surface, SDLSurfaceDestroyer> (SDL_GetWindowSurface(mp_window.get()), SDLSurfaceDestroyer());
 

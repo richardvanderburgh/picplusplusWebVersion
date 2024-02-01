@@ -47,7 +47,7 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 int main(int argc, char* argv[]) {
 
 	auto start = std::chrono::high_resolution_clock::now();
-	UI::Window windowDefault;
+	UI::PicWindow windowDefault;
 	windowDefault.render();
 	if (argc != 2) {
 		std::cerr << "Path: " << argv[0] << " <config.json>\n";
