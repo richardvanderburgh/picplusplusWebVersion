@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <Window.h>
+#include <PicWindow.h>
 #include <PICPlusPlus.h>
 
 DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {

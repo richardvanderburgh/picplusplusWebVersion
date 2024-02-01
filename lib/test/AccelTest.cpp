@@ -2,7 +2,6 @@
 
 #include <Accel.hpp>
 #include "DataStructs.h"
-#include <Window.h>
 
 TEST(AccelTest, accel) {
 	DATA_STRUCTS::SimulationParams simulationParams;
