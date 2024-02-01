@@ -6,3 +6,4 @@ buildLinux
 djangodocker/__pycache__
 .vs
 windowBuild
+CMakeUserPresets.json
