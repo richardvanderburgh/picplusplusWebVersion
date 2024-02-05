@@ -26,7 +26,7 @@ jobs:
         mkdir build
         conan profile detect
         conan install . --profile=buildUtils/linux_gcc_release --build=missing -of=build
-        conan build . --build-folder=build
+        conan build . -build-folder=build
 
     - name: Test
       working-directory: build
