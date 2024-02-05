@@ -15,8 +15,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: 
-      image: conanio/gcc9
+    container: ghcr.io/richardvanderburgh/picplusplus_ubuntu_latest:latest
 
     steps:
     - uses: actions/checkout@v3
