@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "Accel.hpp"
-#include "PicPlusPlus.h"
 #include "fft.hpp"
 #include "Fields.hpp"
 #include "SetRho.hpp"
