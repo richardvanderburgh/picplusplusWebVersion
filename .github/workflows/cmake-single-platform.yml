@@ -15,14 +15,17 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: 
+      image: conanio/gcc9
 
     steps:
     - uses: actions/checkout@v3
     
     - name: Install Dependencies with Conan
       run: |
+        
         mkdir ${{github.workspace}}/build
-        conan install ${{github.workspace}} --profile=${{github.workspace}}/buildUtils/win_debug --build=missing -of=${{github.workspace}}/build
+        conan install ${{github.workspace}} --profile=${{github.workspace}}/buildUtils/linux_gcc_release --build=missing -of=${{github.workspace}}/build
         conan build ${{github.workspace}} --build-folder ${{github.workspace}}/build
 
     - name: Test
