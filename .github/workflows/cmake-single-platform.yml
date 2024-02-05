@@ -24,9 +24,10 @@ jobs:
       run: |
         
         mkdir build
+        conan profile detect
         conan install . --profile=buildUtils/linux_gcc_release --build=missing -of=build
         conan build . --build-folder build
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: build
       run: ctest -C ${{env.BUILD_TYPE}}
