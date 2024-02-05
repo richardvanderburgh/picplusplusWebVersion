@@ -23,9 +23,9 @@ jobs:
     - name: Install Dependencies with Conan
       run: |
         
-        mkdir ${{github.workspace}}/build
-        conan install ${{github.workspace}} --profile=${{github.workspace}}/buildUtils/linux_gcc_release --build=missing -of=${{github.workspace}}/build
-        conan build ${{github.workspace}} --build-folder ${{github.workspace}}/build
+        mkdir build
+        conan install . --profile=buildUtils/linux_gcc_release --build=missing -of=build
+        conan build . --build-folder build
 
     - name: Test
       working-directory: ${{github.workspace}}/build
