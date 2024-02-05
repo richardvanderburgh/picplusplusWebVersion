@@ -1,23 +1,21 @@
-#ifndef SET_RHO_HPP
-#define SET_RHO_HPP
+#pragma once 
 
 #include <vector>
 
-void setRho(int species, int ng, double dx,
-	const std::vector<int>& N,
+void setRho(int species,
+	DATA_STRUCTS::SimulationParams simulationParams,
+	std::vector<DATA_STRUCTS::SpeciesData>& allSpeciesData,
 	const std::vector<double>& qdx,
 	std::vector<double>& rho,
-	std::vector<std::vector<double>>& x,
 	std::vector<std::vector<double>>& rho0,
 	std::vector<std::vector<double>>& rhos) {
 
-	//double dxi;
-	const double dxi = 1.0 / dx;
-	const int xn = ng;
+	const double dxi = 1.0 / simulationParams.gridStepSize;
+	const int xn = simulationParams.numGrid;
 
 	// If it is the first group of particles, then clear out rho.
 	if (species == 0) {
-		for (int j = 1; j < ng + 1; j++) {
+		for (int j = 1; j < simulationParams.numGrid + 1; j++) {
 			rho[j] = rho0[0][j];
 		}
 		rho[0] = 0;
@@ -28,58 +26,58 @@ void setRho(int species, int ng, double dx,
 	for (int j = 0; j < rhos[0].size(); j++) {
 		rhos[species][j] = 0;
 	}
-	for (int j = 1; j <= ng; j++) {
+	for (int j = 1; j <= simulationParams.numGrid; j++) {
 		rho0[species][j] = rho0[species][j] - rhos[species][j];
 		rho[j] = rho[j] - rhos[species][j];
 	}
 
-
-	for (int i = 0; i < N[species]; i++) {
-		x[species][i] = x[species][i] * dxi;
-		if (x[species][i] < 0) {
-			x[species][i] = x[species][i] + xn;
+	for (int i = 0; i < allSpeciesData[species].numParticles; i++) {
+		allSpeciesData[species].particlePositions[i] = allSpeciesData[species].particlePositions[i] * dxi;
+		if (allSpeciesData[species].particlePositions[i] < 0) {
+			allSpeciesData[species].particlePositions[i] = allSpeciesData[species].particlePositions[i] + xn;
 		}
-		if (x[species][i] > xn) {
-			x[species][i] = x[species][i] - xn;
+		if (allSpeciesData[species].particlePositions[i] > xn) {
+			allSpeciesData[species].particlePositions[i] = allSpeciesData[species].particlePositions[i] - xn;
 		}
-		int64_t j = static_cast<int64_t>(floor(x[species][i]));
-		//jdata(i, species) = j;
-		double drho = qdx[species] * (x[species][i] - j);
-		//drhodata(i, species) = drho;
+		int64_t j = static_cast<int64_t>(floor(allSpeciesData[species].particlePositions[i]));
+		double drho = qdx[species] * (allSpeciesData[species].particlePositions[i] - j);
 		rho[j] = rho[j] - drho + qdx[species];
 		rho[j + 1] = rho[j + 1] + drho;
 	}
 }
 
+void move(
+	DATA_STRUCTS::SimulationParams simulationParams,
+	std::vector<DATA_STRUCTS::SpeciesData>& allSpeciesData,
+	std::vector<double>& rho, 
+	const std::vector<std::vector<double>>& rho0, 
+	const std::vector<double>& qdx) {
 
-void move(int nsp, std::vector<double>& rho, const std::vector<std::vector<double>>& rho0, const std::vector<double>& qdx, const std::vector<int>& N, std::vector <std::vector<double>>& x, const std::vector <std::vector<double>>& vx, int ng) {
-	//MOVE - Advances position one time step and accumulates charge density.
-	for (int species = 0; species < nsp; species++) {
+	for (int species = 0; species < simulationParams.numSpecies; species++) {
 		// Clear out old charge density.
-		for (int j = 1; j <= ng; j++) {
+		for (int j = 1; j <= simulationParams.numGrid; j++) {
 			rho[j] = rho0[species][j];
 		}
 		rho[0] = 0;
 	}
 
-	for (int species = 0; species < nsp; species++) {
-		for (int i = 0; i < N[species]; i++) {
+	for (int species = 0; species < simulationParams.numSpecies; species++) {
+		for (int i = 0; i < allSpeciesData[species].numParticles; i++) {
 
-			x[species][i] += vx[species][i];
+			allSpeciesData[species].particlePositions[i] += allSpeciesData[species].particleXVelocities[i];
 
-			if (x[species][i] < 0)
-				x[species][i] += ng;
+			if (allSpeciesData[species].particlePositions[i] < 0)
+				allSpeciesData[species].particlePositions[i] += simulationParams.numGrid;
 
-			if (x[species][i] >= ng)
-				x[species][i] -= ng;
+			if (allSpeciesData[species].particlePositions[i] >= simulationParams.numGrid)
+				allSpeciesData[species].particlePositions[i] -= simulationParams.numGrid;
 
 
-			int64_t j = static_cast<int64_t>(floor(x[species][i]));
-			double drho = qdx[species] * (x[species][i] - j);
+			int64_t j = static_cast<int64_t>(floor(allSpeciesData[species].particlePositions[i]));
+			double drho = qdx[species] * (allSpeciesData[species].particlePositions[i] - j);
 			rho[j] = rho[j] - drho + qdx[species];
 			rho[j + 1] = rho[j + 1] + drho;
 		}
 	}
 
 }
-#endif // !SET_RHO_HPP
