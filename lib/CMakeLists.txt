@@ -32,14 +32,12 @@ add_library(${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
 	  ${CMAKE_CURRENT_SOURCE_DIR}/include
-	  ${MPI_INCLUDE_PATH}
 	PRIVATE
 	  ${CMAKE_CURRENT_SOURCE_DIR}/private_headers
 )
 
 target_link_libraries( ${PROJECT_NAME} 
     nlohmann_json::nlohmann_json
-	${MPI_CXX_LIBRARIES}
 )
 
 add_subdirectory(test)
