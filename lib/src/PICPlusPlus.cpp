@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <random>
 #include <thread>
 #include <vector>
 
@@ -38,6 +39,7 @@ namespace PIC_PLUS_PLUS {
 		m_electrostaticEnergy(m_simulationParams.numTimeSteps + 1, 0.0),
 		m_totalEnergy(m_simulationParams.numTimeSteps + 1, 0.0)
 	{
+
 		m_simulationParams.gridStepSize = m_simulationParams.spatialLength / m_simulationParams.numGrid;
 		m_dtdx = m_simulationParams.timeStepSize / m_simulationParams.gridStepSize;
 		m_timeStep = 0;
@@ -68,14 +70,21 @@ namespace PIC_PLUS_PLUS {
 
 			m_qdx[species] = m_allSpeciesData[species].particleCharge / m_simulationParams.gridStepSize;
 
-			setRho(species, 
+			setRho(species,
 				m_simulationParams,
 				m_allSpeciesData,
-				m_qdx, 
+				m_qdx,
 				m_chargeDensity,
-				m_rho0, 
+				m_rho0,
 				m_rhos);
 		}
+
+		m_particleKineticEnergy.reserve(m_simulationParams.numSpecies);
+		for (auto& speciesEnergy : m_particleKineticEnergy) {
+			speciesEnergy.reserve(m_simulationParams.numTimeSteps + 1);
+		}
+
+		m_electrostaticEnergy.reserve(m_simulationParams.numTimeSteps + 1);
 	};
 
 	std::optional<nlohmann::json> PICPlusPlus::initialize() {
@@ -97,9 +106,17 @@ namespace PIC_PLUS_PLUS {
 
 		mPicData.frames.emplace_back() = updateFrame();
 
+		auto start = std::chrono::high_resolution_clock::now();
+
 		for (m_timeStep = 1; m_timeStep <= m_simulationParams.numTimeSteps; m_timeStep++) {
 			runTimeLoop();
 		}
+
+		auto finish = std::chrono::high_resolution_clock::now();
+
+		auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
+		std::cout << "Time loop took " << microseconds.count() << " micro secs\n";
 
 		nlohmann::json JSON;
 		JSON["ke"] = m_particleKineticEnergy;
@@ -148,15 +165,13 @@ namespace PIC_PLUS_PLUS {
 	}
 
 	void PICPlusPlus::addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::normal_distribution<> dis(0, 1);
 
-		for (int I = 0; I < numParticles; ++I) {
-			double rm = 0;
-			for (int ith = 0; ith < 12; ++ith) {
-				rm += (double)rand() / RAND_MAX;
-			}
-			rm -= 6;
-
-			inOutParticleXVelocities[I] += thermalVelocity * rm;
+		for (int i = 0; i < numParticles; ++i) {
+			double randomValue = dis(gen);
+			inOutParticleXVelocities[i] += thermalVelocity * randomValue;
 		}
 	}
 
@@ -171,8 +186,11 @@ namespace PIC_PLUS_PLUS {
 	}
 
 	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialPerturbationAmplitude) {
+
+		double spatialPertConst = 2 * std::numbers::pi * spatialPerturbationMode / m_simulationParams.spatialLength;
+
 		for (int a = 0; a < numParticles; ++a) {
-			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / m_simulationParams.spatialLength;
+			double theta = spatialPertConst * inOutParticlePositions[a];
 			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
 
 			if (inOutParticlePositions[a] >= m_simulationParams.spatialLength) {
@@ -192,8 +210,10 @@ namespace PIC_PLUS_PLUS {
 			}
 		}
 
+		double halfGridSize = 0.5 * m_simulationParams.gridStepSize;
+
 		for (int i = 0; i < m_simulationParams.numGrid + 1; i++) {
-			m_electrostaticEnergy[m_timeStep] += std::pow(m_electricField[m_timeStep][i], 2) * 0.5 * m_simulationParams.gridStepSize;
+			m_electrostaticEnergy[m_timeStep] += std::pow(m_electricField[m_timeStep][i], 2) * halfGridSize;
 		}
 	}
 

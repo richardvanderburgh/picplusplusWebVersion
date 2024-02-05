@@ -149,10 +149,26 @@ TEST(PICTest, EFrame0Test)
 	inputVariables.allSpeciesData = allSpeciesData;
 	inputVariables.simulationParams = simulationParams;
 
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+
 	PIC_PLUS_PLUS::PICPlusPlus init(inputVariables);
 
 	auto jsonResult = init.initialize();
-	EXPECT_TRUE(jsonResult.has_value());
 
+	auto finish = std::chrono::high_resolution_clock::now();
+
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
+
+	std::cout << "numParticles: " << inputVariables.allSpeciesData[0].numParticles << std::endl;
+	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
+	std::cout << "numGrid: " << inputVariables.simulationParams.numGrid << std::endl;
+	std::cout << "numSpecies: " << inputVariables.simulationParams.numSpecies << std::endl;
+
+	std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
+
+	EXPECT_TRUE(jsonResult.has_value());
 	EXPECT_EQ(jsonResult.value(), BuildExpectedJson());
 }
