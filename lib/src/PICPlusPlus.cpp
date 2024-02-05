@@ -7,7 +7,6 @@
 #include <array>
 #include <cmath>
 #include <iostream>
-#include <mpi.h>
 #include <numbers>
 #include <random>
 #include <thread>
@@ -40,9 +39,6 @@ namespace PIC_PLUS_PLUS {
 		m_electrostaticEnergy(m_simulationParams.numTimeSteps + 1, 0.0),
 		m_totalEnergy(m_simulationParams.numTimeSteps + 1, 0.0)
 	{
-		int world_size, world_rank;
-		MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-		MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
 		m_simulationParams.gridStepSize = m_simulationParams.spatialLength / m_simulationParams.numGrid;
 		m_dtdx = m_simulationParams.timeStepSize / m_simulationParams.gridStepSize;
@@ -50,7 +46,6 @@ namespace PIC_PLUS_PLUS {
 
 		m_ael = 1;
 
-		#pragma omp parallel for
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
 
 			DATA_STRUCTS::SpeciesData& speciesData = m_allSpeciesData[species];
@@ -75,12 +70,12 @@ namespace PIC_PLUS_PLUS {
 
 			m_qdx[species] = m_allSpeciesData[species].particleCharge / m_simulationParams.gridStepSize;
 
-			setRho(species, 
+			setRho(species,
 				m_simulationParams,
 				m_allSpeciesData,
-				m_qdx, 
+				m_qdx,
 				m_chargeDensity,
-				m_rho0, 
+				m_rho0,
 				m_rhos);
 		}
 
@@ -170,12 +165,12 @@ namespace PIC_PLUS_PLUS {
 	}
 
 	void PICPlusPlus::addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
-		std::random_device rd;  
+		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::normal_distribution<> dis(0, 1);
 
 		for (int i = 0; i < numParticles; ++i) {
-			double randomValue = dis(gen); 
+			double randomValue = dis(gen);
 			inOutParticleXVelocities[i] += thermalVelocity * randomValue;
 		}
 	}
@@ -239,17 +234,14 @@ namespace PIC_PLUS_PLUS {
 
 		std::vector<DATA_STRUCTS::Particle> particles;
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
-			particles.resize(particles.size() + m_allSpeciesData[species].numParticles);
-
-			#pragma omp parallel for
 			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
 
-				particles[i] = DATA_STRUCTS::Particle{
-					m_allSpeciesData[species].particlePositions[i],
-					m_allSpeciesData[species].particleXVelocities[i],
-					species,
-					particleId++
-					};
+				DATA_STRUCTS::Particle& particle = particles.emplace_back();
+
+				particle.id = particleId++;
+				particle.position = m_allSpeciesData[species].particlePositions[i];
+				particle.velocity = m_allSpeciesData[species].particleXVelocities[i];
+				particle.species = species;
 			}
 		}
 		return particles;
