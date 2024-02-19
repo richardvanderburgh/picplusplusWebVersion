@@ -8,9 +8,13 @@ enable_testing()
 
 find_package(GTest REQUIRED)
 #find_package(FFTW3 REQUIRED)
+find_package(MPI REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(spdlog REQUIRED)
+
+include_directories(${MPI_CXX_INCLUDE_PATH})
+
 
 add_subdirectory(logger)
 add_subdirectory(lib)
@@ -22,6 +26,7 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     PIC++Lib
+    ${MPI_CXX_LIBRARIES}
     Logger
   PRIVATE
     SDL2::SDL2

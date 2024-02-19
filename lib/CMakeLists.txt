@@ -29,6 +29,7 @@ add_library(${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME}
 	PUBLIC
 	  ${CMAKE_CURRENT_SOURCE_DIR}/include
+	  ${MPI_INCLUDE_PATH}
 	PRIVATE
 	  ${CMAKE_CURRENT_SOURCE_DIR}/private_headers
 )
@@ -36,6 +37,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries( ${PROJECT_NAME}
   PUBLIC
     nlohmann_json::nlohmann_json
+	${MPI_CXX_LIBRARIES}
     spdlog::spdlog
 )
 
