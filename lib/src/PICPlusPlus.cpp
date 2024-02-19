@@ -1,7 +1,6 @@
 
 #include "PICPlusPlus.h"
 
-//#include <fftw3.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -13,205 +12,130 @@
 #include <vector>
 
 #include "Accel.hpp"
-#include "DataStructs.h"
+#include "PicPlusPlus.h"
 #include "fft.hpp"
 #include "Fields.hpp"
 #include "SetRho.hpp"
 #include "Utils.hpp"
 
-
 namespace PIC_PLUS_PLUS {
 
-	PICPlusPlus::PICPlusPlus(
-		const double spatialLength,
-		const int numParticles,
-		const int numTimeSteps,
-		const double timeStepSize,
-		const int numGrid,
-		const int spatialPerturbationMode,
-		const double driftVelocity,
-		const int numSpecies,
-		const double spatialPerturbationAmplitude,
-		const double thermalVelocity,
-		const int plasmaFrequency,
-		const int chargeMassRatio)
+	PICPlusPlus::PICPlusPlus(DATA_STRUCTS::InputVariables inputVariables)
 
-		: m_spatialLength(spatialLength),
-		m_numParticles(numParticles),
-		m_numTimeSteps(numTimeSteps),
-		m_timeStepSize(timeStepSize),
-		m_numGrid(numGrid),
-		m_spatialPerturbationMode(spatialPerturbationMode),
-		m_driftVelocity(driftVelocity),
-		m_numSpecies(numSpecies),
-		m_spatialPerturbationAmplitude(spatialPerturbationAmplitude),
-		m_thermalVelocity(thermalVelocity),
-		m_plasmaFrequency(plasmaFrequency),
-		m_chargeMassRatio(chargeMassRatio) {
+		: m_simulationParams(inputVariables.simulationParams),
+		m_allSpeciesData(inputVariables.allSpeciesData),
 
-		m_gridStepSize = m_spatialLength / m_numGrid;
-		m_dtdx = m_timeStepSize / m_gridStepSize;
+		m_qdx(inputVariables.simulationParams.numSpecies),
+
+		m_rhos(inputVariables.simulationParams.numSpecies, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
+		m_rho0(m_simulationParams.numSpecies, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
+
+		m_chargeDensity(m_simulationParams.numGrid + 1, 0.0),
+		m_electricField(m_simulationParams.numTimeSteps + 1, std::vector<double>(m_simulationParams.numGrid + 1, 0.0)),
+		m_particleAcceleration(m_simulationParams.numGrid + 1),
+
+		m_particleKineticEnergy(m_simulationParams.numSpecies, std::vector<double>(m_simulationParams.numTimeSteps + 1, 0.0)),
+		m_electrostaticEnergy(m_simulationParams.numTimeSteps + 1, 0.0),
+		m_totalEnergy(m_simulationParams.numTimeSteps + 1, 0.0)
+	{
+		m_simulationParams.gridStepSize = m_simulationParams.spatialLength / m_simulationParams.numGrid;
+		m_dtdx = m_simulationParams.timeStepSize / m_simulationParams.gridStepSize;
+		m_timeStep = 0;
+
+		m_ael = 1;
+
+		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
+
+			DATA_STRUCTS::SpeciesData& speciesData = m_allSpeciesData[species];
+
+			speciesData.particleCharge = m_simulationParams.spatialLength * speciesData.plasmaFrequency * speciesData.plasmaFrequency / (speciesData.numParticles * speciesData.chargeMassRatio);
+			speciesData.particleMass = speciesData.particleCharge / speciesData.chargeMassRatio;
+			speciesData.chargeCloudWidth = m_simulationParams.spatialLength / speciesData.numParticles;
+
+			initializePositions(speciesData.particlePositions, speciesData.numParticles, speciesData.chargeCloudWidth);
+			initializeVelocities(speciesData.particleXVelocities, speciesData.numParticles, speciesData.driftVelocity, speciesData.thermalVelocity);
+
+			for (int K = 0; K < speciesData.numParticles; ++K) {
+				speciesData.particleXVelocities[K] *= m_dtdx;
+			}
+
+			if (m_allSpeciesData[species].spatialPerturbationAmplitude != 0) {
+				applySpatialPerturbation(m_allSpeciesData[species].particlePositions,
+					m_allSpeciesData[species].numParticles,
+					m_allSpeciesData[species].spatialPerturbationMode,
+					m_allSpeciesData[species].spatialPerturbationAmplitude);
+			}
+
+			m_qdx[species] = m_allSpeciesData[species].particleCharge / m_simulationParams.gridStepSize;
+
+			setRho(species, 
+				m_simulationParams,
+				m_allSpeciesData,
+				m_qdx, 
+				m_chargeDensity,
+				m_rho0, 
+				m_rhos);
+		}
 	};
 
 	std::optional<nlohmann::json> PICPlusPlus::initialize() {
 
-		std::vector<int> speciesNumParticles(m_numSpecies, m_numParticles);
-		std::vector<double> speciesPlasmaFrequency(m_numSpecies, m_plasmaFrequency);
-		std::vector<double> speciesChargeMassRatio(m_numSpecies, m_chargeMassRatio);
-		std::vector<double> speciesThermalVelocity(m_numSpecies, m_thermalVelocity);
+		fields(m_simulationParams,
+			m_chargeDensity,
+			m_electricField,
+			m_timeStep,
+			m_particleAcceleration,
+			m_ael);
 
-		const std::vector<double> speciesDriftVelocity = { m_driftVelocity, - m_driftVelocity, 0, 2 *  m_driftVelocity, -2 *  m_driftVelocity };
+		accel(m_simulationParams,
+			m_allSpeciesData,
+			m_particleAcceleration,
+			m_timeStep,
+			m_ael);
 
-		std::vector<int>    speciesSpatialPerturbationMode(m_numSpecies, m_spatialPerturbationMode);
-		std::vector<double> speciesSpatialPerturbationAmplitude(m_numSpecies, m_spatialPerturbationAmplitude);
+		calculateEnergies();
 
-		std::vector<std::vector<double>> particleKineticEnergy(m_numSpecies, std::vector<double>(m_numTimeSteps + 1, 0.0));
-		std::vector<std::vector<double>> particleDriftEnergy(m_numSpecies, std::vector<double>(m_numTimeSteps + 1, 0.0));
-		std::vector<std::vector<double>> particleThermalEnergy(m_numSpecies, std::vector<double>(m_numTimeSteps + 1, 0.0));
+		mPicData.frames.emplace_back() = updateFrame();
 
-		int maxN = *std::max_element(speciesNumParticles.begin(), speciesNumParticles.end());
-		std::vector<std::vector<double>> particlePositions(m_numSpecies, std::vector<double>(maxN, 0.0));
-		std::vector<std::vector<double>> particleXVelocities(m_numSpecies, std::vector<double>(maxN, 0.0));
-		std::vector<std::vector<double>> particleYVelocities(m_numSpecies, std::vector<double>(maxN, 0.0));
-		std::vector<std::vector<double>> particleZVelocities(m_numSpecies, std::vector<double>(maxN, 0.0));
-
-		std::vector<double> electrostaticEnergy(m_numTimeSteps + 1, 0.0);
-		std::vector<double> totalEnergy(m_numTimeSteps + 1, 0.0);
-		std::vector<double> chargeCloudWidth(m_numSpecies);
-		std::vector<double> particleCharge(m_numSpecies, 0.0);
-		std::vector<double> particleMass(m_numSpecies);
-		std::vector<double> qdx(m_numSpecies);
-
-		std::vector<std::vector<double>> electricField(m_numTimeSteps + 1, std::vector<double>(m_numGrid + 1, 0.0));
-		std::vector<double> chargeDensity(m_numGrid + 1, 0.0);
-		std::vector<double> particleAcceleration(m_numGrid + 1);
-
-		std::vector<std::vector<double>> rhos(m_numSpecies, std::vector<double>(m_numGrid + 1, 0.0));
-		std::vector<std::vector<double>> rho0(m_numSpecies, std::vector<double>(m_numGrid + 1, 0.0));
-
-		for (int species = 0; species < m_numSpecies; species++) {
-
-			initializeSpecies(particleCharge[species], 
-				particleMass[species], 
-				chargeCloudWidth[species], 
-				particlePositions[species], 
-				particleXVelocities[species],
-				speciesPlasmaFrequency[species],
-				speciesNumParticles[species],
-				speciesChargeMassRatio[species],
-				speciesPlasmaFrequency[species],
-				speciesDriftVelocity[species],
-				speciesThermalVelocity[species]);
-
-			if (speciesSpatialPerturbationAmplitude[species] != 0) {
-				applySpatialPerturbation(particlePositions[species], 
-					speciesNumParticles[species], 
-					speciesSpatialPerturbationMode[species],
-					speciesSpatialPerturbationAmplitude[species]);
-			}
-
-			qdx[species] = particleCharge[species] / m_gridStepSize;
-			setRho(species, m_numGrid, m_gridStepSize, speciesNumParticles, qdx, chargeDensity, particlePositions, rho0, rhos);
-		}
-
-		int timeStep = 0;
-		double ael = 1;
-
-		fields(chargeDensity, m_spatialLength, m_gridStepSize, electricField, timeStep, m_numGrid, particleAcceleration, ael);
-
-		accel(particleAcceleration,
-			particleCharge,
-			m_numSpecies,
-			m_gridStepSize,
-			m_timeStepSize,
-			timeStep,
-			particleMass,
-			ael, m_numGrid, speciesNumParticles, particlePositions, particleXVelocities);
-
-		calculateEnergies(
-			particleKineticEnergy,
-			electrostaticEnergy,
-			timeStep,
-			speciesNumParticles,
-			particleXVelocities,
-			particleMass,
-			electricField);
-
-		mPicData.frames.emplace_back() = updateFrame(
-			electricField,
-			timeStep, m_numSpecies,
-			speciesNumParticles,
-			particlePositions,
-			particleXVelocities,
-			particleMass);
- 
-		for (int timeStep = 1; timeStep <= m_numTimeSteps; timeStep++) {
-
-			accel(particleAcceleration,
-				particleCharge,
-				m_numSpecies,
-				m_gridStepSize,
-				m_timeStepSize,
-				timeStep,
-				particleMass,
-				ael, m_numGrid, speciesNumParticles, particlePositions, particleXVelocities);
-
-			move(m_numSpecies, chargeDensity, rho0, qdx, speciesNumParticles, particlePositions, particleXVelocities, m_numGrid);
-			fields(chargeDensity, m_spatialLength, m_gridStepSize, electricField, timeStep, m_numGrid, particleAcceleration, ael);
-
-			calculateEnergies(
-				particleKineticEnergy,
-				electrostaticEnergy,
-				timeStep,
-				speciesNumParticles,
-				particleXVelocities,
-				particleMass,
-				electricField);
-
-			mPicData.frames.emplace_back() = updateFrame(
-				electricField,
-				timeStep, m_numSpecies,
-				speciesNumParticles,
-				particlePositions,
-				particleXVelocities,
-				particleMass);
+		for (m_timeStep = 1; m_timeStep <= m_simulationParams.numTimeSteps; m_timeStep++) {
+			runTimeLoop();
 		}
 
 		nlohmann::json JSON;
-		JSON["ke"] = particleKineticEnergy;
-		JSON["ese"] = electrostaticEnergy;
+		JSON["ke"] = m_particleKineticEnergy;
+		JSON["ese"] = m_electrostaticEnergy;
 		JSON["phaseFrames"] = mPicData.frames;
 
-		//std::cout << JSON.dump() << std::endl;
 		return JSON;
 	}
 
-	void PICPlusPlus::initializeSpecies(double& particleCharge, 
-		double& particleMass,
-		double& chargeCloudWidth, 
-		std::vector<double>& particlePositions, 
-		std::vector<double>& particleXVelocities,
-		const double plasmaFrequency, 
-		const int	 numParticles, 
-		const double chargeMassRatio,  
-		const double speciesPlasmaFrequency, 
-		const double driftVelocity, 
-		const double thermalVelocity) {
-		
-		particleCharge = m_spatialLength * plasmaFrequency * plasmaFrequency / (numParticles * chargeMassRatio);
-		particleMass = particleCharge / chargeMassRatio;
-		chargeCloudWidth = m_spatialLength / numParticles;
+	void PICPlusPlus::runTimeLoop() {
 
-		initializeLinearPositions(particlePositions, numParticles, chargeCloudWidth);
+		accel(m_simulationParams,
+			m_allSpeciesData,
+			m_particleAcceleration,
+			m_timeStep,
+			m_ael);
 
-		addInitialVelocities(particleXVelocities, numParticles, driftVelocity, thermalVelocity);
+		move(m_simulationParams,
+			m_allSpeciesData,
+			m_chargeDensity,
+			m_rho0,
+			m_qdx);
 
-		for (int K = 0; K < numParticles; ++K) {
-			particleXVelocities[K] *= m_dtdx;
-		}
+		fields(m_simulationParams,
+			m_chargeDensity,
+			m_electricField,
+			m_timeStep,
+			m_particleAcceleration,
+			m_ael);
+
+		calculateEnergies();
+
+		mPicData.frames.emplace_back() = updateFrame();
 	}
 
-	void PICPlusPlus::initializeLinearPositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
+	void PICPlusPlus::initializePositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
 		for (int I = 1; I < numParticles + 1; I++) {
 			inOutParticlePositions[I - 1] = (I - 0.5) * chargeCloudWidth;
 		}
@@ -219,7 +143,7 @@ namespace PIC_PLUS_PLUS {
 
 	void PICPlusPlus::addDriftVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity) {
 		for (int I = 0; I < numParticles; I++) {
-			inOutParticleXVelocities[I] = driftVelocity;
+			inOutParticleXVelocities[I] += driftVelocity;
 		}
 	}
 
@@ -236,7 +160,7 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void PICPlusPlus::addInitialVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity) {
+	void PICPlusPlus::initializeVelocities(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double driftVelocity, const double thermalVelocity) {
 		if (driftVelocity != 0) {
 			addDriftVelocity(inOutParticleXVelocities, numParticles, driftVelocity);
 		}
@@ -248,87 +172,58 @@ namespace PIC_PLUS_PLUS {
 
 	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialPerturbationAmplitude) {
 		for (int a = 0; a < numParticles; ++a) {
-			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / m_spatialLength;
+			double theta = 2 * std::numbers::pi * spatialPerturbationMode * inOutParticlePositions[a] / m_simulationParams.spatialLength;
 			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
 
-			if (inOutParticlePositions[a] >= m_spatialLength) {
-				inOutParticlePositions[a] = inOutParticlePositions[a] - m_spatialLength;
+			if (inOutParticlePositions[a] >= m_simulationParams.spatialLength) {
+				inOutParticlePositions[a] = inOutParticlePositions[a] - m_simulationParams.spatialLength;
 			}
 			if (inOutParticlePositions[a] < 0) {
-				inOutParticlePositions[a] = inOutParticlePositions[a] + m_spatialLength;
+				inOutParticlePositions[a] = inOutParticlePositions[a] + m_simulationParams.spatialLength;
 			}
 		}
 	}
 
-	void PICPlusPlus::calculateEnergies(
-		std::vector<std::vector<double>>& inOutParticleKineticEnergy,
-		std::vector<double>& inOutElectrostaticEnergy,
-		const int timeStep,
-		const std::vector<int>& speciesNumParticles,
-		const std::vector<std::vector<double>>& particleXVelocities,
-		const std::vector<double>& particleMass,
-		const std::vector<std::vector<double>>& electricField) {
+	void PICPlusPlus::calculateEnergies() {
 
-		for (int species = 0; species < m_numSpecies; species++) {
-			for (int i = 0; i < speciesNumParticles[species]; i++) {
-				inOutParticleKineticEnergy[species][timeStep] += 0.5 * std::pow((particleXVelocities[species][i]), 2) * particleMass[species];
+		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
+			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
+				m_particleKineticEnergy[species][m_timeStep] += 0.5 * std::pow((m_allSpeciesData[species].particleXVelocities[i]), 2) * m_allSpeciesData[species].particleMass;
 			}
 		}
 
-		for (int i = 0; i < m_numGrid + 1; i++) {
-			inOutElectrostaticEnergy[timeStep] += std::pow(electricField[timeStep][i], 2) * 0.5 * m_gridStepSize;
+		for (int i = 0; i < m_simulationParams.numGrid + 1; i++) {
+			m_electrostaticEnergy[m_timeStep] += std::pow(m_electricField[m_timeStep][i], 2) * 0.5 * m_simulationParams.gridStepSize;
 		}
 	}
 
-	std::vector<DATA_STRUCTS::Particle> PICPlusPlus::updateFrameParticles(
-		int numSpecies,
-		const std::vector<int>& speciesNumParticles,
-		const std::vector<std::vector<double>>& particlePositions,
-		const std::vector<std::vector<double>>& particleXVelocities,
-		const int timeStep,
-		const std::vector<double>& particleMass
-	) {
+	DATA_STRUCTS::Frame PICPlusPlus::updateFrame() {
+
+		DATA_STRUCTS::Frame frame;
+
+		frame.electricField = m_electricField[m_timeStep];
+		frame.particles = updateFrameParticles();
+		frame.frameNumber = m_timeStep;
+
+		return frame;
+	}
+
+	std::vector<DATA_STRUCTS::Particle> PICPlusPlus::updateFrameParticles() {
+
 		int particleId = 0;
 
 		std::vector<DATA_STRUCTS::Particle> particles;
-		for (int species = 0; species < numSpecies; species++) {
-			for (int i = 0; i < speciesNumParticles[species]; i++) {
+		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
+			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
 
 				DATA_STRUCTS::Particle& particle = particles.emplace_back();
 
 				particle.id = particleId++;
-				particle.position = particlePositions[species][i];
-				particle.velocity = particleXVelocities[species][i];
+				particle.position = m_allSpeciesData[species].particlePositions[i];
+				particle.velocity = m_allSpeciesData[species].particleXVelocities[i];
 				particle.species = species;
 			}
 		}
-
 		return particles;
-	}
-
-	DATA_STRUCTS::Frame PICPlusPlus::updateFrame(
-		const std::vector<std::vector<double>>& electricField,
-		const int timeStep, const int numSpecies,
-		const std::vector<int>& speciesNumParticles,
-		const std::vector<std::vector<double>>& particlePositions,
-		const std::vector<std::vector<double>>& particleXVelocities,
-		const std::vector<double>& particleMass) {
-
-		DATA_STRUCTS::Frame frame;
-
-		frame.electricField = electricField[timeStep];
-
-		frame.particles = updateFrameParticles(
-			numSpecies,
-			speciesNumParticles,
-			particlePositions,
-			particleXVelocities,
-			timeStep,
-			particleMass
-		);
-
-		frame.frameNumber = timeStep;
-
-		return frame;
 	}
 };

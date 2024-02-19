@@ -1,10 +1,12 @@
 #include <chrono>
+#include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 #include <SDL2/SDL.h>
 
 #include <Logger.h>
-
+#include <DataStructs.h>
 #include <PICPlusPlus.h>
 
 struct App {
@@ -84,12 +86,51 @@ void presentScene(void)
     SDL_RenderPresent(app.renderer);
 }
 
+DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
+
+	DATA_STRUCTS::InputVariables inputVariables;
+
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.numGrid = config.value("numGrid", 0);
+	simulationParams.numTimeSteps = config.value("numTimeSteps", 0);
+	simulationParams.spatialLength = config.value("spatialLength", 0.0);
+	simulationParams.timeStepSize = config.value("timeStepSize", 0.0);
+	simulationParams.numSpecies = config.value("numSpecies", 0);
+
+	std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData;
+
+	for (const auto& speciesConfig : config["species"]) {
+		DATA_STRUCTS::SpeciesData speciesData;
+		speciesData.name = speciesConfig.value("name", "UnnamedSpecies");
+		speciesData.numParticles = speciesConfig.value("numParticles", 0);
+		speciesData.spatialPerturbationMode = speciesConfig.value("spatialPerturbationMode", 0);
+		speciesData.driftVelocity = speciesConfig.value("driftVelocity", 0.0);
+		speciesData.spatialPerturbationAmplitude = speciesConfig.value("spatialPerturbationAmplitude", 0.0);
+		speciesData.thermalVelocity = speciesConfig.value("thermalVelocity", 0.0);
+		speciesData.plasmaFrequency = speciesConfig.value("plasmaFrequency", 0);
+		speciesData.chargeMassRatio = speciesConfig.value("chargeMassRatio", 0);
+
+		std::vector<double> particlePositions(speciesData.numParticles, 0);
+		std::vector<double> particleXVelocities(speciesData.numParticles, 0);
+
+		speciesData.particlePositions = particlePositions;
+		speciesData.particleXVelocities = particleXVelocities;
+
+
+		allSpeciesData.push_back(speciesData);
+	}
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = allSpeciesData;
+
+	return inputVariables;
+}
+
 int main(int argc, char* argv[]) {
     Logger::Logger::Init();
 
-    initSDL();
+    /*initSDL();
 
-    //atexit(cleanup);
+    atexit(cleanup);
 
     while (app.isRunning)
     {
@@ -102,59 +143,44 @@ int main(int argc, char* argv[]) {
         SDL_Delay(16);
     }
 
-    return 0;
+    return 0;*/
 
+	auto start = std::chrono::high_resolution_clock::now();
 
-    const double defaultL = 6.28318530717958;
-    const int defaultN = 500;
-    const int defaultNt = 300;
-    const double defaultDt = 0.1;
-    const int defaultNg = 256;
-    const int defaultMode = 1;
-    const double defaultV0 = 0;
-    const int defaultNumSpecies = 1;
-    const double defaultAmplitude = 0.02;
-    const double defaultVT1 = 0.5;
-    const int defaultWp1 = 1;
-    const int defaultQm1 = -1;
+	if (argc != 2) {
+		std::cerr << "Path: " << argv[0] << " <config.json>\n";
+		return 1;
+	}
 
-    // Initialize variables with default values or command line arguments
-    const double spatialLength = argc > 1 ? std::stod(argv[1]) : defaultL;
-    const int numParticles = argc > 2 ? atoi(argv[2]) : defaultN;
-    const int numTimeSteps = argc > 3 ? atoi(argv[3]) : defaultNt;
-    const double timeStepSize = argc > 4 ? std::stod(argv[4]) : defaultDt;
-    const int numGrid = argc > 5 ? atoi(argv[5]) : defaultNg;
-    const int spatialPerturbationMode = argc > 6 ? std::stoi(argv[6]) : defaultMode;
-    const double driftVelocity = argc > 7 ? std::stod(argv[7]) : defaultV0;
-    const int numSpecies = argc > 8 ? std::stoi(argv[8]) : defaultNumSpecies;
-    const double spatialPerturbationAmplitude = argc > 9 ? std::stod(argv[9]) : defaultAmplitude;
-    const double thermalVelocity = argc > 10 ? std::stod(argv[10]) : defaultVT1;
-    const int plasmaFrequency = argc > 11 ? std::stoi(argv[11]) : defaultWp1;
-    const int chargeMassRatio = argc > 12 ? std::stoi(argv[12]) : defaultQm1;
+	std::ifstream configFile(argv[1]);
+	if (!configFile.is_open()) {
+		std::cerr << "Error opening file: " << argv[1] << "\n";
+		return 1;
+	}
 
-    // 6.28318530717958 5 3 0.1 32 1 1 2 0.001 0.0 1.0 -1.0
+	nlohmann::json config;
+	configFile >> config;
 
-    auto start = std::chrono::high_resolution_clock::now();
+	if (config.find("species") == config.end() || !config["species"].is_array()) {
+		std::cerr << "Error: 'species' array not found in the JSON file.\n";
+		return 1;
+	}
 
-	PIC_PLUS_PLUS::PICPlusPlus init(spatialLength,
-        numParticles,
-        numTimeSteps,
-        timeStepSize,
-        numGrid,
-        spatialPerturbationMode,
-        driftVelocity,
-        numSpecies,
-        spatialPerturbationAmplitude,
-        thermalVelocity,
-        plasmaFrequency,
-        chargeMassRatio);
+	DATA_STRUCTS::InputVariables inputVariables = loadJSONFile(config);
 
-	auto jsonResult = init.initialize();
+	PIC_PLUS_PLUS::PICPlusPlus picPlusPlus(inputVariables);
+	auto jsonResult = picPlusPlus.initialize();
 
-    auto finish = std::chrono::high_resolution_clock::now();
+	auto finish = std::chrono::high_resolution_clock::now();
 
-    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
-    std::cout << "Finished in " << microseconds.count() << " micro secs\n";
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish - start);
+
+	std::cout << "numParticles: " << inputVariables.allSpeciesData[0].numParticles << std::endl;
+	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
+	std::cout << "numGrid: "	  << inputVariables.simulationParams.numGrid << std::endl;
+	std::cout << "numSpecies: "   << inputVariables.simulationParams.numSpecies << std::endl;
+
+	std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
 
 	return 0;
 }
