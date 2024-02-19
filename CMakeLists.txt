@@ -8,12 +8,12 @@ enable_testing()
 
 find_package(GTest REQUIRED)
 #find_package(FFTW3 REQUIRED)
-find_package(MPI REQUIRED)
+#find_package(MPI REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(spdlog REQUIRED)
 
-include_directories(${MPI_CXX_INCLUDE_PATH})
+#include_directories(${MPI_CXX_INCLUDE_PATH})
 
 
 add_subdirectory(logger)
