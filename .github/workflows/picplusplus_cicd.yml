@@ -1,0 +1,53 @@
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    container: ghcr.io/richardvanderburgh/picplusplus_ubuntu_latest:latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Dependencies with Conan (Ubuntu)
+      run: |
+        mkdir build
+        conan profile detect
+        conan install . --profile=buildUtils/linux_gcc_release --build=missing -of=build
+        conan build . -build-folder=build
+
+    # - name: Test (Ubuntu)
+    #   working-directory: build
+    #   run: ctest
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Conan (Windows)
+      uses: trassir/conan-setup-action@v1
+      with:
+        conan-version: 'latest'
+
+    - name: Install Dependencies with Conan (Windows)
+      run: |
+        mkdir build
+        conan profile new --detect default
+        conan profile update settings.compiler.version=YOUR_COMPILER_VERSION default # Replace YOUR_COMPILER_VERSION with the actual version, e.g., 16 for Visual Studio 2019
+        conan install . --build=missing -of=build
+        conan build . -build-folder=build
+
+    # - name: Test (Windows)
+    #   working-directory: build
+    #   run: .\path\to\your\test\command
