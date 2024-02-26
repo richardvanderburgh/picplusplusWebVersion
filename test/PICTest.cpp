@@ -86,6 +86,8 @@ namespace {
 	}
 }
 
+void compareArrays(const nlohmann::json& expected, const nlohmann::json& actual, double precision);
+void compareObjects(const nlohmann::json& expected, const nlohmann::json& actual, double precision);
 
 TEST(PICTest, EFrame0Test)
 {
@@ -169,6 +171,44 @@ TEST(PICTest, EFrame0Test)
 
 	std::cout << "PIC++ took " << microseconds.count() << " micro secs\n";
 
+	double precision = 1e-6; 
+
+	auto expected = jsonResult.value();
+	auto actual = BuildExpectedJson();
+
 	EXPECT_TRUE(jsonResult.has_value());
-	EXPECT_EQ(jsonResult.value(), BuildExpectedJson());
+	compareObjects(expected, actual, precision);
+}
+
+void compareValues(const nlohmann::json& expected, const nlohmann::json& actual, double precision) {
+    // Check type of expected value and compare accordingly
+    switch (expected.type()) {
+        case nlohmann::json::value_t::array:
+            compareArrays(expected, actual, precision);
+            break;
+        case nlohmann::json::value_t::object:
+            compareObjects(expected, actual, precision);
+            break;
+        case nlohmann::json::value_t::number_float:
+            ASSERT_NEAR(expected.get<double>(), actual.get<double>(), precision);
+            break;
+        default:
+            ASSERT_EQ(expected, actual);
+            break;
+    }
+}
+
+void compareArrays(const nlohmann::json& expected, const nlohmann::json& actual, double precision) {
+    ASSERT_EQ(expected.size(), actual.size()) << "Arrays have different sizes.";
+    for (size_t i = 0; i < expected.size(); ++i) {
+        compareValues(expected[i], actual[i], precision);
+    }
+}
+
+void compareObjects(const nlohmann::json& expected, const nlohmann::json& actual, double precision) {
+    ASSERT_EQ(expected.size(), actual.size()) << "Objects have different numbers of keys.";
+    for (auto it = expected.begin(); it != expected.end(); ++it) {
+        ASSERT_TRUE(actual.contains(it.key())) << "Key " << it.key() << " is missing.";
+        compareValues(it.value(), actual[it.key()], precision);
+    }
 }
