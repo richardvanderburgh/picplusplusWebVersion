@@ -15,6 +15,7 @@ class pic_plus_plus(ConanFile):
 
     def build(self):
         cmake = CMake(self)
+        cmake.definitions['CMAKE_EXPORT_COMPILE_COMMANDS'] = "ON"
         cmake.configure()
         cmake.build()
         # here you can run CTest, launch your binaries, etc
