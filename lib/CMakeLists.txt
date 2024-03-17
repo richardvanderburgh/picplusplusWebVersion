@@ -39,6 +39,7 @@ target_link_libraries( ${PROJECT_NAME}
     nlohmann_json::nlohmann_json
 	${MPI_CXX_LIBRARIES}
     spdlog::spdlog
+	Logger
 )
 
 add_subdirectory(test)

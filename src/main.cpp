@@ -128,20 +128,20 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 int main(int argc, char* argv[]) {
     Logger::Logger::Init();
 
-    //initSDL();
+    initSDL();
 
     //atexit(cleanup);
 
-    //while (app.isRunning)
-    //{
-    //    prepareScene();
+    while (app.isRunning)
+    {
+        prepareScene();
 
-    //    doInput();
+        doInput();
 
-    //    presentScene();
+        presentScene();
 
-    //    SDL_Delay(16);
-    //}
+        SDL_Delay(16);
+    }
 
     //return 0;
 

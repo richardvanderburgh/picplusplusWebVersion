@@ -12,6 +12,9 @@
 #include <thread>
 #include <vector>
 
+#include <Logger.h>
+
+
 #include "Accel.hpp"
 #include "PicPlusPlus.h"
 #include "fft.hpp"
@@ -107,8 +110,10 @@ namespace PIC_PLUS_PLUS {
 		mPicData.frames.emplace_back() = updateFrame();
 
 		auto start = std::chrono::high_resolution_clock::now();
+		LOG_INFO("Time step = {}" , m_timeStep);
 
 		for (m_timeStep = 1; m_timeStep <= m_simulationParams.numTimeSteps; m_timeStep++) {
+			LOG_INFO("Time step = {}", m_timeStep);
 			runTimeLoop();
 		}
 
