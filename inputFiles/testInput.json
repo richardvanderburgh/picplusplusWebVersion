@@ -2,7 +2,7 @@
   "species": [
     {
       "name": "Species1",
-      "numParticles": 50000,
+      "numParticles": 5000,
       "spatialPerturbationMode": 1,
       "driftVelocity": 1,
       "spatialPerturbationAmplitude": 0.001,
@@ -12,7 +12,7 @@
     },
     {
       "name": "Species2",
-      "numParticles": 50000,
+      "numParticles": 5000,
       "spatialPerturbationMode": 1,
       "driftVelocity": -1,
       "spatialPerturbationAmplitude": 0.001,
