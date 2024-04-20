@@ -15,6 +15,8 @@ set(PRIVATE_HEADERS
     ./private_headers/complex.hpp
     ./private_headers/SetRho.hpp
     ./private_headers/Utils.hpp
+    ./private_headers/Flat2DVector.h
+
 )
 
 set(SOURCE_FILES

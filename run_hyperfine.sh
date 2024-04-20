@@ -21,7 +21,7 @@ for input_file in $input_files; do
     result_file="${output_dir}/${base_name}_result.json"
     
     # Run Hyperfine and export the results to a JSON file
-    hyperfine "buildLinux/bin/PIC++Main $input_file" --export-json "$result_file"
+    hyperfine "build/bin/PIC++Main $input_file" --export-json "$result_file"
     
     # Optional: Echo the completion of this test
     echo "Completed benchmark for $input_file. Results saved to $result_file."
