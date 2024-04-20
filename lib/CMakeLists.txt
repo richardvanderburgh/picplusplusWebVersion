@@ -16,13 +16,12 @@ set(PRIVATE_HEADERS
     ./private_headers/SetRho.hpp
     ./private_headers/Utils.hpp
     ./private_headers/Flat2DVector.h
-
 )
 
 set(SOURCE_FILES
 	./src/complex.cpp
 	./src/fft.cpp
-    ./src/PICPlusPlus.cpp
+	./src/PICPlusPlus.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC

@@ -19,6 +19,7 @@ public:
   operator[](IntType column) {
     return m_vec[m_curRow * m_numColumns + column];
   }
+  ~Flat2DHelper() = default;
 };
 
 template <typename T> class Flat2DVector {
@@ -47,7 +48,7 @@ public:
     return Flat2DHelper<T>(flatVector, m_numRows, m_numColumns, row);
   }
 
-  ~Flat2DVector();
+  ~Flat2DVector() = default;
 
 private:
   std::vector<T> flatVector;

@@ -1,5 +1,6 @@
 
 #include "PICPlusPlus.h"
+#include "Flat2DVector.h"
 
 #include <nlohmann/json.hpp>
 
@@ -14,7 +15,6 @@
 
 #include "Accel.hpp"
 #include "Fields.hpp"
-#include "Flat2DVector.h"
 #include "SetRho.hpp"
 #include "Utils.hpp"
 #include "fft.hpp"
