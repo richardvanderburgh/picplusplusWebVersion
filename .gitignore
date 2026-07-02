@@ -1,7 +1,12 @@
-
-*.filters
-*.cmake
 build
 buildLinux
+.venv
+conan.lock
+conanbuildinfo.*
+conaninfo.txt
+conan_toolchain.cmake
+CMakeUserPresets.json
+conan_generator.cmake
+graph_info.json
 djangodocker/__pycache__
 .vs

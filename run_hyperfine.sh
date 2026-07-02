@@ -1,30 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Define the directory containing your input files
-input_dir="inputFiles/benchmarkFiles/timestepDOE"
+# Usage: ./run_hyperfine.sh [input_dir]
+# Example: ./run_hyperfine.sh inputFiles/benchmarkFiles/particleDOE
 
-# Define the output directory for your results files
+input_dir="${1:-inputFiles/benchmarkFiles/timestepDOE}"
 output_dir="results"
+binary="${PIC_BINARY:-build/bin/PIC++Main}"
 
-# Create the output directory if it doesn't exist
+if [[ ! -x "$binary" && ! -f "$binary" ]]; then
+  echo "Binary not found: $binary" >&2
+  echo "Build first with ./scripts/build.sh or set PIC_BINARY." >&2
+  exit 1
+fi
+
 mkdir -p "$output_dir"
 
-# Get a list of input files
-input_files=$(ls $input_dir/*.json)
+for input_file in "$input_dir"/*.json; do
+  base_name=$(basename "$input_file" .json)
+  result_file="${output_dir}/${base_name}_result.json"
 
-# Iterate over each input file
-for input_file in $input_files; do
-    # Extract the basename of the file for naming the result file
-    base_name=$(basename "$input_file" .json)
-    
-    # Define the output file name
-    result_file="${output_dir}/${base_name}_result.json"
-    
-    # Run Hyperfine and export the results to a JSON file
-    hyperfine "buildLinux/bin/PIC++Main $input_file" --export-json "$result_file"
-    
-    # Optional: Echo the completion of this test
-    echo "Completed benchmark for $input_file. Results saved to $result_file."
+  hyperfine "$binary $input_file" --export-json "$result_file"
+  echo "Completed benchmark for $input_file. Results saved to $result_file."
 done
 
 echo "All benchmarks completed."

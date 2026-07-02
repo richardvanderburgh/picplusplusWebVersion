@@ -48,8 +48,8 @@ int main(int argc, char* argv[]) {
 
 	auto start = std::chrono::high_resolution_clock::now();
 
-	if (argc != 2) {
-		std::cerr << "Path: " << argv[0] << " <config.json>\n";
+	if (argc < 2) {
+		std::cerr << "Usage: " << argv[0] << " <config.json> [output.json]\n";
 		return 1;
 	}
 
@@ -75,6 +75,20 @@ int main(int argc, char* argv[]) {
 
 	PIC_PLUS_PLUS::PICPlusPlus picPlusPlus(inputVariables);
 	auto jsonResult = picPlusPlus.initialize();
+
+	if (!jsonResult.has_value()) {
+		std::cerr << "Simulation failed to produce results.\n";
+		return 1;
+	}
+
+	if (argc >= 3) {
+		std::ofstream outputFile(argv[2]);
+		if (!outputFile.is_open()) {
+			std::cerr << "Error opening output file: " << argv[2] << "\n";
+			return 1;
+		}
+		outputFile << jsonResult->dump(2);
+	}
 
 	auto finish = std::chrono::high_resolution_clock::now();
 

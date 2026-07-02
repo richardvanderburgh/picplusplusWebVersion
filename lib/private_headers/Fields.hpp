@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <numbers>
+#include <vector>
 
 #include "complex.hpp"
 #include "fft.hpp"
@@ -16,40 +17,21 @@ inline void fields(
 	std::vector<double>& inOutAcceleration,
 	double& ael) {
 
-	const int numGrid = 32;
+	const int numGrid = simulationParams.numGrid;
 	std::vector<double> electricPotential(numGrid + 1, 0.0);
-	double l = simulationParams.spatialLength;
 
 	inOutChargeDensity[0] += inOutChargeDensity[numGrid];
 	inOutChargeDensity[numGrid] = inOutChargeDensity[0];
 
-	complex complexChargeDensity[numGrid + 1];
-	complex complexChargeDensityK[numGrid];
+	std::vector<complex> complexChargeDensity(numGrid + 1);
+	std::vector<complex> complexChargeDensityK(numGrid);
+	std::vector<complex> complexPotential(numGrid + 1);
+	std::vector<complex> complexPotentialK(numGrid + 1);
 
-	complex complexPotential[numGrid + 1];
-	complex complexPotentialK[numGrid + 1];
-
-	//fftw_complex complexRho[ng + 1];
-	//fftw_complex complexRhok[ng];   // Output array
-	//fftw_complex complexPhik[ng + 1];
-	//fftw_complex complexPhi[ng + 1];
-	//fftw_plan forwardPlan;
-
-	for (int i = 0; i < numGrid; i++) { complexChargeDensity[i] = inOutChargeDensity[i]; }
-	CFFT::Forward(complexChargeDensity, complexChargeDensityK, numGrid);
-
-	//for (int i = 0; i < ng + 1; i++) {
-		//complexRho[i][0] = rho[i];
-		//complexRho[i][1] = 0;
-		//complexPhik[i][0] = 0;
-		//complexPhik[i][1] = 0;
-		//complexPhi[i][0] = 0;
-		//complexPhi[i][1] = 0;
-	//}
-
-	//forwardPlan = fftw_plan_dft_1d(ng, complexRho, complexRhok, FFTW_FORWARD,  FFTW_ESTIMATE);
-	//fftw_execute(forwardPlan);
-	//fftw_destroy_plan(forwardPlan);
+	for (int i = 0; i < numGrid; i++) {
+		complexChargeDensity[i] = inOutChargeDensity[i];
+	}
+	CFFT::Forward(complexChargeDensity.data(), complexChargeDensityK.data(), numGrid);
 
 	for (int k = 0; k < numGrid + 1; k++) {
 		int ii = 0;
@@ -67,35 +49,13 @@ inline void fields(
 			break;
 
 		complexPotentialK[k] = complexChargeDensityK[k] / -std::pow(2.0 * std::numbers::pi * ii / simulationParams.spatialLength, 2.0);
-
-		//complexPhik[k][0] = complexRhok[k][0] / -std::pow(2.0 * M_PI * ii / L, 2.0);
-		//complexPhik[k][1] = complexRhok[k][1] / -std::pow(2.0 * M_PI * ii / L, 2.0);
-
 	}
 
-	//complex complexPhi[ng];
-	CFFT::Inverse(complexPotentialK, complexPotential, numGrid);
-
-	//fftw_plan inversePlan;
-	//inversePlan = fftw_plan_dft_1d(ng, complexPhik, complexPhi, FFTW_BACKWARD, FFTW_ESTIMATE);
-	//fftw_execute(inversePlan);
-
-	//fftw_destroy_plan(inversePlan);
-	//fftw_free(complexRhok);
-
-	//for (int i = 0; i < ng + 1; i++) {
-	//	double real = complexPhi[i][0];
-	//	double imag = complexPhi[i][1];
-
-	//	phi[i] = -real;
-	//}
+	CFFT::Inverse(complexPotentialK.data(), complexPotential.data(), numGrid);
 
 	for (int i = 0; i < numGrid + 1; i++) {
 		electricPotential[i] = -complexPotential[i].re();
 	}
-
-	//fftw_free(complexPhi);
-
 
 	electricPotential[numGrid] = electricPotential[0];
 

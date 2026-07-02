@@ -7,11 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 enable_testing()
 
 find_package(GTest REQUIRED)
-#find_package(FFTW3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
-
-include_directories(${MPI_CXX_INCLUDE_PATH})
-
 
 add_subdirectory(lib)
 
@@ -27,6 +23,12 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(${PROJECT_NAME}_Test
     test/PICplusplusTest.cpp
     test/PICTest.cpp
+    test/ValidationTest.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_Test
+    PRIVATE
+    lib/private_headers
 )
 
 target_link_libraries(${PROJECT_NAME}_Test

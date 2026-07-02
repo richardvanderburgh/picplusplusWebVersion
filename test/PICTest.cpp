@@ -173,11 +173,8 @@ TEST(PICTest, EFrame0Test)
 
 	double precision = 1e-6; 
 
-	auto expected = jsonResult.value();
-	auto actual = BuildExpectedJson();
-
-	EXPECT_TRUE(jsonResult.has_value());
-	compareObjects(expected, actual, precision);
+	ASSERT_TRUE(jsonResult.has_value());
+	compareObjects(BuildExpectedJson(), jsonResult.value(), precision);
 }
 
 void compareValues(const nlohmann::json& expected, const nlohmann::json& actual, double precision) {

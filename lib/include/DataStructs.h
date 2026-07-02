@@ -20,8 +20,8 @@ namespace DATA_STRUCTS {
 		double thermalVelocity;
 		double spatialPerturbationAmplitude;
 		int spatialPerturbationMode;
-		int plasmaFrequency;
-		int chargeMassRatio;
+		double plasmaFrequency;
+		double chargeMassRatio;
 		double particleCharge;
 		double particleMass;
 		double chargeCloudWidth;
