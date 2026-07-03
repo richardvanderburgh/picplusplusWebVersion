@@ -8,6 +8,10 @@
 
 `buildUtils/win_release` and `buildUtils/win_debug` pin `compiler.version` to match whatever MSVC toolset is actually installed on the GitHub Actions `windows-latest` runner. GitHub periodically bumps the underlying Visual Studio version on that image (e.g. VS2022 -> VS2026), which changes the CMake generator Conan selects. If Windows CI fails with `CMake Error ... could not find any instance of Visual Studio`, run `conan profile detect` on a fresh `windows-latest` runner (or check the failing job's log for the `detect_api: Found msvc ...` / `Detected profile` output) and update `compiler.version` in both profiles to match.
 
+## `conan build` requires `--profile` too
+
+`conan build . -of=build` recomputes the dependency graph from scratch and, unlike `conan install`, does **not** remember the `--profile` passed to the preceding `conan install` call. Omitting `--profile` on the `conan build` step makes it silently fall back to Conan's auto-detected default profile, which can have a different `compiler.cppstd` (e.g. MSVC defaults to `14`) than the pinned build profiles (which use `20`). This produces a package-ID mismatch and an `ERROR: Missing binary` failure even though the preceding `conan install` succeeded. Always pass the same `--profile=...` to both `conan install` and `conan build` (see `scripts/build.sh` for the canonical pattern).
+
 ## macOS Conan profile
 
 `buildUtils/macos_clang_release` pins `compiler.version=14` and `arch=armv8` (Conan clamps Apple Clang to a max known version). Adjust these if you are on Intel macOS or a different Xcode/Clang version, or run `conan profile detect` and copy the detected values into the profile.

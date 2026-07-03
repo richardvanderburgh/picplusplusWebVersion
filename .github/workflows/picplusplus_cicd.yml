@@ -23,7 +23,7 @@ jobs:
         mkdir build
         conan profile detect
         conan install . --profile=buildUtils/linux_gcc_release --build=missing -of=build
-        conan build . -of=build
+        conan build . --profile=buildUtils/linux_gcc_release -of=build
 
     - name: Test (Ubuntu)
       run: ctest --test-dir build --output-on-failure
@@ -45,7 +45,7 @@ jobs:
         mkdir build
         conan profile detect 
         conan install . --profile=buildUtils/win_release --build=missing -of=build
-        conan build . -of=build
+        conan build . --profile=buildUtils/win_release -of=build
 
     - name: Test (Windows)
       run: ctest --test-dir build --output-on-failure
