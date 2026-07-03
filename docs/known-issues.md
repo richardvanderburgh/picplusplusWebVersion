@@ -4,6 +4,10 @@
 
 `numGrid` must be a **power of two** because the bundled FFT implementation requires it. Non-power-of-two grids will fail silently or produce incorrect fields.
 
+## Windows Conan profile / GitHub Actions runner drift
+
+`buildUtils/win_release` and `buildUtils/win_debug` pin `compiler.version` to match whatever MSVC toolset is actually installed on the GitHub Actions `windows-latest` runner. GitHub periodically bumps the underlying Visual Studio version on that image (e.g. VS2022 -> VS2026), which changes the CMake generator Conan selects. If Windows CI fails with `CMake Error ... could not find any instance of Visual Studio`, run `conan profile detect` on a fresh `windows-latest` runner (or check the failing job's log for the `detect_api: Found msvc ...` / `Detected profile` output) and update `compiler.version` in both profiles to match.
+
 ## macOS Conan profile
 
 `buildUtils/macos_clang_release` pins `compiler.version=14` and `arch=armv8` (Conan clamps Apple Clang to a max known version). Adjust these if you are on Intel macOS or a different Xcode/Clang version, or run `conan profile detect` and copy the detected values into the profile.
