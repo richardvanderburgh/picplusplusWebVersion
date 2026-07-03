@@ -12,6 +12,10 @@
 
 `conan build . -of=build` recomputes the dependency graph from scratch and, unlike `conan install`, does **not** remember the `--profile` passed to the preceding `conan install` call. Omitting `--profile` on the `conan build` step makes it silently fall back to Conan's auto-detected default profile, which can have a different `compiler.cppstd` (e.g. MSVC defaults to `14`) than the pinned build profiles (which use `20`). This produces a package-ID mismatch and an `ERROR: Missing binary` failure even though the preceding `conan install` succeeded. Always pass the same `--profile=...` to both `conan install` and `conan build` (see `scripts/build.sh` for the canonical pattern).
 
+## `ctest` on Windows needs `-C <config>`
+
+The Windows build uses the Visual Studio (multi-configuration) CMake generator, so the build type is chosen at test time rather than configure time. Running `ctest --test-dir build` without a config on Windows fails every test with `Test not available without configuration. (Missing "-C <config>"?)`. Pass `-C Release` (CI uses `-C ${{ env.BUILD_TYPE }}`). Linux/macOS use single-config generators (Make/Ninja) and don't need this.
+
 ## macOS Conan profile
 
 `buildUtils/macos_clang_release` pins `compiler.version=14` and `arch=armv8` (Conan clamps Apple Clang to a max known version). Adjust these if you are on Intel macOS or a different Xcode/Clang version, or run `conan profile detect` and copy the detected values into the profile.
