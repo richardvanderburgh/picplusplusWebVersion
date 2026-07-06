@@ -2,7 +2,9 @@
 
 ## Field solver grid size
 
-`numGrid` must be a **power of two** because the bundled FFT implementation requires it. Non-power-of-two grids will fail silently or produce incorrect fields.
+`numGrid` must be a **power of two** because the bundled FFT implementation requires it.
+Invalid values are rejected at startup with a clear error message from
+`validateSimulationParams()` (CLI and `PICPlusPlus::initialize()`).
 
 ## Windows Conan profile / GitHub Actions runner drift
 
@@ -41,7 +43,8 @@ The `.venv` also holds Conan/CMake, so a single environment drives builds, tests
 The web UI is a development aid, not a production front end:
 
 - Hard-coded `ng = 32` in `templates/index.html` for plot axis limits does not track the form's `numGrid` value.
-- Thermal velocity initialization uses a non-seeded random number generator, so runs with `thermalVelocity > 0` are not reproducible.
+- Thermal velocity initialization uses a fixed seed (`std::mt19937(42)`), so runs
+  with `thermalVelocity > 0` are reproducible across platforms.
 - The UI assumes exactly two species with opposite drift velocities.
 
 ## Legacy input files
@@ -68,11 +71,11 @@ OpenMP-parallelized (see [performance.md](performance.md)). Notes:
 
 ## Homebrew libomp is keg-only (macOS)
 
-`brew install libomp` does not symlink into `/opt/homebrew`, so CMake's
-`find_package(OpenMP)` won't find it for AppleClang without explicit hints. See
-the OpenMP section of [building.md](building.md) for the required
-`-DOpenMP_*` flags. Without them the macOS build simply falls back to serial
-(still correct, just single-threaded).
+`brew install libomp` does not symlink into `/opt/homebrew`, so stock
+`find_package(OpenMP)` fails for AppleClang. CMake now probes
+`/opt/homebrew/opt/libomp` and `/usr/local/opt/libomp` automatically when you
+run `./scripts/build.sh`. Without `libomp` installed the macOS build falls back
+to serial (still correct, just single-threaded).
 
 ## Energy conservation
 

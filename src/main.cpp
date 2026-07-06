@@ -8,6 +8,7 @@
 #endif
 
 #include <PICPlusPlus.h>
+#include "Utils.hpp"
 
 DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 
@@ -73,6 +74,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	DATA_STRUCTS::InputVariables inputVariables = loadJSONFile(config);
+
+	if (const auto validationError = validateSimulationParams(inputVariables.simulationParams)) {
+		std::cerr << "Invalid simulation parameters: " << *validationError << "\n";
+		return 1;
+	}
+
 	std::cout << "numParticles: " << inputVariables.allSpeciesData[0].numParticles << std::endl;
 	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
 	std::cout << "numGrid: "	  << inputVariables.simulationParams.numGrid << std::endl;

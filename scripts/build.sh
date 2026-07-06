@@ -32,6 +32,21 @@ else
   PROFILE="buildUtils/linux_gcc_release"
 fi
 
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  libomp_found=false
+  for prefix in /opt/homebrew/opt/libomp /usr/local/opt/libomp; do
+    if [[ -f "$prefix/include/omp.h" ]]; then
+      libomp_found=true
+      break
+    fi
+  done
+  if [[ "$libomp_found" == false ]]; then
+    echo "Note: Homebrew libomp not found. The macOS build will be serial unless you run:" >&2
+    echo "      brew install libomp" >&2
+    echo "" >&2
+  fi
+fi
+
 echo "Using Conan profile: $PROFILE"
 conan install . --profile="$PROFILE" --build=missing -of=build
 conan build . --profile="$PROFILE" -of=build
@@ -40,3 +55,14 @@ echo ""
 echo "Build complete."
 echo "  Run:  ./build/bin/PIC++Main inputFiles/exampleInput.json"
 echo "  Test: ctest --test-dir build --output-on-failure"
+
+if [[ -x "$ROOT/scripts/verify_openmp.sh" ]]; then
+  echo ""
+  if "$ROOT/scripts/verify_openmp.sh"; then
+    :
+  else
+    echo "" >&2
+    echo "OpenMP verification failed. Parallel speedups require an OpenMP-enabled build." >&2
+    exit 1
+  fi
+fi

@@ -71,10 +71,11 @@ speedup on 8 threads**:
 
 ![OpenMP strong scaling](docs/images/openmp_scaling.png)
 
-Reproduce the strong-scaling sweep (requires an OpenMP-enabled build):
+Reproduce the strong-scaling sweep (requires an OpenMP-enabled build; run
+`scripts/verify_openmp.sh` to confirm):
 
 ```bash
-PICPP_BIN=build/bin/PIC++Main ./scripts/scaling_benchmark.sh
+./scripts/scaling_benchmark.sh
 .venv/bin/python scripts/plot_scaling.py
 ```
 

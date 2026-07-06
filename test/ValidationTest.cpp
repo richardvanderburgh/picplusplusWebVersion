@@ -108,3 +108,34 @@ TEST(ValidationTest, FieldsSolverUsesConfiguredGridSize)
 	EXPECT_GT(maxField, 1e-6)
 		<< "Field solver should produce a non-zero electric field at numGrid=256";
 }
+
+TEST(ValidationTest, RejectsNonPowerOfTwoGrid)
+{
+	auto inputVariables = buildTwoStreamInput();
+	inputVariables.simulationParams.numGrid = 30;
+
+	PIC_PLUS_PLUS::PICPlusPlus simulation(inputVariables);
+	const auto result = simulation.initialize();
+
+	EXPECT_FALSE(result.has_value())
+		<< "numGrid=30 should be rejected because the FFT solver requires a power of two";
+}
+
+TEST(ValidationTest, ThermalVelocityIsReproducible)
+{
+	auto inputA = buildTwoStreamInput();
+	auto inputB = buildTwoStreamInput();
+	inputA.allSpeciesData[0].thermalVelocity = 0.1;
+	inputA.allSpeciesData[1].thermalVelocity = 0.1;
+	inputB.allSpeciesData[0].thermalVelocity = 0.1;
+	inputB.allSpeciesData[1].thermalVelocity = 0.1;
+	inputA.simulationParams.numTimeSteps = 10;
+	inputB.simulationParams.numTimeSteps = 10;
+
+	const auto resultA = PIC_PLUS_PLUS::PICPlusPlus(inputA).initialize();
+	const auto resultB = PIC_PLUS_PLUS::PICPlusPlus(inputB).initialize();
+
+	ASSERT_TRUE(resultA.has_value());
+	ASSERT_TRUE(resultB.has_value());
+	EXPECT_DOUBLE_EQ(sumKineticEnergy(*resultA), sumKineticEnergy(*resultB));
+}

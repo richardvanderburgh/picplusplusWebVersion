@@ -1,0 +1,9 @@
+{
+  "platform": "darwin",
+  "compiler": "apple-clang",
+  "nproc": 14,
+  "input": "inputFiles/benchmarkFiles/scaling/large.json",
+  "repeats": 3,
+  "threads": [1, 2, 4, 8, 14],
+  "time_loop_us": [642165, 339097, 206914, 147396, 163271]
+}

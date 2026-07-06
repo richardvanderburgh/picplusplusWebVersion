@@ -17,6 +17,7 @@ cd "$ROOT"
 
 INPUT="${1:-inputFiles/benchmarkFiles/scaling/large.json}"
 REPEATS="${2:-3}"
+OUTPUT="${SCALING_OUTPUT:-results/scaling.json}"
 
 BIN="${PICPP_BIN:-build/bin/PIC++Main}"
 if [[ ! -x "$BIN" ]]; then
@@ -30,7 +31,7 @@ if [[ ! -f "$INPUT" ]]; then
 fi
 
 # Detect physical/logical core count for a sensible default thread ladder.
-if command -v sysctl &>/dev/null; then
+if [[ "$(uname -s)" == "Darwin" ]] && command -v sysctl &>/dev/null; then
   MAX_CORES="$(sysctl -n hw.ncpu)"
 elif command -v nproc &>/dev/null; then
   MAX_CORES="$(nproc)"
@@ -48,7 +49,22 @@ while (( t < MAX_CORES )); do
 done
 THREADS+=("$MAX_CORES")
 
+# Optional metadata for cross-platform comparison plots.
+PLATFORM="${SCALING_PLATFORM:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
+COMPILER="${SCALING_COMPILER:-unknown}"
+if [[ "$COMPILER" == "unknown" && -x "$BIN" ]]; then
+  if strings "$BIN" 2>/dev/null | grep -q "GCC:"; then
+    COMPILER="gcc"
+  elif [[ "$(uname -s)" == "Darwin" ]]; then
+    COMPILER="apple-clang"
+  fi
+fi
+NPROC="$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 0)"
+
 echo "PIC++ OpenMP strong-scaling benchmark"
+echo "  platform: $PLATFORM"
+echo "  compiler: $COMPILER"
+echo "  nproc:    $NPROC"
 echo "  input:   $INPUT"
 echo "  repeats: $REPEATS (reporting best/min)"
 echo "  threads: ${THREADS[*]}"
@@ -84,6 +100,9 @@ done
 # Emit results/scaling.json
 {
   echo "{"
+  printf '  "platform": "%s",\n' "$PLATFORM"
+  printf '  "compiler": "%s",\n' "$COMPILER"
+  printf '  "nproc": %s,\n' "$NPROC"
   printf '  "input": "%s",\n' "$INPUT"
   printf '  "repeats": %s,\n' "$REPEATS"
   printf '  "threads": ['
@@ -99,8 +118,8 @@ done
   done
   printf ']\n'
   echo "}"
-} > results/scaling.json
+} > "$OUTPUT"
 
 echo ""
-echo "Wrote results/scaling.json"
+echo "Wrote $OUTPUT"
 echo "Plot with: .venv/bin/python scripts/plot_scaling.py"

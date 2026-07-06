@@ -16,6 +16,24 @@ option(PICPP_ENABLE_OPENMP "Enable OpenMP shared-memory parallelism when availab
 # and the code runs correctly in serial.
 if(PICPP_ENABLE_OPENMP)
     find_package(OpenMP COMPONENTS CXX)
+
+    # AppleClang does not ship OpenMP; Homebrew's keg-only libomp needs hints.
+    if(NOT OpenMP_CXX_FOUND AND APPLE)
+        foreach(_libomp_root IN ITEMS "/opt/homebrew/opt/libomp" "/usr/local/opt/libomp")
+            if(EXISTS "${_libomp_root}/include/omp.h")
+                message(STATUS "PIC++: probing Homebrew libomp at ${_libomp_root}")
+                set(OpenMP_ROOT "${_libomp_root}")
+                set(OpenMP_CXX_FLAGS "-Xclang -fopenmp -I${_libomp_root}/include")
+                set(OpenMP_CXX_LIB_NAMES omp)
+                set(OpenMP_omp_LIBRARY "${_libomp_root}/lib/libomp.dylib")
+                find_package(OpenMP COMPONENTS CXX)
+                if(OpenMP_CXX_FOUND)
+                    break()
+                endif()
+            endif()
+        endforeach()
+    endif()
+
     if(OpenMP_CXX_FOUND)
         message(STATUS "PIC++: OpenMP enabled (${OpenMP_CXX_VERSION})")
     else()
@@ -41,6 +59,11 @@ add_subdirectory(lib)
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
+)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+    lib/private_headers
 )
 
 target_link_libraries(${PROJECT_NAME}

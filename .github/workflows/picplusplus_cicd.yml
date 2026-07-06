@@ -28,6 +28,11 @@ jobs:
     - name: Test (Ubuntu)
       run: ctest --test-dir build --output-on-failure
 
+    - name: Verify OpenMP (Ubuntu)
+      run: |
+        chmod +x scripts/verify_openmp.sh
+        scripts/verify_openmp.sh build/bin/PIC++Main inputFiles/benchmarkFiles/scaling/ci_smoke.json
+
   build-windows:
     runs-on: windows-latest
 
@@ -49,3 +54,9 @@ jobs:
 
     - name: Test (Windows)
       run: ctest --test-dir build -C ${{ env.BUILD_TYPE }} --output-on-failure
+
+    - name: Verify OpenMP (Windows)
+      shell: bash
+      run: |
+        chmod +x scripts/verify_openmp.sh
+        scripts/verify_openmp.sh build/bin/PIC++Main.exe inputFiles/benchmarkFiles/scaling/ci_smoke.json

@@ -33,8 +33,9 @@ The AoS `Particle` struct still exists, but only for **diagnostic output**
 
 ## OpenMP parallelization of the hot loops
 
-Three kernels run every time step and scale with particle count. Each is
-parallelized according to its data-dependency pattern.
+Four kernels run every time step. The particle kernels scale with particle count;
+the field solve scales with grid size. Each is parallelized according to its
+data-dependency pattern.
 
 ### 1. Particle push (`accel`) — embarrassingly parallel
 
@@ -97,6 +98,27 @@ for (int i = 0; i < numParticles; ++i)
     kineticEnergy += 0.5 * v[i] * v[i] * mass;
 ```
 
+### 4. Field solve (`fields`) — k-space Poisson and grid derivatives
+
+After the charge density FFT (serial butterfly in `CFFT`), the Poisson solve in
+Fourier space and the electric-field finite-difference stencils are independent
+per mode/grid point and run as parallel `for` loops:
+
+```cpp
+#pragma omp parallel for schedule(static)
+for (int k = 0; k < numGrid + 1; ++k) {
+    // solve for complexPotentialK[k]
+}
+
+#pragma omp parallel for schedule(static)
+for (int j = 1; j < numGrid; ++j) {
+    electricField[j] = (phi[j - 1] - phi[j + 1]) / (2 * dx);
+}
+```
+
+The FFT itself remains serial for now; parallelizing its butterfly stages needs
+cache-aware tiling to avoid false sharing on medium grids (512 cells).
+
 All OpenMP pragmas are guarded with `#ifdef _OPENMP`, so a build without OpenMP
 (e.g. stock AppleClang) compiles the identical code path serially and correctly
 — the parallelization is purely opt-in at configure time.
@@ -130,7 +152,8 @@ Observations:
 
 ### Next steps
 
-- Parallelize / vectorize the FFT field solve to shrink the serial fraction.
+- Parallelize the FFT butterfly stages (attempted; needs cache-aware tiling to
+  beat serial on medium grids).
 - NUMA-aware first-touch initialization on multi-socket nodes.
 - Distributed-memory domain decomposition (MPI) for multi-node runs.
 - SIMD intrinsics or explicit `#pragma omp simd` on the gather in `accel`.
@@ -141,31 +164,24 @@ An OpenMP-enabled build is required (Linux GCC/Clang ship it; on macOS install
 `libomp` via `brew install libomp`).
 
 ```bash
-# Build (see docs/building.md; on macOS pass the libomp hints so
-# find_package(OpenMP) succeeds with AppleClang).
+# Build (see docs/building.md; on macOS: brew install libomp first).
 ./scripts/build.sh
 
 # Run the strong-scaling sweep and plot it.
-PICPP_BIN=build/bin/PIC++Main ./scripts/scaling_benchmark.sh
+./scripts/scaling_benchmark.sh
 .venv/bin/python scripts/plot_scaling.py
 ```
 
 Results are written to `results/scaling.json` and the plot to
 `docs/images/openmp_scaling.png`.
 
-### macOS + AppleClang note
+### Verifying OpenMP is enabled
 
-Homebrew's `libomp` is keg-only, so CMake needs explicit hints. Configure with:
+`./scripts/build.sh` runs this automatically after configure/build:
 
 ```bash
-cmake -S . -B build-omp \
-  -DCMAKE_TOOLCHAIN_FILE="$PWD/build/conan_toolchain.cmake" \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DOpenMP_ROOT=/opt/homebrew/opt/libomp \
-  -DOpenMP_CXX_FLAGS="-Xclang -fopenmp -I/opt/homebrew/opt/libomp/include" \
-  -DOpenMP_CXX_LIB_NAMES=omp \
-  -DOpenMP_omp_LIBRARY=/opt/homebrew/opt/libomp/lib/libomp.dylib
-cmake --build build-omp -j
+scripts/verify_openmp.sh
 ```
 
-(Run `./scripts/build.sh` first once to generate `build/conan_toolchain.cmake`.)
+CI runs the same check on Ubuntu and Windows. A passing run prints
+`OK: OpenMP enabled (...)`; a serial build fails with install/rebuild guidance.

@@ -1,0 +1,49 @@
+name: Linux GCC scaling benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'src/**'
+      - 'scripts/scaling_benchmark.sh'
+      - '.github/workflows/scaling_linux.yml'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  scaling-linux:
+    runs-on: ubuntu-latest
+    container: ghcr.io/richardvanderburgh/picplusplus_ubuntu_latest:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (GCC / linux_gcc_release)
+        run: |
+          mkdir -p build
+          conan profile detect
+          conan install . --profile=buildUtils/linux_gcc_release --build=missing -of=build
+          conan build . --profile=buildUtils/linux_gcc_release -of=build
+
+      - name: Verify OpenMP
+        run: |
+          chmod +x scripts/verify_openmp.sh
+          scripts/verify_openmp.sh build/bin/PIC++Main inputFiles/benchmarkFiles/scaling/ci_smoke.json
+
+      - name: Strong-scaling sweep
+        run: |
+          chmod +x scripts/scaling_benchmark.sh
+          SCALING_OUTPUT=results/scaling_linux.json \
+          SCALING_PLATFORM=linux \
+          SCALING_COMPILER=gcc \
+          ./scripts/scaling_benchmark.sh inputFiles/benchmarkFiles/scaling/large.json 3
+
+      - name: Upload scaling results
+        uses: actions/upload-artifact@v4
+        with:
+          name: scaling-linux-json
+          path: results/scaling_linux.json
+          if-no-files-found: error

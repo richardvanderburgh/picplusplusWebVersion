@@ -88,6 +88,11 @@ namespace PIC_PLUS_PLUS {
 
 	std::optional<nlohmann::json> PICPlusPlus::initialize() {
 
+		if (const auto validationError = validateSimulationParams(m_simulationParams)) {
+			std::cerr << "Invalid simulation parameters: " << *validationError << "\n";
+			return std::nullopt;
+		}
+
 		fields(m_simulationParams,
 			m_chargeDensity,
 			m_electricField,
@@ -166,8 +171,8 @@ namespace PIC_PLUS_PLUS {
 	}
 
 	void PICPlusPlus::addThermalVelocity(std::vector<double>& inOutParticleXVelocities, const int numParticles, const double thermalVelocity) {
-		std::random_device rd;
-		std::mt19937 gen(rd());
+		// Fixed seed so thermal-velocity runs are reproducible across platforms.
+		std::mt19937 gen(42);
 		std::normal_distribution<> dis(0, 1);
 
 		for (int i = 0; i < numParticles; ++i) {
@@ -221,10 +226,17 @@ namespace PIC_PLUS_PLUS {
 		}
 
 		double halfGridSize = 0.5 * m_simulationParams.gridStepSize;
+		const int numGridPoints = m_simulationParams.numGrid + 1;
+		const std::vector<double>& field = m_electricField[m_timeStep];
 
-		for (int i = 0; i < m_simulationParams.numGrid + 1; i++) {
-			m_electrostaticEnergy[m_timeStep] += std::pow(m_electricField[m_timeStep][i], 2) * halfGridSize;
+		double electrostaticEnergy = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : electrostaticEnergy) schedule(static) if(numGridPoints >= 1024)
+#endif
+		for (int i = 0; i < numGridPoints; i++) {
+			electrostaticEnergy += std::pow(field[i], 2) * halfGridSize;
 		}
+		m_electrostaticEnergy[m_timeStep] += electrostaticEnergy;
 	}
 
 	DATA_STRUCTS::Frame PICPlusPlus::updateFrame() {
