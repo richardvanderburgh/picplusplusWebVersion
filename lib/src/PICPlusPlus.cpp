@@ -148,7 +148,9 @@ namespace PIC_PLUS_PLUS {
 
 		calculateEnergies();
 
-		mPicData.frames.emplace_back() = updateFrame();
+		if (m_simulationParams.framePeriod > 0 && m_timeStep % m_simulationParams.framePeriod == 0) {
+			mPicData.frames.emplace_back() = updateFrame();
+		}
 	}
 
 	void PICPlusPlus::initializePositions(std::vector<double>& inOutParticlePositions, const int numParticles, const double chargeCloudWidth) {
@@ -204,9 +206,18 @@ namespace PIC_PLUS_PLUS {
 	void PICPlusPlus::calculateEnergies() {
 
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
-			for (int i = 0; i < m_allSpeciesData[species].numParticles; i++) {
-				m_particleKineticEnergy[species][m_timeStep] += 0.5 * std::pow((m_allSpeciesData[species].particleXVelocities[i]), 2) * m_allSpeciesData[species].particleMass;
+			const std::vector<double>& velocities = m_allSpeciesData[species].particleXVelocities;
+			const double particleMass = m_allSpeciesData[species].particleMass;
+			const int numParticles = m_allSpeciesData[species].numParticles;
+
+			double kineticEnergy = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : kineticEnergy) schedule(static)
+#endif
+			for (int i = 0; i < numParticles; i++) {
+				kineticEnergy += 0.5 * std::pow(velocities[i], 2) * particleMass;
 			}
+			m_particleKineticEnergy[species][m_timeStep] += kineticEnergy;
 		}
 
 		double halfGridSize = 0.5 * m_simulationParams.gridStepSize;

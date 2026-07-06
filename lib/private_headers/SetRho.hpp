@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <cmath>
+#include <cstddef>
 #include <vector>
 
 void setRho(int species,
@@ -62,21 +64,52 @@ void move(
 	}
 
 	for (int species = 0; species < simulationParams.numSpecies; species++) {
-		for (int i = 0; i < allSpeciesData[species].numParticles; i++) {
+		std::vector<double>& positions = allSpeciesData[species].particlePositions;
+		const std::vector<double>& velocities = allSpeciesData[species].particleXVelocities;
+		const int numParticles = allSpeciesData[species].numParticles;
+		const double q = qdx[species];
+		const double gridLength = static_cast<double>(simulationParams.numGrid);
 
-			allSpeciesData[species].particlePositions[i] += allSpeciesData[species].particleXVelocities[i];
+		// The position update is independent per particle, but the charge
+		// deposition is a scatter (rho[j], rho[j+1]) that races when threads
+		// touch the same cell. Each thread accumulates into a private density
+		// buffer and merges once under a critical section, so the result is
+		// race-free and does not serialize the inner loop with atomics.
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+		{
+			std::vector<double> localRho(rho.size(), 0.0);
 
-			if (allSpeciesData[species].particlePositions[i] < 0)
-				allSpeciesData[species].particlePositions[i] += simulationParams.numGrid;
+#ifdef _OPENMP
+#pragma omp for nowait schedule(static)
+#endif
+			for (int i = 0; i < numParticles; i++) {
+				double position = positions[i] + velocities[i];
 
-			if (allSpeciesData[species].particlePositions[i] >= simulationParams.numGrid)
-				allSpeciesData[species].particlePositions[i] -= simulationParams.numGrid;
+				if (position < 0.0)
+					position += gridLength;
 
+				if (position >= gridLength)
+					position -= gridLength;
 
-			int64_t j = static_cast<int64_t>(floor(allSpeciesData[species].particlePositions[i]));
-			double drho = qdx[species] * (allSpeciesData[species].particlePositions[i] - j);
-			rho[j] = rho[j] - drho + qdx[species];
-			rho[j + 1] = rho[j + 1] + drho;
+				positions[i] = position;
+
+				const double gridPosition = std::floor(position);
+				const size_t j = static_cast<size_t>(gridPosition);
+				const double drho = q * (position - gridPosition);
+				localRho[j] += q - drho;
+				localRho[j + 1] += drho;
+			}
+
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+			{
+				for (size_t k = 0; k < rho.size(); ++k) {
+					rho[k] += localRho[k];
+				}
+			}
 		}
 	}
 

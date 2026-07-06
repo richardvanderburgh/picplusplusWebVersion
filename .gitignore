@@ -1,4 +1,5 @@
 build
+build-omp
 buildLinux
 .venv
 conan.lock
@@ -10,3 +11,4 @@ conan_generator.cmake
 graph_info.json
 djangodocker/__pycache__
 .vs
+.cache/

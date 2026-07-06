@@ -37,8 +37,19 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries( ${PROJECT_NAME} 
+    PUBLIC
     nlohmann_json::nlohmann_json
+    PRIVATE
+    project_warnings
 )
+
+# Propagate OpenMP (compile flags + runtime) to everything that links PIC++Lib:
+# the main executable and both test binaries. PUBLIC ensures the _OPENMP define
+# reaches the header-only hot loops (Accel.hpp / SetRho.hpp) wherever they are
+# compiled.
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 add_subdirectory(test)
 

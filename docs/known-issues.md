@@ -52,9 +52,27 @@ The web UI is a development aid, not a production front end:
 
 `plasmaFrequency` and `chargeMassRatio` are stored as `double` in `DataStructs.h` but JSON inputs historically used integer values. Fractional values are supported.
 
-## MPI
+## Parallelism (OpenMP / MPI)
 
-`CMakeLists.txt` previously referenced MPI include paths but MPI is not used. Parallelization (OpenMP/MPI) is planned work — see project roadmap in prior discussions.
+The particle push, charge deposition, and kinetic-energy diagnostic are
+OpenMP-parallelized (see [performance.md](performance.md)). Notes:
+
+- **Floating-point determinism**: with OpenMP enabled, the charge-deposition
+  merge and the energy reduction sum partial results in a thread-dependent
+  order. Because floating-point addition is not associative, results can differ
+  from the serial build (and between thread counts) at the ~1e-13 level. This is
+  well within the regression/validation test tolerances, but bit-exact
+  reproducibility across thread counts is not guaranteed.
+- **MPI is not used.** Distributed-memory domain decomposition is future work;
+  the stale MPI include paths were removed from `CMakeLists.txt`.
+
+## Homebrew libomp is keg-only (macOS)
+
+`brew install libomp` does not symlink into `/opt/homebrew`, so CMake's
+`find_package(OpenMP)` won't find it for AppleClang without explicit hints. See
+the OpenMP section of [building.md](building.md) for the required
+`-DOpenMP_*` flags. Without them the macOS build simply falls back to serial
+(still correct, just single-threaded).
 
 ## Energy conservation
 

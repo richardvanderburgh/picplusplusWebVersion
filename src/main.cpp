@@ -3,6 +3,10 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include <PICPlusPlus.h>
 
 DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
@@ -15,6 +19,7 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 	simulationParams.spatialLength = config.value("spatialLength", 0.0);
 	simulationParams.timeStepSize = config.value("timeStepSize", 0.0);
 	simulationParams.numSpecies = config.value("numSpecies", 0);
+	simulationParams.framePeriod = config.value("framePeriod", 1);
 
 	std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData;
 
@@ -72,6 +77,11 @@ int main(int argc, char* argv[]) {
 	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
 	std::cout << "numGrid: "	  << inputVariables.simulationParams.numGrid << std::endl;
 	std::cout << "numSpecies: "   << inputVariables.simulationParams.numSpecies << std::endl;
+#ifdef _OPENMP
+	std::cout << "OpenMP threads: " << omp_get_max_threads() << std::endl;
+#else
+	std::cout << "OpenMP threads: 1 (serial build)" << std::endl;
+#endif
 
 	PIC_PLUS_PLUS::PICPlusPlus picPlusPlus(inputVariables);
 	auto jsonResult = picPlusPlus.initialize();

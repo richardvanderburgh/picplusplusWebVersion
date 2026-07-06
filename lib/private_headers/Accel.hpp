@@ -33,10 +33,22 @@ inline void accel(
 			ael = ae;
 		}
 
-		for (int i = 0; i < allSpeciesData[species].numParticles; ++i) {
-			const int64_t j = static_cast<int64_t>(floor(allSpeciesData[species].particlePositions[i]));
-			allSpeciesData[species].particleXVelocities[i] = allSpeciesData[species].particleXVelocities[i] + inOutAcceleration[j] +
-				(allSpeciesData[species].particlePositions[i] - j) * (inOutAcceleration[j + 1] - inOutAcceleration[j]);
+		// Gather-only particle push: every particle reads the shared acceleration
+		// grid and writes its own velocity, so this loop is embarrassingly parallel
+		// (no races, no reduction).
+		const auto& acceleration = inOutAcceleration;
+		const std::vector<double>& positions = allSpeciesData[species].particlePositions;
+		std::vector<double>& velocities = allSpeciesData[species].particleXVelocities;
+		const int numParticles = allSpeciesData[species].numParticles;
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+		for (int i = 0; i < numParticles; ++i) {
+			const double gridPosition = std::floor(positions[i]);
+			const size_t j = static_cast<size_t>(gridPosition);
+			velocities[i] = velocities[i] + acceleration[j] +
+				(positions[i] - gridPosition) * (acceleration[j + 1] - acceleration[j]);
 		}
 	}
 }

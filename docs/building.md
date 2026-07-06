@@ -124,6 +124,39 @@ conan build . --profile=buildUtils/linux_gcc_debug -of=build
 
 Profiles available: `linux_gcc_debug`, `linux_clang_debug`, `linux_clang_release`, `win_debug`, `win_release`, `macos_clang_release`.
 
+## OpenMP (shared-memory parallelism)
+
+The hot particle kernels are OpenMP-parallelized. OpenMP is **optional**: when
+`find_package(OpenMP)` succeeds the parallel path is compiled in; otherwise the
+code builds and runs correctly in serial. Linux GCC/Clang and MSVC ship OpenMP,
+so the default builds and CI pick it up automatically.
+
+On macOS, AppleClang needs Homebrew's (keg-only) `libomp` plus explicit CMake
+hints:
+
+```bash
+brew install libomp
+./scripts/build.sh                      # generates build/conan_toolchain.cmake
+
+cmake -S . -B build-omp \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/build/conan_toolchain.cmake" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DOpenMP_ROOT=/opt/homebrew/opt/libomp \
+  -DOpenMP_CXX_FLAGS="-Xclang -fopenmp -I/opt/homebrew/opt/libomp/include" \
+  -DOpenMP_CXX_LIB_NAMES=omp \
+  -DOpenMP_omp_LIBRARY=/opt/homebrew/opt/libomp/lib/libomp.dylib
+cmake --build build-omp -j
+```
+
+`PIC++Main` prints the active thread count at startup; control it with
+`OMP_NUM_THREADS`. See [performance.md](performance.md) for the strong-scaling
+study.
+
+```bash
+PICPP_BIN=build-omp/bin/PIC++Main ./scripts/scaling_benchmark.sh
+.venv/bin/python scripts/plot_scaling.py
+```
+
 ## Performance benchmarks
 
 After building, run hyperfine sweeps (requires [hyperfine](https://github.com/sharkdp/hyperfine)):

@@ -1,6 +1,6 @@
 # PIC++
 
-PIC++ is a **1D electrostatic Particle-in-Cell (PIC)** plasma simulator written in modern C++20. It models collisionless plasma dynamics by coupling a particle push with a spectral Poisson field solve, and includes regression tests, benchmark inputs, and optional web visualization.
+PIC++ is a **1D electrostatic Particle-in-Cell (PIC)** plasma simulator written in modern C++20. It models collisionless plasma dynamics by coupling a particle push with a spectral Poisson field solve. The hot particle kernels are **OpenMP-parallelized** over a cache-friendly Structure-of-Arrays layout, and the project includes regression tests, physics validation, benchmark inputs, and optional web visualization.
 
 ## Physics
 
@@ -61,9 +61,27 @@ Run only validation tests:
 ./build/bin/PIC++Main_Test --gtest_filter="ValidationTest.*"
 ```
 
-## Performance
+## Performance & parallelism
 
-Benchmark inputs for parameter sweeps live under `inputFiles/benchmarkFiles/`. Use [hyperfine](https://github.com/sharkdp/hyperfine) to collect timings:
+The particle push, charge deposition, and energy diagnostics are parallelized
+with **OpenMP** over a Structure-of-Arrays particle layout. OpenMP is optional:
+when it isn't found at configure time the code compiles and runs correctly in
+serial. On an 800k-particle problem the time-integration loop reaches **~4.3×
+speedup on 8 threads**:
+
+![OpenMP strong scaling](docs/images/openmp_scaling.png)
+
+Reproduce the strong-scaling sweep (requires an OpenMP-enabled build):
+
+```bash
+PICPP_BIN=build/bin/PIC++Main ./scripts/scaling_benchmark.sh
+.venv/bin/python scripts/plot_scaling.py
+```
+
+See [docs/performance.md](docs/performance.md) for the parallelization strategy
+(including the race-free charge deposition) and full scaling analysis.
+
+Benchmark inputs for parameter sweeps live under `inputFiles/benchmarkFiles/`. Use [hyperfine](https://github.com/sharkdp/hyperfine) to collect end-to-end timings:
 
 ```bash
 ./run_hyperfine.sh
@@ -100,6 +118,7 @@ Open http://127.0.0.1:8000/. The UI writes a temporary JSON config and calls `bu
 
 - [docs/building.md](docs/building.md) — build, test, and run instructions
 - [docs/validation.md](docs/validation.md) — physics validation tests and plots
+- [docs/performance.md](docs/performance.md) — OpenMP parallelization and scaling study
 - [docs/known-issues.md](docs/known-issues.md) — current limitations and caveats
 
 ## CI

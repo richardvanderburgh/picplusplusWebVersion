@@ -11,6 +11,11 @@ namespace DATA_STRUCTS {
 		int numTimeSteps;
 		double timeStepSize;
 		int numSpecies;
+		// Record a phase-space/field frame every `framePeriod` steps. 1 (default)
+		// records every step; values <= 0 disable per-step frame recording, which
+		// is useful for large performance runs where storing every frame would
+		// dominate runtime and memory.
+		int framePeriod = 1;
 	};
 
 	struct SpeciesData {
