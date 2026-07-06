@@ -127,24 +127,41 @@ All OpenMP pragmas are guarded with `#ifdef _OPENMP`, so a build without OpenMP
 
 Fixed problem size (**800,000 particles**, 512 grid cells, 200 steps;
 `framePeriod: 0` so frame I/O doesn't dominate), varying the OpenMP thread count.
-Measured on Apple Silicon (8 performance + efficiency cores).
+Measured on **macOS / AppleClang** (Apple Silicon, 14 logical cores) and
+**Linux / GCC** (GitHub Actions `ubuntu-latest`, 4 vCPUs).
 
 ![OpenMP strong scaling](images/openmp_scaling.png)
 
+### macOS / AppleClang (local)
+
 | Threads | Time loop (µs) | Speedup | Efficiency |
 |--------:|---------------:|--------:|-----------:|
-| 1       | 644,128        | 1.00×   | 100%       |
-| 2       | 346,665        | 1.86×   | 93%        |
-| 4       | 208,176        | 3.09×   | 77%        |
-| 8       | 149,458        | 4.31×   | 54%        |
-| 14      | 166,370        | 3.87×   | 28%        |
+| 1       | 642,165        | 1.00×   | 100%       |
+| 2       | 339,097        | 1.89×   | 95%        |
+| 4       | 206,914        | 3.10×   | 78%        |
+| 8       | 147,396        | 4.36×   | 54%        |
+| 14      | 163,271        | 3.93×   | 28%        |
+
+### Linux / GCC (CI)
+
+| Threads | Time loop (µs) | Speedup | Efficiency |
+|--------:|---------------:|--------:|-----------:|
+| 1       | 1,037,396      | 1.00×   | 100%       |
+| 2       | 529,205        | 1.96×   | 98%        |
+| 4       | 440,881        | 2.35×   | 59%        |
+
+Raw JSON: `results/scaling.json` (local) and `results/scaling_linux.json` (CI).
 
 Observations:
 
-- Near-linear speedup through 2–4 threads (77–93% efficiency).
-- Speedup peaks around the physical performance-core count (~8) and then
-  regresses as work spills onto slower efficiency cores and the run becomes
-  memory-bandwidth bound.
+- Both platforms show near-linear speedup at 2 threads (~95–98% efficiency).
+- macOS continues scaling to **4.36× at 8 threads**, peaking near the
+  performance-core count; efficiency drops past 8 threads as work spills onto
+  slower efficiency cores.
+- Linux GCC reaches **2.35× at 4 threads** on the 4-vCPU CI runner. Absolute
+  single-thread time is higher than Apple Silicon (expected for a shared
+  virtualized runner), and efficiency at 4 threads is lower as the serial FFT
+  fraction and memory bandwidth become the bottleneck on a smaller socket.
 - The residual serial fraction — the FFT-based Poisson field solve
   (`fields`, O(numGrid log numGrid)) and per-step diagnostics — caps the
   achievable speedup per Amdahl's law. On a bandwidth-bound streaming kernel
@@ -174,6 +191,21 @@ An OpenMP-enabled build is required (Linux GCC/Clang ship it; on macOS install
 
 Results are written to `results/scaling.json` and the plot to
 `docs/images/openmp_scaling.png`.
+
+### Linux GCC benchmark (CI)
+
+The workflow `.github/workflows/scaling_linux.yml` builds with GCC inside the
+project's Ubuntu container image and uploads `results/scaling_linux.json`.
+Trigger it manually or let it run on pushes to `main` that touch the solver:
+
+```bash
+gh workflow run scaling_linux.yml
+gh run list --workflow=scaling_linux.yml --limit 1
+gh run download <run-id> -n scaling-linux-json -D results/
+.venv/bin/python scripts/plot_scaling.py
+```
+
+Or use the helper: `./scripts/run_linux_scaling.sh` (wraps `gh workflow run`).
 
 ### Verifying OpenMP is enabled
 

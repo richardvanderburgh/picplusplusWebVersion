@@ -1,0 +1,9 @@
+{
+  "platform": "linux",
+  "compiler": "gcc",
+  "nproc": 4,
+  "input": "inputFiles/benchmarkFiles/scaling/large.json",
+  "repeats": 3,
+  "threads": [1, 2, 4],
+  "time_loop_us": [1037396, 529205, 440881]
+}
