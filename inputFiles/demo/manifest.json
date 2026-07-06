@@ -1,0 +1,132 @@
+[
+  {
+    "id": "twoStreamQuick",
+    "file": "twoStreamQuick.json",
+    "title": "Two-stream (quick)",
+    "category": "Two-stream instability",
+    "description": "Two cold electron beams stream past each other with a tiny k = 1 density perturbation. The counter-streaming setup is the classic testbed for the two-stream instability: electrostatic energy grows exponentially, then saturates as particles trap in the wave.",
+    "lookFor": [
+      "Phase space: two separated beams that broaden and filament over time",
+      "Electrostatic energy rises sharply after an initial quiet period",
+      "Kinetic energy falls as particles exchange energy with the field",
+      "Fast web run (~300 particles, coarse 32-cell grid)"
+    ]
+  },
+  {
+    "id": "strongTwoStream",
+    "file": "strongTwoStream.json",
+    "title": "Two-stream (strong drive)",
+    "category": "Two-stream instability",
+    "description": "Same two-beam geometry as the quick case, but with a larger initial perturbation (amplitude 0.008). The instability kicks in sooner and field growth is easier to see in the first half of the run.",
+    "lookFor": [
+      "Earlier and steeper rise in electrostatic energy than the quick case",
+      "Stronger field amplitudes in the E(x) animation",
+      "More rapid beam mixing in phase space",
+      "Good choice if you want visible dynamics without waiting long"
+    ]
+  },
+  {
+    "id": "warmTwoStream",
+    "file": "warmTwoStream.json",
+    "title": "Two-stream (warm beams)",
+    "category": "Two-stream instability",
+    "description": "Counter-propagating beams with finite temperature (v_th = 0.12). Thermal spread fills out phase space around each beam while the two-stream mode still grows. Compare with the cold cases to see how temperature changes the instability pathway.",
+    "lookFor": [
+      "Phase-space clouds around ±drift velocity instead of thin lines",
+      "Instability still develops, but with more diffuse trapping structures",
+      "Finer 64-cell grid resolves slightly more spatial structure",
+      "Total energy should stay approximately conserved"
+    ]
+  },
+  {
+    "id": "landauQuick",
+    "file": "landauQuick.json",
+    "title": "Landau damping (quick)",
+    "category": "Landau damping",
+    "description": "A warm (v_th = 0.4) electron plasma on a periodic domain is given a small standing-wave density perturbation (sin shift, mode k = 1). Resonant particles near the wave phase velocity absorb field energy, so the |E_k| envelope decays even though the spatial cos(kx) pattern is preserved.",
+    "lookFor": [
+      "E(x) antinode amplitude shrinks while nodes stay fixed",
+      "|E_k| plot shows log-scale decay over the run",
+      "ESE late/early ratio well below 1 in the analysis summary",
+      "Compare with Cold plasma (quick) to isolate physical damping"
+    ]
+  },
+  {
+    "id": "coldPlasmaQuick",
+    "file": "coldPlasmaQuick.json",
+    "title": "Cold plasma wave (quick)",
+    "category": "Landau damping",
+    "description": "Identical setup to Landau quick except v_th = 0. Without a velocity tail at the resonant speed, there is no Landau mechanism — the launched standing wave should oscillate without sustained envelope decay. Use this as the control when interpreting warm Landau results.",
+    "lookFor": [
+      "|E_k| amplitude stays near its initial level",
+      "ESE late/early ratio close to 1 (typically 0.9–1.2)",
+      "E(x) pattern oscillates but does not systematically decay",
+      "Pair with Landau quick to see warm-vs-cold contrast"
+    ]
+  },
+  {
+    "id": "highModeLandau",
+    "file": "highModeLandau.json",
+    "title": "Landau damping (mode 2)",
+    "category": "Landau damping",
+    "description": "Warm standing wave with spatial mode m = 2 (k = 2 on a 2π domain). Higher-k waves have shorter wavelength and often damp faster in PIC, so |E_k| decay should be more pronounced than the k = 1 Landau quick case.",
+    "lookFor": [
+      "E(x) shows two antinodes per domain length",
+      "Fourier panel tracks mode m = 2 amplitude",
+      "Typically faster |E_k| decay than k = 1 warm case",
+      "Standing-wave nodes remain at fixed positions"
+    ]
+  },
+  {
+    "id": "electronOscillation",
+    "file": "electronOscillation.json",
+    "title": "Electron plasma oscillation",
+    "category": "Plasma oscillation",
+    "description": "Single cold electron species with a small standing-wave perturbation. In the absence of beams or thermal Landau damping, the system supports an undamped electron plasma oscillation at ω ≈ ω_p. A short, lightweight run ideal for watching basic wave physics.",
+    "lookFor": [
+      "Regular oscillation of E(x) and electrostatic energy",
+      "Phase space stays near v = 0 with modest spatial bunching",
+      "|E_k| envelope roughly constant after initial transients",
+      "Short run (300 steps) — good first demo to try"
+    ]
+  },
+  {
+    "id": "driftingBeam",
+    "file": "driftingBeam.json",
+    "title": "Drifting warm beam",
+    "category": "Beam dynamics",
+    "description": "One warm electron beam (drift v = 0.8, v_th = 0.25) with a standing-wave perturbation. The drifting Maxwellian interacts with the self-consistent field, producing shear and mixing in phase space distinct from the two-stream or pure Landau cases.",
+    "lookFor": [
+      "Phase-space cloud centered near the drift velocity",
+      "E(x) and |E_k| evolve with both oscillation and beam spreading",
+      "Energy budget: kinetic energy dominates; field energy is a small fraction",
+      "Useful for exploring wave–particle motion beyond textbook benchmarks"
+    ]
+  },
+  {
+    "id": "landauFull",
+    "file": "landauFull.json",
+    "title": "Landau damping (full)",
+    "category": "Landau damping",
+    "description": "Validation-resolution warm Landau case: 8000 particles and a 256-cell grid, matching inputFiles/validation/landauDamping.json. Slower in the browser but produces clean |E_k| decay and the same physics cited in docs/validation.md.",
+    "lookFor": [
+      "Clear |E_k| end/start ratio ≈ 0.2–0.3 (strong damping)",
+      "Smooth E(x) snapshots with well-resolved nodes and antinodes",
+      "ESE late/early ratio typically ≈ 0.8",
+      "Expect longer run time — watch the progress bar"
+    ]
+  },
+  {
+    "id": "twoStreamFull",
+    "file": "twoStreamFull.json",
+    "title": "Two-stream (full)",
+    "category": "Two-stream instability",
+    "description": "Full validation two-stream parameters (500 particles per beam, 500 steps, 32-cell grid), matching inputFiles/validation/twoStreamInstability.json. Runs longer than the quick variant and reaches a more developed nonlinear stage.",
+    "lookFor": [
+      "Extended growth and saturation of electrostatic energy",
+      "Strong phase-space filamentation and vortex-like structures",
+      "Peak ESE many times the initial perturbation level",
+      "Good for portfolio screenshots; moderate run time"
+    ]
+  }
+]

@@ -31,6 +31,7 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 		speciesData.spatialPerturbationMode = speciesConfig.value("spatialPerturbationMode", 0);
 		speciesData.driftVelocity = speciesConfig.value("driftVelocity", 0.0);
 		speciesData.spatialPerturbationAmplitude = speciesConfig.value("spatialPerturbationAmplitude", 0.0);
+		speciesData.spatialPerturbationWaveform = speciesConfig.value("spatialPerturbationWaveform", "cos");
 		speciesData.thermalVelocity = speciesConfig.value("thermalVelocity", 0.0);
 		speciesData.plasmaFrequency = speciesConfig.value("plasmaFrequency", 0);
 		speciesData.chargeMassRatio = speciesConfig.value("chargeMassRatio", 0);

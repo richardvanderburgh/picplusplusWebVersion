@@ -14,7 +14,8 @@ The code implements a standard ES-PIC cycle:
 Supported benchmark problems include:
 
 - **Two-stream instability** — counter-propagating cold beams (`inputFiles/validation/twoStreamInstability.json`)
-- **Landau damping** — warm plasma with spatial perturbation (see legacy params in `inputFiles/landau.txt`)
+- **Landau damping** — warm plasma with spatial perturbation (`inputFiles/validation/landauDamping.json`); cold control at `inputFiles/validation/coldPlasmaWave.json`
+- **Web demos** — quick and full-resolution cases in `inputFiles/demo/` (loaded by the web UI)
 - **Two-stream parameter study** (legacy params in `inputFiles/twoStream.txt`)
 
 All simulations are driven by **JSON input files**. The `.txt` files are legacy parameter lists kept for reference.

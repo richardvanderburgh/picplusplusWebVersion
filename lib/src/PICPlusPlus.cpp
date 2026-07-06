@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <numbers>
 #include <random>
@@ -64,7 +65,8 @@ namespace PIC_PLUS_PLUS {
 				applySpatialPerturbation(m_allSpeciesData[species].particlePositions,
 					m_allSpeciesData[species].numParticles,
 					m_allSpeciesData[species].spatialPerturbationMode,
-					m_allSpeciesData[species].spatialPerturbationAmplitude);
+					m_allSpeciesData[species].spatialPerturbationAmplitude,
+					m_allSpeciesData[species].spatialPerturbationWaveform);
 			}
 
 			m_qdx[species] = m_allSpeciesData[species].particleCharge / m_simulationParams.gridStepSize;
@@ -112,8 +114,24 @@ namespace PIC_PLUS_PLUS {
 
 		auto start = std::chrono::high_resolution_clock::now();
 
-		for (m_timeStep = 1; m_timeStep <= m_simulationParams.numTimeSteps; m_timeStep++) {
+		const int totalSteps = m_simulationParams.numTimeSteps;
+		const bool reportProgress = std::getenv("PICPP_PROGRESS") != nullptr;
+		int lastReportedPercent = -1;
+
+		for (m_timeStep = 1; m_timeStep <= totalSteps; m_timeStep++) {
 			runTimeLoop();
+
+			if (reportProgress && totalSteps > 0) {
+				const int percent = (100 * m_timeStep) / totalSteps;
+				if (percent != lastReportedPercent) {
+					std::cerr << "PICPP_PROGRESS " << percent << '\n' << std::flush;
+					lastReportedPercent = percent;
+				}
+			}
+		}
+
+		if (reportProgress) {
+			std::cerr << "PICPP_PROGRESS 100\n" << std::flush;
 		}
 
 		auto finish = std::chrono::high_resolution_clock::now();
@@ -191,13 +209,15 @@ namespace PIC_PLUS_PLUS {
 		}
 	}
 
-	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialPerturbationAmplitude) {
+	void PICPlusPlus::applySpatialPerturbation(std::vector<double>& inOutParticlePositions, const int numParticles, const int spatialPerturbationMode, const double spatialPerturbationAmplitude, const std::string& spatialPerturbationWaveform) {
 
 		double spatialPertConst = 2 * std::numbers::pi * spatialPerturbationMode / m_simulationParams.spatialLength;
+		const bool useSin = spatialPerturbationWaveform == "sin";
 
 		for (int a = 0; a < numParticles; ++a) {
 			double theta = spatialPertConst * inOutParticlePositions[a];
-			inOutParticlePositions[a] = inOutParticlePositions[a] + spatialPerturbationAmplitude * cos(theta);
+			const double shift = spatialPerturbationAmplitude * (useSin ? std::sin(theta) : std::cos(theta));
+			inOutParticlePositions[a] = inOutParticlePositions[a] + shift;
 
 			if (inOutParticlePositions[a] >= m_simulationParams.spatialLength) {
 				inOutParticlePositions[a] = inOutParticlePositions[a] - m_simulationParams.spatialLength;

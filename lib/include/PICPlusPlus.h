@@ -67,7 +67,8 @@ namespace PIC_PLUS_PLUS {
 		void applySpatialPerturbation(std::vector<double>& inOutParticlePositions,
 			const int numParticles,
 			const int spatialPerturbationMode,
-			const double spatialPerturbationAmplitude);
+			const double spatialPerturbationAmplitude,
+			const std::string& spatialPerturbationWaveform);
 
 		void calculateEnergies();
 
