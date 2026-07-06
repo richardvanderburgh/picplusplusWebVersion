@@ -1,409 +1,994 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>++</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PIC++ Web</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-
-</head>
-
-<body>
-    <div id="wrapper">
-        <h1>PIC++</h1>
-        <form id="simulation-form">
-            <label for="spatialLength">Spatial Length:</label>
-            <input type="text" id="spatialLength" name="spatialLength" value="6.28318530717958">
-            <br>
-            <label for="numParticles">Number of Electrons:</label>
-            <input type="text" id="numParticles" name="numParticles" value="100">
-            <br>
-            <label for="timeSteps">Time Steps:</label>
-            <input type="text" id="timeSteps" name="timeSteps" value="100">
-            <br>
-            <label for="timeStepSize">Time Stepsize:</label>
-            <input type="text" id="timeStepSize" name="timeStepSize" value="0.1">
-            <br>
-            <label for="numGrid">Number of Grid Cells:</label>
-            <input type="text" id="numGrid" name="numGrid" value="32">
-            <br>
-            <label for="spatialPerturbationMode">Mode:</label>
-            <input type="text" id="spatialPerturbationMode" name="spatialPerturbationMode" value="1">
-            <br>
-            <label for="driftVelocity">Drift Velocity:</label>
-            <input type="text" id="driftVelocity" name="driftVelocity" value="1">
-            <br>
-            <label for="numSpecies">Number of Species:</label>
-            <input type="text" id="numSpecies" name="numSpecies" value="2">
-            <br>
-            <label for="spatialPerturbationAmplitude">Amplitude:</label>
-            <input type="text" id="spatialPerturbationAmplitude" name="spatialPerturbationAmplitude" value="0.001">
-            <br>
-            <label for="thermalVelocity">Thermal Velocity:</label>
-            <input type="text" id="thermalVelocity" name="thermalVelocity" value="0.00">
-            <br>
-            <label for="plasmaFrequency">Plasma Frequency:</label>
-            <input type="text" id="plasmaFrequency" name="plasmaFrequency" value="1">
-            <br>
-            <label for="chargeMassRatio">Charge Mass Ratio:</label>
-            <input type="text" id="chargeMassRatio" name="chargeMassRatio" value="-1">
-            <br>
-            <label for="duration">Frame Duration (ms):</label>
-            <input type="text" id="duration" name="duration" value="100">
-            <div>
-                <label for="fileInput">Upload your data:</label>
-                <input type="file" id="fileInput" name="fileInput">
-                <div>
-                    <input type="submit" value="Run Simulation">
-                </div>
-            </div>
-            <div id="loading-container">
-                <div class="loading-spinner"></div> 
-            </div>
-            <div id="frame-number-display">Frame: 0, Time: 0 s</div>
-
-            <div id="visualization"></div>
-
-            <div id="controls-container">
-
-                <div id="controls">
-                    <button id="play-button" class="control-button" type="button">Play</button>
-                    <button id="stop-button" class="control-button" type="button">Stop</button>
-                    <input type="range" id="frame-slider" step="1" value="0">
-                </div>
-            </div>
-
-            <div id="keDiv"></div>
-            <div id="eseDiv"></div>
-
-    </div>
-    <script>
-        const loadingContainer = document.getElementById('loading-container');
-
-        function showLoadingSpinner() {
-            loadingContainer.style.display = 'block';
-        }
-
-        function hideLoadingSpinner() {
-            loadingContainer.style.display = 'none';
-        }
-
-        $(document).ready(function () {
-
-            var yMin = $('#yMin').val();
-            var yMax = $('#yMax').val();
-
-            var jsonData;
-            var positions;
-            var height = 400;
-            var margin = { top: 0, right: 20, bottom: 20, left: 40 };
-            var ng = 32;
-
-            var layout = {
-                title: 'Particle Phase Space',
-                width: 1000,
-                xaxis: {
-                    title: 'Positions (arb. units)',
-                    range: [0, ng + 5],
-                },
-                yaxis: {
-                    title: 'Velocities (arb. units)',
-                    range: [yMin, yMax],
-                },
-            };
-
-            var config = { displayModeBar: true }; 
-
-            var plotlyDiv = document.getElementById('visualization');
-            var plotlyInitialized = false;
-
-            function updatePlot(framesData) {
-                if (!plotlyInitialized) {
-                    Plotly.newPlot(plotlyDiv, framesData, layout, config);
-                    plotlyInitialized = true;
-                } else {
-                    Plotly.react(plotlyDiv, framesData, layout, config);
-                }
-            }
-
-            $('#simulation-form').submit(function (event) {
-                event.preventDefault(); 
-                var spatialLength = $('#spatialLength').val();
-                var numParticles = $('#numParticles').val();
-                var timeSteps = $('#timeSteps').val();
-                var timeStepSize = $('#timeStepSize').val();
-                var numGrid =  $('#numGrid').val();
-                var spatialPerturbationMode = $('#spatialPerturbationMode').val();
-                var driftVelocity = $('#driftVelocity').val();
-                var numSpecies = $('#numSpecies').val();
-                var spatialPerturbationAmplitude = $('#spatialPerturbationAmplitude').val();
-                var thermalVelocity = $('#thermalVelocity').val();
-                var duration = $('#duration').val();
-                var plasmaFrequency = $('#plasmaFrequency').val();
-                var chargeMassRatio = $('#chargeMassRatio').val();
-
-                document.getElementById('frame-slider').max = timeSteps - 1;
-                showLoadingSpinner()
-                $.ajax({
-                    url: '/run/',
-                    method: 'GET',
-                    data: { spatialLength : spatialLength, numParticles: numParticles, timeSteps: timeSteps, timeStepSize: timeStepSize, numGrid : numGrid, spatialPerturbationMode: spatialPerturbationMode, driftVelocity: driftVelocity, numSpecies: numSpecies, spatialPerturbationAmplitude: spatialPerturbationAmplitude, thermalVelocity: thermalVelocity, plasmaFrequency : plasmaFrequency, chargeMassRatio :chargeMassRatio },
-                    success: function (response) {
-                        var PICData = response;
-                        console.log(PICData)
-                        hideLoadingSpinner();
-                        document.getElementById('controls-container').style.display = 'block';
-
-                        startAnimation(PICData.phaseFrames, duration);
-                        createKEPlot(PICData.ke)
-                        createESEPlot(PICData.ese)
-                    },
-                    error: function (xhr, textStatus, errorThrown) {
-                        console.log('Error:', textStatus);
-                        hideLoadingSpinner();
-                    }
-                });
-            });
-
-            function getPositionsOfSpecies(frame, species) {
-                const positions = [];
-
-                for (const particle of frame.particles) {
-                    if (particle.species === species) {
-                        positions.push(particle.position);
-                    }
-                }
-                return positions;
-            }
-
-            function getVelocitiesOfSpecies(frame, species) {
-                const velocities = [];
-
-                for (const particle of frame.particles) {
-                    if (particle.species === species) {
-                        velocities.push(particle.velocity);
-                    }
-                }
-                return velocities;
-            }
-
-            function showFrame(framesData, frameIndex) {
-                document.getElementById('frame-slider').value = frameIndex;
-                animate(framesData[frameIndex]);
-                let time = frameIndex * $('#timeStepSize').val();
-                time = Number(time).toFixed(2)
-                document.getElementById('frame-number-display').textContent = "Frame: " + frameIndex + ", Time: " + time + " s";
-            }
-
-            function startAnimation(framesData, duration) {
-                var frameIndex = 0;
-                animate(framesData[frameIndex]);
-
-                var frameSlider = document.getElementById('frame-slider');
-                frameSlider.addEventListener('input', function () {
-                    var frameIndex = parseInt(frameSlider.value);
-                    showFrame(framesData, frameIndex);
-                });
-
-                var playButton = document.getElementById('play-button');
-                var stopButton = document.getElementById('stop-button');
-
-                playButton.addEventListener('click', function () {
-                    playAnimation(framesData, duration);
-                });
-
-                stopButton.addEventListener('click', function () {
-                    clearInterval(animationInterval);
-                });
-            }
-
-            var animationInterval;
-            var currentFrameIndex = 0;
-
-            function playAnimation(framesData, duration) {
-                clearInterval(animationInterval);
-
-                animationInterval = setInterval(function () {
-                    currentFrameIndex = (currentFrameIndex + 1) % framesData.length;
-                    showFrame(framesData, currentFrameIndex);
-                }, duration);
-            }
-
-            function animate(frame) {
-                const numSpecies = 3;
-                const colors = ['steelblue', 'red', 'green', 'orange'];
-
-                var framesData = [];
-
-                for (let species = 0; species < numSpecies; species++) {
-                    positions = getPositionsOfSpecies(frame, species);
-                    velocities = getVelocitiesOfSpecies(frame, species);
-
-                    framesData.push({
-                        x: positions,
-                        y: velocities,
-                        mode: 'markers',
-                        type: 'scatter',
-                        marker: {
-                            size: 5,
-                            opacity: 0.6,
-                            color: colors[species],
-                        },
-                        name: `Species ${species}`,
-                    });
-                    updatePlot(framesData);
-                }
-            }
-
-            function createKEPlot(ke) {
-                var data = [];
-                let timeStepSize = $('#timeStepSize').val();
-
-                for (let species = 0; species < ke.length; species++) {
-                    const speciesKE = ke[species];
-
-                    const trace = {
-                        x: Array.from({ length: speciesKE.length }, (_, i) => i),  
-                        y: speciesKE,
-                        type: 'scatter',
-                        mode: 'lines+markers',
-                        name: 'Species ' + species
-                    };
-
-                    data.push(trace);
-                }
-                const keLayout = {
-                    title: 'Kinetic Energy of ' + ke.length + ' Species',
-
-                    width: 1000,
-                    xaxis: {
-                        title: 'Time (arb. units)'
-                    },
-                    yaxis: {
-                        title: 'Kinetic Energy (arb. units)'
-                    }
-                };
-
-                Plotly.newPlot('keDiv', data, keLayout);
-            }
-
-            function createESEPlot(ese) {
-                var data = [];
-                let timeStepSize = $('#timeStepSize').val();
-
-                const trace = {
-                    x: Array.from({ length: ese.length }, (_, i) => i),  
-                    y: ese,
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'ESE '
-                };
-
-                data.push(trace);
-
-                const eseLayout = {
-                    title: 'Electrostatic Energy (arb. units)',
-
-                    width: 1000,
-                    xaxis: {
-                        title: 'Time (s)'
-                    },
-                    yaxis: {
-                        title: 'Electrostatic Energy (arb. units)'
-                    }
-                };
-
-                Plotly.newPlot('eseDiv', data, eseLayout);
-            }
-
-            $('#fileInput').on('change', function () {
-                const fileInput = this;
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const reader = new FileReader();
-
-                    reader.onload = function (e) {
-                        const lines = e.target.result.split('\n').filter(Boolean); 
-                        lines.forEach(line => {
-                            const [key, value] = line.split(',').map(item => item.trim());
-                            $(`#${key}`).val(value);
-                        });
-                    };
-
-                    reader.readAsText(file);
-                }
-            });
-
-        });
-    </script>
-
     <style>
-        #controls-container {
-            display: none;
+        :root {
+            --pic-primary: #1d4ed8;
+            --pic-surface: #f8fafc;
         }
 
         body {
+            background: #eef2f7;
+            color: #1e293b;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+            color: #fff;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-header h1 {
+            font-size: 1.35rem;
             margin: 0;
-            /* Reset default margin */
-            min-height: 100vh;
-            /* Ensure body takes up at least the full viewport height */
-            display: flex;
-            /* Convert body to a flex container */
-            align-items: center;
-            /* Center content vertically */
-            justify-content: center;
-            /* Center content horizontally */
-            overflow-y: auto;
-            /* Allow vertical scrolling if the content overflows */
+            font-weight: 700;
         }
 
-        #loading-container {
+        .steps-list {
+            margin: 0.75rem 0 0;
+            padding-left: 1.1rem;
+            font-size: 0.85rem;
+            opacity: 0.95;
+        }
+
+        .steps-list li {
+            margin-bottom: 0.15rem;
+        }
+
+        .sidebar-sticky {
+            position: sticky;
+            top: 1rem;
+        }
+
+        .plot-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .plot-host {
+            min-height: 300px;
+        }
+
+        .plot-caption {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin: -0.25rem 0 0.5rem 0.15rem;
+        }
+
+        #results-header {
             display: none;
-            /* Initially hide the loading container */
+        }
+
+        #progress-container {
+            display: none;
+        }
+
+        .stat-value {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        #demo-info-panel {
+            display: none;
+            background: var(--pic-surface);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        #demo-info-panel .demo-category {
+            font-size: 0.68rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        #demo-look-for {
+            margin-bottom: 0;
+            padding-left: 1.1rem;
+        }
+
+        #demo-look-for li {
+            margin-bottom: 0.25rem;
+        }
+
+        .empty-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
+            padding: 1.5rem;
+            background: rgba(248, 250, 252, 0.92);
+            border-radius: 8px;
+            z-index: 2;
+            pointer-events: none;
         }
 
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            /* Light gray border */
-            border-top: 4px solid #3498db;
-            /* Blue border on top */
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            /* Apply the spinning animation */
-            margin: 0 auto;
-            /* Center the spinner horizontally */
+        .empty-state strong {
+            display: block;
+            margin-bottom: 0.35rem;
         }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
+        .param-hint {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.1rem;
+        }
+
+        #run-button {
+            font-weight: 600;
+            padding: 0.65rem 1rem;
+        }
+
+        #customized-badge {
+            display: none;
+        }
+
+        .frame-btn {
+            min-width: 2.25rem;
+        }
+
+        #success-alert {
+            display: none;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar-sticky {
+                position: static;
             }
 
-            100% {
-                transform: rotate(360deg);
+            .plot-host {
+                min-height: 260px;
             }
-        }
-
-        #frame-slider {
-            width: 73%;
-            /* adjust this value as desired */
-            margin: 0 auto;
-            /* centers the slider, if needed */
-        }
-
-        #frame-number-display {
-            font-size: 16px;
-            margin-top: 10px;
-            font-weight: bold;
         }
     </style>
+</head>
 
+<body>
+    <div class="container-fluid py-3 px-3 px-lg-4">
+        <div class="row g-3">
+            <div class="col-lg-4 col-xl-3">
+                <div class="sidebar-sticky">
+                    <div class="app-header">
+                        <h1>PIC++ Plasma Simulator</h1>
+                        <p class="mb-0 small opacity-90">1D electrostatic particle-in-cell — pick a demo, run, explore.</p>
+                        <ol class="steps-list mb-0">
+                            <li>Choose a <strong>demo case</strong> below</li>
+                            <li>Click <strong>Run simulation</strong></li>
+                            <li>Scrub or play the animation; read the plots</li>
+                        </ol>
+                    </div>
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <label class="form-label fw-semibold" for="demo-select">1. Demo case</label>
+                            <select class="form-select" id="demo-select" aria-describedby="demo-help">
+                                <option value="">— choose a preset —</option>
+                            </select>
+                            <div id="demo-help" class="form-text">Presets load recommended parameters automatically.</div>
+
+                            <div id="demo-info-panel" class="mt-3">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                    <span class="fw-semibold" id="demo-title"></span>
+                                    <span class="badge text-bg-secondary demo-category" id="demo-category"></span>
+                                </div>
+                                <p class="text-muted small mb-2" id="demo-description"></p>
+                                <button class="btn btn-link btn-sm p-0 text-decoration-none" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#demo-look-for-collapse"
+                                    aria-expanded="false" aria-controls="demo-look-for-collapse" id="look-for-toggle">
+                                    Show what to look for ▾
+                                </button>
+                                <div class="collapse mt-1" id="demo-look-for-collapse">
+                                    <ul class="small text-muted" id="demo-look-for"></ul>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-3 mb-2">
+                                <button type="button" class="btn btn-primary flex-grow-1" id="run-button">
+                                    <span id="run-button-label">2. Run simulation</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-demo-button"
+                                    title="Restore parameters from the selected demo" disabled>
+                                    Reset
+                                </button>
+                            </div>
+                            <span class="badge text-bg-warning" id="customized-badge">Parameters edited</span>
+
+                            <div id="progress-container" class="mt-2" aria-live="polite">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span id="progress-message">Running…</span>
+                                    <span id="progress-percent" class="fw-semibold">0%</span>
+                                </div>
+                                <div class="progress" style="height: 0.65rem;">
+                                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                                        role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0"
+                                        aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
+                            <div id="success-alert" class="alert alert-success small py-2 mt-2 mb-0" role="status"></div>
+                            <div id="error-alert" class="alert alert-danger small mt-2 mb-0 d-none" role="alert">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <span id="error-text"></span>
+                                    <button type="button" class="btn-close btn-close-sm" id="dismiss-error"
+                                        aria-label="Dismiss"></button>
+                                </div>
+                            </div>
+
+                            <div class="accordion accordion-flush mt-3" id="params-accordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed py-2" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#params-panel"
+                                            aria-expanded="false">
+                                            Simulation parameters
+                                        </button>
+                                    </h2>
+                                    <div id="params-panel" class="accordion-collapse collapse"
+                                        data-bs-parent="#params-accordion">
+                                        <div class="accordion-body px-1 pt-2 pb-0">
+                                            <form id="simulation-form">
+                                                <p class="small text-muted">Most users can leave these as loaded from the demo.</p>
+                                                <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="numParticles">Particles / species</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" min="1" id="numParticles" value="500">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="numSpecies">Species</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" min="1" max="2" id="numSpecies" value="2">
+                                                        <div class="param-hint">1 = single species; 2 = ±drift beams</div>
+                                                        <div class="param-hint">2 = ±drift beams</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="timeSteps">Time steps</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" min="1" id="timeSteps" value="500">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="timeStepSize">Δt</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" min="0" id="timeStepSize" value="0.2">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="numGrid">Grid cells</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" min="2" id="numGrid" value="32">
+                                                        <div class="param-hint">Must be a power of 2</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="framePeriod">Frame period</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" min="1" id="framePeriod" value="5">
+                                                        <div class="param-hint">Steps between saved frames</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="driftVelocity">Drift v</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" id="driftVelocity" value="1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="thermalVelocity">v<sub>th</sub></label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" min="0" id="thermalVelocity" value="0">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="spatialPerturbationMode">Mode m</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" min="0" id="spatialPerturbationMode" value="1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="spatialPerturbationAmplitude">Pert. amplitude</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" min="0" id="spatialPerturbationAmplitude" value="0.001">
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label small" for="spatialPerturbationWaveform">Perturbation waveform</label>
+                                                        <select class="form-select form-select-sm param-input" id="spatialPerturbationWaveform">
+                                                            <option value="cos">cos — density perturbation</option>
+                                                            <option value="sin">sin — standing wave (Landau)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="spatialLength">Domain length</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" min="0" id="spatialLength" value="6.28318530717958">
+                                                        <div class="param-hint">2π for standard benchmarks</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="plasmaFrequency">ω<sub>p</sub></label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" min="0" id="plasmaFrequency" value="1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="chargeMassRatio">q/m</label>
+                                                        <input class="form-control form-control-sm param-input" type="number" step="any" id="chargeMassRatio" value="-1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label small" for="duration">Anim speed (ms)</label>
+                                                        <input class="form-control form-control-sm" type="number" min="20" id="duration" value="80">
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <label class="form-label small" for="fileInput">Import parameters (CSV)</label>
+                                                    <input class="form-control form-control-sm" type="file" id="fileInput" accept=".csv,.txt">
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 mt-3" id="summary-card" style="display: none;">
+                        <div class="card-header bg-white fw-semibold py-2">Analysis summary</div>
+                        <div class="card-body small pt-2">
+                            <p class="text-muted mb-2">Quick metrics from the finished run.</p>
+                            <div class="row g-2 text-center">
+                                <div class="col-6">
+                                    <div class="text-muted">Field energy late / early</div>
+                                    <div class="stat-value" id="stat-ese-ratio">—</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted">Total energy drift</div>
+                                    <div class="stat-value" id="stat-energy-drift">—</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted">|E<sub>k</sub>| end / start</div>
+                                    <div class="stat-value" id="stat-ek-ratio">—</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted">Peak field / initial</div>
+                                    <div class="stat-value" id="stat-ese-peak">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8 col-xl-9">
+                <div id="results-header" class="card shadow-sm border-0 mb-3">
+                    <div class="card-body py-2">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="fw-semibold small text-secondary me-1">3. Explore results</span>
+                            <button id="prev-frame" class="btn btn-sm btn-outline-secondary frame-btn" type="button"
+                                title="Previous frame" aria-label="Previous frame">◀</button>
+                            <button id="play-button" class="btn btn-sm btn-success" type="button">Play</button>
+                            <button id="stop-button" class="btn btn-sm btn-outline-secondary" type="button">Pause</button>
+                            <button id="next-frame" class="btn btn-sm btn-outline-secondary frame-btn" type="button"
+                                title="Next frame" aria-label="Next frame">▶</button>
+                            <input type="range" class="form-range flex-grow-1" id="frame-slider" min="0" value="0"
+                                aria-label="Animation frame">
+                            <span id="frame-number-display" class="small text-nowrap fw-semibold text-secondary">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="plots-empty" class="alert alert-light border text-center py-4 mb-3">
+                    <strong>No results yet</strong>
+                    <p class="mb-0 small text-muted">Select a demo and run the simulation. Plots and animation will appear here.</p>
+                </div>
+
+                <div class="row g-3" id="plots-grid">
+                    <div class="col-xl-6">
+                        <div class="plot-card">
+                            <div class="plot-caption">Particle positions vs. velocity — watch beams mix or Landau damping in phase space.</div>
+                            <div id="phasePlot" class="plot-host"></div>
+                            <div class="empty-state" data-plot="phase"><div><strong>Phase space</strong><span class="text-muted small">Run a simulation to populate</span></div></div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6">
+                        <div class="plot-card">
+                            <div class="plot-caption">Electric field profile E(x) at the selected time step.</div>
+                            <div id="fieldPlot" class="plot-host"></div>
+                            <div class="empty-state" data-plot="field"><div><strong>E(x)</strong><span class="text-muted small">Run a simulation to populate</span></div></div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6">
+                        <div class="plot-card">
+                            <div class="plot-caption">Kinetic, field, and total energy vs. time.</div>
+                            <div id="energyPlot" class="plot-host"></div>
+                            <div class="empty-state" data-plot="energy"><div><strong>Energy</strong><span class="text-muted small">Run a simulation to populate</span></div></div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6">
+                        <div class="plot-card">
+                            <div class="plot-caption">Fourier amplitude of the launched mode — decay indicates Landau damping.</div>
+                            <div id="modePlot" class="plot-host"></div>
+                            <div class="empty-state" data-plot="mode"><div><strong>|E<sub>k</sub>|</strong><span class="text-muted small">Run a simulation to populate</span></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const SPECIES_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#ea580c'];
+        const PARAM_IDS = [
+            'spatialLength', 'numParticles', 'timeSteps', 'timeStepSize', 'numGrid',
+            'spatialPerturbationMode', 'driftVelocity', 'numSpecies',
+            'spatialPerturbationAmplitude', 'thermalVelocity', 'plasmaFrequency',
+            'chargeMassRatio', 'spatialPerturbationWaveform', 'framePeriod',
+        ];
+
+        let demoCatalog = {};
+        let activeDemoId = 'twoStreamQuick';
+        let savedDemoParams = null;
+        let paramsCustomized = false;
+        let hasResults = false;
+
+        let animationInterval = null;
+        let currentFrameIndex = 0;
+        let activeFrames = [];
+        let phaseSpaceYRange = [-1, 1];
+
+        function num(id) {
+            return Number($('#' + id).val());
+        }
+
+        function isPowerOfTwo(n) {
+            return n > 0 && (n & (n - 1)) === 0;
+        }
+
+        function collectParams() {
+            const params = {};
+            PARAM_IDS.forEach(function (key) {
+                params[key] = $('#' + key).val();
+            });
+            return params;
+        }
+
+        function applyParams(params) {
+            if (!params) return;
+            Object.entries(params).forEach(function ([key, value]) {
+                const el = $('#' + key);
+                if (el.length) el.val(value);
+            });
+        }
+
+        function setParamsCustomized(customized) {
+            paramsCustomized = customized;
+            $('#customized-badge').toggle(customized);
+            $('#reset-demo-button').prop('disabled', !customized || !activeDemoId);
+        }
+
+        function showDemoInfo(demo) {
+            const panel = $('#demo-info-panel');
+            if (!demo) {
+                panel.hide();
+                return;
+            }
+            $('#demo-title').text(demo.title || '');
+            const category = demo.category || '';
+            $('#demo-category').text(category).toggle(!!category);
+            $('#demo-description').text(demo.description || '');
+            const list = $('#demo-look-for').empty();
+            const items = demo.lookFor || [];
+            items.forEach(function (item) {
+                list.append($('<li></li>').text(item));
+            });
+            $('#look-for-toggle').text(items.length ? 'Show what to look for ▾' : '').toggle(items.length > 0);
+            $('#demo-look-for-collapse').collapse('hide');
+            panel.show();
+        }
+
+        function loadDemos() {
+            return $.getJSON('/demos/').then(function (response) {
+                const select = $('#demo-select');
+                select.find('option:not(:first)').remove();
+                demoCatalog = {};
+
+                const byCategory = {};
+                (response.demos || []).forEach(function (demo) {
+                    demoCatalog[demo.id] = demo;
+                    const category = demo.category || 'Other';
+                    if (!byCategory[category]) byCategory[category] = [];
+                    byCategory[category].push(demo);
+                });
+
+                Object.keys(byCategory).sort().forEach(function (category) {
+                    const group = $('<optgroup></optgroup>').attr('label', category);
+                    byCategory[category].forEach(function (demo) {
+                        group.append(
+                            $('<option></option>')
+                                .attr('value', demo.id)
+                                .attr('title', demo.description || '')
+                                .text(demo.title)
+                        );
+                    });
+                    select.append(group);
+                });
+            });
+        }
+
+        function loadDemo(demoId, fromUser) {
+            if (!demoId) {
+                activeDemoId = '';
+                showDemoInfo(null);
+                return $.Deferred().resolve();
+            }
+            activeDemoId = demoId;
+            showDemoInfo(demoCatalog[demoId]);
+            return $.getJSON('/demos/' + demoId + '/').then(function (demo) {
+                demoCatalog[demoId] = Object.assign({}, demoCatalog[demoId], demo);
+                showDemoInfo(demoCatalog[demoId]);
+                applyParams(demo.params);
+                savedDemoParams = collectParams();
+                if (fromUser !== false) {
+                    setParamsCustomized(false);
+                }
+            });
+        }
+
+        function validateParams() {
+            const grid = num('numGrid');
+            if (!isPowerOfTwo(grid)) {
+                return 'Grid cells must be a power of 2 (e.g. 32, 64, 128, 256).';
+            }
+            if (num('numParticles') < 1) return 'Need at least 1 particle per species.';
+            if (num('timeSteps') < 1) return 'Need at least 1 time step.';
+            if (num('timeStepSize') <= 0) return 'Time step Δt must be positive.';
+            const nSpecies = num('numSpecies');
+            if (nSpecies < 1 || nSpecies > 2) return 'Species count must be 1 or 2.';
+            return null;
+        }
+
+        function showProgress(visible) {
+            $('#progress-container').toggle(visible);
+            const running = visible;
+            $('#run-button').prop('disabled', running);
+            $('#demo-select').prop('disabled', running);
+            $('#run-button-label').text(running ? 'Running…' : '2. Run simulation');
+        }
+
+        function setProgress(percent, message) {
+            const clamped = Math.max(0, Math.min(100, percent));
+            $('#progress-bar').css('width', clamped + '%').attr('aria-valuenow', clamped);
+            $('#progress-percent').text(clamped + '%');
+            $('#progress-message').text(message || 'Running…');
+        }
+
+        function showError(message) {
+            $('#error-text').text(message);
+            $('#error-alert').removeClass('d-none');
+            $('#success-alert').hide();
+        }
+
+        function hideError() {
+            $('#error-alert').addClass('d-none');
+            $('#error-text').text('');
+        }
+
+        function showSuccess(message) {
+            $('#success-alert').text(message).show();
+        }
+
+        function setEmptyPlotsVisible(visible) {
+            $('.empty-state').toggle(visible);
+            $('#plots-empty').toggle(visible);
+        }
+
+        function timeAxis(length, dt) {
+            return Array.from({ length }, function (_, i) { return i * dt; });
+        }
+
+        function meanSlice(values, begin, end) {
+            const slice = values.slice(begin, Math.min(end, values.length));
+            if (!slice.length) return 0;
+            return slice.reduce(function (a, b) { return a + b; }, 0) / slice.length;
+        }
+
+        function fourierModeAmplitude(field, mode, domainLength) {
+            const n = field.length - 1;
+            if (n <= 0) return 0;
+            const k = (2 * Math.PI * mode) / domainLength;
+            let re = 0;
+            let im = 0;
+            for (let j = 0; j < n; j++) {
+                const x = (j / n) * domainLength;
+                const phase = k * x;
+                re += field[j] * Math.cos(phase);
+                im += field[j] * Math.sin(phase);
+            }
+            re /= n;
+            im /= n;
+            return Math.sqrt(re * re + im * im);
+        }
+
+        function getSpeciesData(frame, species) {
+            const positions = [];
+            const velocities = [];
+            for (const particle of frame.particles) {
+                if (particle.species === species) {
+                    positions.push(particle.position);
+                    velocities.push(particle.velocity);
+                }
+            }
+            return { positions, velocities };
+        }
+
+        function gridX(numGrid, domainLength) {
+            const dx = domainLength / numGrid;
+            return Array.from({ length: numGrid + 1 }, function (_, j) { return j * dx; });
+        }
+
+        function estimateVelocityExtent() {
+            const drift = Math.abs(num('driftVelocity'));
+            const vth = Math.max(0, num('thermalVelocity'));
+            // Headroom for thermal spread and instability-driven acceleration.
+            return Math.max((drift + 4 * vth) * 1.5, 0.5);
+        }
+
+        function computePhaseSpaceYRange(frames) {
+            let vMin = Infinity;
+            let vMax = -Infinity;
+            frames.forEach(function (frame) {
+                (frame.particles || []).forEach(function (particle) {
+                    const v = particle.velocity;
+                    if (v < vMin) vMin = v;
+                    if (v > vMax) vMax = v;
+                });
+            });
+
+            const estimate = estimateVelocityExtent();
+            if (!isFinite(vMin) || !isFinite(vMax)) {
+                return [-estimate, estimate];
+            }
+
+            vMin = Math.min(vMin, -estimate);
+            vMax = Math.max(vMax, estimate);
+
+            const span = vMax - vMin;
+            const pad = Math.max(span * 0.15, 0.1);
+            return [vMin - pad, vMax + pad];
+        }
+
+        function renderPhaseSpace(frame, numSpecies, domainLength) {
+            const traces = [];
+            for (let species = 0; species < numSpecies; species++) {
+                const data = getSpeciesData(frame, species);
+                traces.push({
+                    x: data.positions,
+                    y: data.velocities,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Species ' + species,
+                    marker: { size: 4, opacity: 0.55, color: SPECIES_COLORS[species % SPECIES_COLORS.length] },
+                });
+            }
+            Plotly.react('phasePlot', traces, {
+                title: 'Phase space',
+                margin: { t: 36, r: 10, b: 40, l: 50 },
+                xaxis: { title: 'position x', range: [0, domainLength] },
+                yaxis: { title: 'velocity v', range: phaseSpaceYRange, autorange: false },
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        function renderField(frame, numGrid, domainLength) {
+            Plotly.react('fieldPlot', [{
+                x: gridX(numGrid, domainLength),
+                y: frame.electricField || [],
+                mode: 'lines',
+                type: 'scatter',
+                line: { color: '#7c3aed', width: 2 },
+                name: 'E(x)',
+            }], {
+                title: 'Electric field E(x)',
+                margin: { t: 36, r: 10, b: 40, l: 50 },
+                xaxis: { title: 'position x' },
+                yaxis: { title: 'E' },
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        function renderEnergyPlots(picData, dt) {
+            const ke = picData.ke || [];
+            const ese = picData.ese || [];
+            const t = timeAxis(ese.length, dt);
+            const traces = [];
+
+            for (let species = 0; species < ke.length; species++) {
+                traces.push({
+                    x: t, y: ke[species], type: 'scatter', mode: 'lines',
+                    name: 'KE species ' + species,
+                    line: { color: SPECIES_COLORS[species % SPECIES_COLORS.length] },
+                });
+            }
+
+            const totalKe = ese.map(function (_, i) {
+                return ke.reduce(function (sum, speciesKe) { return sum + (speciesKe[i] || 0); }, 0);
+            });
+            const total = totalKe.map(function (value, i) { return value + (ese[i] || 0); });
+
+            traces.push({
+                x: t, y: ese, type: 'scatter', mode: 'lines', name: 'Field energy',
+                line: { color: '#7c3aed' }, yaxis: 'y2',
+            });
+            traces.push({
+                x: t, y: total, type: 'scatter', mode: 'lines', name: 'Total energy',
+                line: { color: '#0f766e', width: 2, dash: 'dot' },
+            });
+
+            Plotly.react('energyPlot', traces, {
+                title: 'Energy budget',
+                margin: { t: 36, r: 50, b: 40, l: 50 },
+                xaxis: { title: 'time' },
+                yaxis: { title: 'kinetic energy' },
+                yaxis2: { title: 'field energy', overlaying: 'y', side: 'right', showgrid: false },
+                legend: { orientation: 'h', y: -0.25 },
+            }, { responsive: true, displayModeBar: false });
+        }
+
+        function renderModeAmplitude(phaseFrames, mode, domainLength, dt) {
+            const amplitudes = phaseFrames.map(function (frame) {
+                return fourierModeAmplitude(frame.electricField || [], mode, domainLength);
+            });
+            const times = phaseFrames.map(function (frame) {
+                return (frame.frameNumber || 0) * dt;
+            });
+
+            Plotly.react('modePlot', [{
+                x: times, y: amplitudes, type: 'scatter', mode: 'lines+markers',
+                name: '|E_{k=' + mode + '}|',
+                line: { color: '#b45309' }, marker: { size: 4 },
+            }], {
+                title: 'Fourier amplitude |E_k| (mode ' + mode + ')',
+                margin: { t: 36, r: 10, b: 40, l: 50 },
+                xaxis: { title: 'time' },
+                yaxis: { title: '|E_k|', type: amplitudes.some(function (v) { return v > 0; }) ? 'log' : 'linear' },
+            }, { responsive: true, displayModeBar: false });
+
+            return amplitudes;
+        }
+
+        function updateSummary(picData, modeAmplitudes) {
+            const ese = picData.ese || [];
+            const ke = picData.ke || [];
+            const n = ese.length;
+
+            const earlyEse = meanSlice(ese, Math.floor(n * 0.1), Math.floor(n * 0.3));
+            const lateEse = meanSlice(ese, Math.floor(n * 0.8), n);
+            const eseRatio = earlyEse > 0 ? lateEse / earlyEse : 0;
+
+            const total0 = ke.reduce(function (s, speciesKe) { return s + (speciesKe[0] || 0); }, 0) + (ese[0] || 0);
+            const totalN = ke.reduce(function (s, speciesKe) { return s + (speciesKe[n - 1] || 0); }, 0) + (ese[n - 1] || 0);
+            const energyDrift = total0 > 0 ? Math.abs(totalN - total0) / total0 : 0;
+
+            const peakEse = ese.reduce(function (m, v) { return Math.max(m, v); }, 0);
+            const peakRatio = ese[0] > 0 ? peakEse / ese[0] : 0;
+
+            let ekRatio = 0;
+            if (modeAmplitudes.length >= 2 && modeAmplitudes[0] > 0) {
+                ekRatio = modeAmplitudes[modeAmplitudes.length - 1] / modeAmplitudes[0];
+            }
+
+            $('#stat-ese-ratio').text(eseRatio ? eseRatio.toFixed(2) : '—');
+            $('#stat-energy-drift').text((energyDrift * 100).toFixed(1) + '%');
+            $('#stat-ese-peak').text(peakRatio ? peakRatio.toFixed(2) + '×' : '—');
+            $('#stat-ek-ratio').text(ekRatio ? ekRatio.toFixed(2) : '—');
+            $('#summary-card').show();
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+        }
+
+        function showFrame(frameIndex) {
+            if (!activeFrames.length) return;
+            const frame = activeFrames[frameIndex];
+            const numSpecies = num('numSpecies');
+            const domainLength = num('spatialLength');
+            const numGrid = num('numGrid');
+            const dt = num('timeStepSize');
+
+            currentFrameIndex = frameIndex;
+            $('#frame-slider').val(frameIndex);
+            const total = activeFrames.length;
+            const simTime = ((frame.frameNumber || 0) * dt).toFixed(2);
+            $('#frame-number-display').text(
+                'Frame ' + (frameIndex + 1) + ' / ' + total + ' · t = ' + simTime
+            );
+
+            renderPhaseSpace(frame, numSpecies, domainLength);
+            renderField(frame, numGrid, domainLength);
+        }
+
+        function stepFrame(delta) {
+            if (!activeFrames.length) return;
+            const next = (currentFrameIndex + delta + activeFrames.length) % activeFrames.length;
+            showFrame(next);
+        }
+
+        function startAnimation(framesData) {
+            activeFrames = framesData;
+            phaseSpaceYRange = computePhaseSpaceYRange(framesData);
+            currentFrameIndex = 0;
+            stopAnimation();
+
+            const slider = document.getElementById('frame-slider');
+            slider.max = Math.max(0, framesData.length - 1);
+            slider.value = 0;
+
+            slider.oninput = function () {
+                showFrame(parseInt(slider.value, 10));
+            };
+
+            $('#results-header').show();
+            showFrame(0);
+        }
+
+        function visualizeResults(picData) {
+            hasResults = true;
+            setEmptyPlotsVisible(false);
+
+            const dt = num('timeStepSize');
+            const domainLength = num('spatialLength');
+            const mode = num('spatialPerturbationMode');
+
+            renderEnergyPlots(picData, dt);
+            const modeAmplitudes = renderModeAmplitude(
+                picData.phaseFrames || [], mode, domainLength, dt
+            );
+            updateSummary(picData, modeAmplitudes);
+            startAnimation(picData.phaseFrames || []);
+
+            document.getElementById('results-header').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function pollJob(jobId) {
+            return new Promise(function (resolve, reject) {
+                const timer = setInterval(function () {
+                    $.getJSON('/run/status/' + jobId + '/')
+                        .done(function (status) {
+                            setProgress(status.percent || 0, status.message || 'Running…');
+                            if (status.status === 'complete') {
+                                clearInterval(timer);
+                                resolve(status);
+                            } else if (status.status === 'error') {
+                                clearInterval(timer);
+                                reject(new Error(status.error || 'Simulation failed'));
+                            }
+                        })
+                        .fail(function (xhr) {
+                            clearInterval(timer);
+                            reject(new Error(xhr.responseText || 'Status poll failed'));
+                        });
+                }, 300);
+            });
+        }
+
+        function runSimulation(params) {
+            const validationError = validateParams();
+            if (validationError) {
+                showError(validationError);
+                $('#params-panel').collapse('show');
+                return $.Deferred().reject().promise();
+            }
+
+            hideError();
+            showProgress(true);
+            setProgress(0, 'Starting…');
+            $('#success-alert').hide();
+            $('#summary-card').hide();
+            $('#results-header').hide();
+            stopAnimation();
+
+            return $.getJSON('/run/start/', params)
+                .then(function (startResponse) {
+                    return pollJob(startResponse.jobId).then(function () {
+                        return $.getJSON('/run/result/' + startResponse.jobId + '/');
+                    });
+                })
+                .then(function (result) {
+                    setProgress(100, 'Complete');
+                    const demoTitle = demoCatalog[activeDemoId] ? demoCatalog[activeDemoId].title : 'Simulation';
+                    showSuccess('Done — ' + demoTitle + '. Scrub the slider or press Play to animate.');
+                    visualizeResults(result);
+                })
+                .catch(function (err) {
+                    if (err && err.message) showError(err.message);
+                })
+                .always(function () {
+                    showProgress(false);
+                });
+        }
+
+        $(document).ready(function () {
+            setEmptyPlotsVisible(true);
+
+            loadDemos()
+                .then(function () { return loadDemo('twoStreamQuick', false); })
+                .then(function () {
+                    $('#demo-select').val('twoStreamQuick');
+                    setParamsCustomized(false);
+                })
+                .catch(function () {
+                    showError('Could not load demo catalog. Refresh the page or check the server.');
+                });
+
+            $('#demo-select').on('change', function () {
+                loadDemo($(this).val()).catch(function (err) {
+                    showError(err.message || 'Failed to load demo');
+                });
+            });
+
+            $('#reset-demo-button').on('click', function () {
+                if (savedDemoParams) {
+                    applyParams(savedDemoParams);
+                    setParamsCustomized(false);
+                    hideError();
+                } else if (activeDemoId) {
+                    loadDemo(activeDemoId);
+                }
+            });
+
+            $('.param-input').on('input change', function () {
+                if (!savedDemoParams) return;
+                const current = JSON.stringify(collectParams());
+                const saved = JSON.stringify(savedDemoParams);
+                setParamsCustomized(current !== saved);
+            });
+
+            $('#run-button').on('click', function () {
+                runSimulation(collectParams());
+            });
+
+            $('#simulation-form').on('submit', function (event) {
+                event.preventDefault();
+                runSimulation(collectParams());
+            });
+
+            $('#play-button').on('click', function () {
+                if (!activeFrames.length) return;
+                stopAnimation();
+                const duration = num('duration') || 80;
+                animationInterval = setInterval(function () {
+                    currentFrameIndex = (currentFrameIndex + 1) % activeFrames.length;
+                    showFrame(currentFrameIndex);
+                }, duration);
+            });
+
+            $('#stop-button').on('click', stopAnimation);
+            $('#prev-frame').on('click', function () { stepFrame(-1); });
+            $('#next-frame').on('click', function () { stepFrame(1); });
+
+            $('#dismiss-error').on('click', hideError);
+
+            $('#demo-look-for-collapse')
+                .on('shown.bs.collapse', function () {
+                    $('#look-for-toggle').text('Hide what to look for ▴');
+                })
+                .on('hidden.bs.collapse', function () {
+                    $('#look-for-toggle').text('Show what to look for ▾');
+                });
+
+            $('#fileInput').on('change', function () {
+                const fileInput = this;
+                if (!fileInput.files.length) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    e.target.result.split('\n').filter(Boolean).forEach(function (line) {
+                        const parts = line.split(',').map(function (item) { return item.trim(); });
+                        if (parts.length >= 2) {
+                            const el = $('#' + parts[0]);
+                            if (el.length) el.val(parts[1]);
+                        }
+                    });
+                    setParamsCustomized(true);
+                    $('#params-panel').collapse('show');
+                };
+                reader.readAsText(fileInput.files[0]);
+            });
+        });
+    </script>
 </body>
+
 </html>

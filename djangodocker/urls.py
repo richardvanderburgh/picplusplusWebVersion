@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from .views import run
+from .views import run, run_start, run_status, run_result, demo_list, demo_detail
 
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -25,7 +25,11 @@ def home(request):
     return HttpResponse("Welcome to my Django app!")
 
 urlpatterns = [
-        #path('', home, name='home'),
         path('', TemplateView.as_view(template_name="index.html")),
         path('run/', run, name='run'),
+        path('run/start/', run_start, name='run_start'),
+        path('run/status/<str:job_id>/', run_status, name='run_status'),
+        path('run/result/<str:job_id>/', run_result, name='run_result'),
+        path('demos/', demo_list, name='demo_list'),
+        path('demos/<str:demo_id>/', demo_detail, name='demo_detail'),
 ]
