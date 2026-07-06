@@ -25,6 +25,9 @@ namespace DATA_STRUCTS {
 		double thermalVelocity;
 		double spatialPerturbationAmplitude;
 		int spatialPerturbationMode;
+		// "cos" (default) or "sin". A sin shift seeds a cosine density mode and is the
+		// standard standing-wave initial condition at t = 0.
+		std::string spatialPerturbationWaveform = "cos";
 		double plasmaFrequency;
 		double chargeMassRatio;
 		double particleCharge;
