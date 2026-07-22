@@ -547,7 +547,7 @@
             });
         }
 
-        function loadDemo(demoId, fromUser) {
+        function loadDemo(demoId) {
             if (!demoId) {
                 activeDemoId = '';
                 activeRunConfig = null;
@@ -1007,10 +1007,13 @@
             setEmptyPlotsVisible(true);
 
             loadDemos()
-                .then(function () { return loadDemo('twoStreamQuick', false); })
+                .then(function () { return loadDemo('twoStreamQuick'); })
                 .then(function () {
                     $('#demo-select').val('twoStreamQuick');
                     setParamsCustomized(false);
+                    if (demoCatalog.twoStreamQuick && demoCatalog.twoStreamQuick.config) {
+                        activeRunConfig = demoCatalog.twoStreamQuick.config;
+                    }
                 })
                 .catch(function () {
                     showError('Could not load demo catalog. Refresh the page or check the server.');
