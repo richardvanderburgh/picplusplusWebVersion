@@ -4,7 +4,8 @@
 
 `numGrid` must be a **power of two** because the bundled FFT implementation requires it.
 Invalid values are rejected at startup with a clear error message from
-`validateSimulationParams()` (CLI and `PICPlusPlus::initialize()`).
+`validateSimulationParams()` (CLI and `PICPlusPlus::initialize()`). The web UI
+also validates this before starting a run.
 
 ## Windows Conan profile / GitHub Actions runner drift
 
@@ -42,18 +43,21 @@ The `.venv` also holds Conan/CMake, so a single environment drives builds, tests
 
 The web UI is a development aid, not a production front end:
 
-- Hard-coded `ng = 32` in `templates/index.html` for plot axis limits does not track the form's `numGrid` value.
+- Plot axes track the form's `numGrid` / `spatialLength` (phase space and `E(x)`).
 - Thermal velocity initialization uses a fixed seed (`std::mt19937(42)`), so runs
   with `thermalVelocity > 0` are reproducible across platforms.
-- The UI assumes exactly two species with opposite drift velocities.
+- The simplified parameter form shares one species template: one species, or two
+  counter-propagating beams (`±drift`). For arbitrary multi-species setups
+  (different `q/m`, `v_th`, particle counts, etc.), import a full JSON config or
+  load a demo — the UI sends that `species` array through unchanged until you
+  edit the form.
 
-## Legacy input files
+## Input files
 
-`inputFiles/landau.txt` and `inputFiles/twoStream.txt` use an old comma-separated format. The CLI accepts JSON only; use the JSON files under `inputFiles/` and `inputFiles/validation/` instead.
-
-## Data type precision
-
-`plasmaFrequency` and `chargeMassRatio` are stored as `double` in `DataStructs.h` but JSON inputs historically used integer values. Fractional values are supported.
+CLI inputs are JSON only (`inputFiles/*.json`, `inputFiles/validation/`,
+`inputFiles/demo/`). Passing a legacy `.txt` / `.csv` path prints a clear error
+pointing at the JSON replacements. The web UI file picker still accepts legacy
+comma-separated parameter lists as well as JSON.
 
 ## Parallelism (OpenMP / MPI)
 

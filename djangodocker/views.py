@@ -46,13 +46,54 @@ def _parse_params(source) -> dict:
     params["framePeriod"] = source.get("framePeriod", "1")
 
     num_species = int(params["numSpecies"])
-    if num_species not in (1, 2):
-        raise ValueError("numSpecies must be 1 or 2")
+    if num_species < 1:
+        raise ValueError("numSpecies must be at least 1")
 
     return params
 
 
+def _validate_config(config: dict) -> dict:
+    """Validate a full PIC++ JSON config (species array + global params)."""
+    if not isinstance(config, dict):
+        raise ValueError("config must be a JSON object")
+    species = config.get("species")
+    if not isinstance(species, list) or not species:
+        raise ValueError("config.species must be a non-empty array")
+
+    num_species = int(config.get("numSpecies", len(species)))
+    if num_species != len(species):
+        raise ValueError(
+            f"numSpecies ({num_species}) does not match species array length ({len(species)})"
+        )
+    if num_species < 1:
+        raise ValueError("numSpecies must be at least 1")
+
+    num_grid = int(config.get("numGrid", 0))
+    if num_grid < 1 or (num_grid & (num_grid - 1)) != 0:
+        raise ValueError("numGrid must be a power of two")
+
+    frame_period = int(config.get("framePeriod", 1))
+    if frame_period < 1:
+        frame_period = 1
+
+    validated = dict(config)
+    validated["numSpecies"] = num_species
+    validated["numGrid"] = num_grid
+    validated["spatialLength"] = float(config["spatialLength"])
+    validated["numTimeSteps"] = int(config["numTimeSteps"])
+    validated["timeStepSize"] = float(config["timeStepSize"])
+    validated["framePeriod"] = frame_period
+    return validated
+
+
 def _build_config(params: dict) -> dict:
+    """Build a config from the simplified web form.
+
+    The form exposes one shared species template. For two species it creates
+    counter-propagating beams (±drift); for more than two it keeps the same
+    template with driftVelocity on species 0 only (remaining species get 0).
+    Prefer posting a full `config` JSON when species differ.
+    """
     num_particles = int(params["numParticles"])
     num_species = int(params["numSpecies"])
     drift_velocity = float(params["driftVelocity"])
@@ -71,17 +112,22 @@ def _build_config(params: dict) -> dict:
         species = [
             {"name": "Species1", "driftVelocity": drift_velocity, **species_template},
         ]
-    else:
+    elif num_species == 2:
         species = [
             {"name": "Species1", "driftVelocity": drift_velocity, **species_template},
             {"name": "Species2", "driftVelocity": -drift_velocity, **species_template},
+        ]
+    else:
+        species = [
+            {"name": f"Species{i + 1}", "driftVelocity": (drift_velocity if i == 0 else 0.0), **species_template}
+            for i in range(num_species)
         ]
 
     frame_period = int(params["framePeriod"])
     if frame_period < 1:
         frame_period = 1
 
-    return {
+    return _validate_config({
         "species": species,
         "spatialLength": float(params["spatialLength"]),
         "numTimeSteps": int(params["timeSteps"]),
@@ -89,7 +135,33 @@ def _build_config(params: dict) -> dict:
         "numGrid": int(params["numGrid"]),
         "numSpecies": len(species),
         "framePeriod": frame_period,
-    }
+    })
+
+
+def _config_from_request(request) -> dict:
+    """Prefer an explicit full JSON config; otherwise build from flat form params."""
+    body_config = None
+    if request.method == "POST" and request.content_type and "application/json" in request.content_type:
+        try:
+            payload = json.loads(request.body.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON body: {exc}") from exc
+        if isinstance(payload, dict) and payload.get("config") is not None:
+            body_config = payload["config"]
+        elif isinstance(payload, dict) and payload.get("species") is not None:
+            body_config = payload
+
+    if body_config is not None:
+        return _validate_config(body_config)
+
+    source = request.GET if request.method == "GET" else request.POST
+    if source.get("config"):
+        try:
+            return _validate_config(json.loads(source.get("config")))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid config JSON: {exc}") from exc
+
+    return _build_config(_parse_params(source))
 
 
 def _set_job(job_id: str, **fields) -> None:
@@ -158,12 +230,12 @@ def _run_job(job_id: str, config: dict, input_path: str, output_path: str) -> No
 
 
 def run_start(request):
-    source = request.GET if request.method == "GET" else request.POST
     try:
-        params = _parse_params(source)
-        config = _build_config(params)
+        config = _config_from_request(request)
     except ValueError as exc:
         return HttpResponse(str(exc), status=400)
+    except (TypeError, KeyError) as exc:
+        return HttpResponse(f"Invalid parameters: {exc}", status=400)
 
     job_id = str(uuid.uuid4())
 
@@ -223,12 +295,12 @@ def run_result(request, job_id):
 
 def run(request):
     """Synchronous run (legacy). Prefer /run/start/ + polling for progress."""
-    source = request.GET if request.method == "GET" else request.POST
     try:
-        params = _parse_params(source)
-        config = _build_config(params)
+        config = _config_from_request(request)
     except ValueError as exc:
         return HttpResponse(str(exc), status=400)
+    except (TypeError, KeyError) as exc:
+        return HttpResponse(f"Invalid parameters: {exc}", status=400)
 
     input_path = None
     output_path = None

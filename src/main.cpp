@@ -1,6 +1,8 @@
 #include <chrono>
+#include <cctype>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <nlohmann/json.hpp>
 
 #ifdef _OPENMP
@@ -60,9 +62,25 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	std::ifstream configFile(argv[1]);
+	const std::string configPath = argv[1];
+	auto lowerExtension = configPath;
+	for (char& ch : lowerExtension) {
+		ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+	}
+	const auto endsWith = [&](const std::string& suffix) {
+		return lowerExtension.size() >= suffix.size()
+			&& lowerExtension.compare(lowerExtension.size() - suffix.size(), suffix.size(), suffix) == 0;
+	};
+	if (endsWith(".txt") || endsWith(".csv")) {
+		std::cerr << "Error: legacy comma-separated inputs (.txt/.csv) are no longer accepted.\n"
+			<< "Use a JSON config instead (see inputFiles/*.json and inputFiles/validation/).\n"
+			<< "The web UI can still import legacy CSV/TXT parameter lists via the file picker.\n";
+		return 1;
+	}
+
+	std::ifstream configFile(configPath);
 	if (!configFile.is_open()) {
-		std::cerr << "Error opening file: " << argv[1] << "\n";
+		std::cerr << "Error opening file: " << configPath << "\n";
 		return 1;
 	}
 

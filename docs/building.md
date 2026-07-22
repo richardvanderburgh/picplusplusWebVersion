@@ -84,7 +84,11 @@ conan build . --profile=buildUtils/macos_clang_release -of=build
 `conan build` runs CTest automatically. To run tests again:
 
 ```bash
+# Linux / macOS (single-config generators)
 ctest --test-dir build --output-on-failure
+
+# Windows (Visual Studio multi-config generator)
+ctest --test-dir build -C Release --output-on-failure
 ```
 
 ### 3. Run a simulation
@@ -174,4 +178,4 @@ See [validation.md](validation.md) for details.
 
 ## CI
 
-GitHub Actions builds on Ubuntu (Docker) and Windows using `linux_gcc_release` and `win_release`, then runs `ctest --test-dir build --output-on-failure`.
+GitHub Actions builds on Ubuntu (Docker) and Windows using `linux_gcc_release` and `win_release`, then runs CTest (`ctest --test-dir build --output-on-failure` on Ubuntu; add `-C Release` on Windows).

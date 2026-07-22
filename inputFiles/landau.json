@@ -1,0 +1,19 @@
+{
+  "species": [
+    {
+      "name": "Electrons",
+      "numParticles": 500,
+      "spatialPerturbationMode": 1,
+      "driftVelocity": 0,
+      "spatialPerturbationAmplitude": 0.02,
+      "thermalVelocity": 0.5,
+      "plasmaFrequency": 1,
+      "chargeMassRatio": -1
+    }
+  ],
+  "spatialLength": 6.28318530717958,
+  "numTimeSteps": 300,
+  "timeStepSize": 0.1,
+  "numGrid": 256,
+  "numSpecies": 1
+}
