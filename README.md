@@ -103,12 +103,50 @@ python manage.py runserver
 
 Open http://127.0.0.1:8000/. The UI writes a temporary JSON config and calls `build/bin/PIC++Main`.
 
+## Desktop GUI (Qt)
+
+A native Qt 6 desktop application provides the same workflow as the web UI: pick a demo preset, adjust parameters, run the simulation in a background thread, and explore phase space, field, energy, and Fourier plots with frame animation.
+
+**Requirements:** Qt 6 with **Widgets** and **Charts** modules.
+
+| OS | Install |
+|----|---------|
+| macOS | `brew install qt` |
+| Ubuntu | `sudo apt install qt6-base-dev qt6-charts-dev` |
+
+Build with the rest of the project (enabled by default when Qt is found). Look for `PIC++: Qt GUI enabled` in the CMake output; if you see `skipping PIC++GUI`, Qt was not found.
+
+```bash
+./scripts/build.sh
+./build/bin/PIC++GUI
+```
+
+On macOS, if CMake still cannot find Qt after `brew install qt`:
+
+```bash
+export CMAKE_PREFIX_PATH="$(brew --prefix qt)"
+./scripts/build.sh
+```
+
+Pass the repository root if you launch from another directory:
+
+```bash
+./build/bin/PIC++GUI /path/to/picplusplus
+```
+
+To skip the GUI target:
+
+```bash
+cmake -S . -B build -DPICPP_BUILD_GUI=OFF
+```
+
 ## Project layout
 
 | Path | Description |
 |------|-------------|
 | `lib/` | PIC library — field solve, deposition, time loop |
 | `src/main.cpp` | CLI entry point |
+| `gui/` | Qt 6 desktop GUI |
 | `test/` | Integration, regression, and validation tests |
 | `lib/test/` | Unit tests for individual kernels |
 | `inputFiles/` | Example and benchmark inputs |

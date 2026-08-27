@@ -9,6 +9,7 @@ enable_testing()
 option(PICPP_ENABLE_WARNINGS "Enable a strict compiler warning set for project code" ON)
 option(PICPP_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 option(PICPP_ENABLE_OPENMP "Enable OpenMP shared-memory parallelism when available" ON)
+option(PICPP_BUILD_GUI "Build the Qt desktop GUI (requires Qt 6 Widgets and Charts)" ON)
 
 # OpenMP is optional: when found, the hot particle loops run multi-threaded and
 # the compiler defines _OPENMP (which the pragmas in the headers key off of).
@@ -94,3 +95,30 @@ target_link_libraries(${PROJECT_NAME}_Test
 add_test(NAME "${PROJECT_NAME}"
           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
           COMMAND ${PROJECT_NAME}_Test)
+
+if(PICPP_BUILD_GUI)
+    # Homebrew Qt is keg-only; help CMake find it on macOS when CMAKE_PREFIX_PATH
+    # was not set by the user.
+    if(APPLE AND NOT DEFINED Qt6_DIR)
+        foreach(_qt_root IN ITEMS "/opt/homebrew/opt/qt" "/usr/local/opt/qt"
+                                  "/opt/homebrew/opt/qt@6" "/usr/local/opt/qt@6")
+            if(EXISTS "${_qt_root}/lib/cmake/Qt6")
+                list(PREPEND CMAKE_PREFIX_PATH "${_qt_root}")
+                message(STATUS "PIC++: probing Homebrew Qt at ${_qt_root}")
+                break()
+            endif()
+        endforeach()
+    endif()
+
+    find_package(Qt6 QUIET COMPONENTS Widgets Charts)
+    if(Qt6_FOUND)
+        add_subdirectory(gui)
+        message(STATUS "PIC++: Qt GUI enabled (Qt ${Qt6_VERSION})")
+    else()
+        message(STATUS "PIC++: Qt6 Widgets/Charts not found - skipping PIC++GUI")
+        if(APPLE)
+            message(STATUS "       Install with: brew install qt")
+            message(STATUS "       Or set: export CMAKE_PREFIX_PATH=\"\$(brew --prefix qt)\"")
+        endif()
+    endif()
+endif()
