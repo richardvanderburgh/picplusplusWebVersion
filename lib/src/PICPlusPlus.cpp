@@ -277,6 +277,10 @@ namespace PIC_PLUS_PLUS {
 
 	void PICPlusPlus::calculateEnergies() {
 
+		// Velocities are stored in cells/timestep; convert to physical units so
+		// KE is commensurate with PE = (Δx/2) Σ E².
+		const double dxdt = m_simulationParams.gridStepSize / m_simulationParams.timeStepSize;
+
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
 			const std::vector<double>& velocities = m_allSpeciesData[species].particleXVelocities;
 			const double particleMass = m_allSpeciesData[species].particleMass;
@@ -287,7 +291,8 @@ namespace PIC_PLUS_PLUS {
 #pragma omp parallel for reduction(+ : kineticEnergy) schedule(static)
 #endif
 			for (int i = 0; i < numParticles; i++) {
-				kineticEnergy += 0.5 * std::pow(velocities[i], 2) * particleMass;
+				const double vPhys = velocities[i] * dxdt;
+				kineticEnergy += 0.5 * vPhys * vPhys * particleMass;
 			}
 			m_particleKineticEnergy[species][m_timeStep] += kineticEnergy;
 		}

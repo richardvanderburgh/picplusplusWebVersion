@@ -88,12 +88,14 @@ inline void accel3d(
 #pragma omp parallel for schedule(static)
 #endif
 		for (int i = 0; i < numParticles; ++i) {
+			// Sample E, then scale into code-unit Δv = (q/m)(dt²/d{x,y,z}) E
+			// (same normalization as the 1D accel pusher).
 			const double ax = trilinearSample(ex, grid, px[i], py[i], pz[i]);
 			const double ay = trilinearSample(ey, grid, px[i], py[i], pz[i]);
 			const double az = trilinearSample(ez, grid, px[i], py[i], pz[i]);
-			vx[i] += ax;
-			vy[i] += ay;
-			vz[i] += az;
+			vx[i] += aeX * ax;
+			vy[i] += aeY * ay;
+			vz[i] += aeZ * az;
 		}
 	}
 }

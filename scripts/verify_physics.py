@@ -195,29 +195,21 @@ def main() -> int:
     d3_totals = total_energy(d3)
     d3_finite = d3.get("dimension") == 3 and all(math.isfinite(x) for x in d3["ese"])
     d3_drift = abs(d3_totals[-1] - d3_totals[0]) / max(abs(d3_totals[0]), 1e-30)
-    # 3D is only a smoke test in ValidationTest — report conservation honestly.
-    ok_smoke = d3_finite
-    ok_conserved = d3_drift < 0.5
-    failures += not ok_smoke
+    ok = d3_finite and d3_drift < 0.15
+    failures += not ok
     report(
         "3D plasma oscillation",
         [
             f"dimension = {d3.get('dimension')}, frames = {len(d3.get('phaseFrames', []))}",
             f"All ESE samples finite: {d3_finite}",
-            f"Total energy drift = {100 * d3_drift:.1f}%",
-            "Automated test only requires finite energy (smoke test).",
-            "Energy is NOT well conserved on the coarse 8³/512-particle demo —",
-            "treat 3D as experimental visualization, not a validated physics benchmark.",
+            f"Total energy drift = {100 * d3_drift:.3f}% (criterion < 15%)",
         ],
-        ok_smoke,
+        ok,
     )
-    if not ok_conserved:
-        print("  [caveat] 3D energy conservation check would FAIL a 1D-style budget test.")
 
     print("\n=== Verdict ===")
     if failures == 0:
-        print("Documented 1D electrostatic validation criteria: PASSED.")
-        print("3D: completes with finite energy, but is not energy-validated.")
+        print("Documented electrostatic validation criteria: PASSED (1D and 3D).")
         return 0
     print(f"{failures} primary check group(s) FAILED.")
     return 1

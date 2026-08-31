@@ -103,6 +103,11 @@ void PICPlusPlus::applySpatialPerturbation3D(DATA_STRUCTS::SpeciesData& speciesD
 
 void PICPlusPlus::calculateEnergies3D() {
 	const double cellVolume = m_grid3D.cellVolume();
+	// Velocities are stored in cells/timestep; convert to physical units so
+	// KE is commensurate with PE = (1/2) ∫ E² dV.
+	const double dxdt = m_grid3D.dx / m_simulationParams.timeStepSize;
+	const double dydt = m_grid3D.dy / m_simulationParams.timeStepSize;
+	const double dzdt = m_grid3D.dz / m_simulationParams.timeStepSize;
 
 	for (int species = 0; species < m_simulationParams.numSpecies; ++species) {
 		const double particleMass = m_allSpeciesData[species].particleMass;
@@ -113,9 +118,9 @@ void PICPlusPlus::calculateEnergies3D() {
 #pragma omp parallel for reduction(+ : kineticEnergy) schedule(static)
 #endif
 		for (int i = 0; i < numParticles; ++i) {
-			const double vx = m_allSpeciesData[species].particleXVelocities[static_cast<size_t>(i)];
-			const double vy = m_allSpeciesData[species].particleYVelocities[static_cast<size_t>(i)];
-			const double vz = m_allSpeciesData[species].particleZVelocities[static_cast<size_t>(i)];
+			const double vx = m_allSpeciesData[species].particleXVelocities[static_cast<size_t>(i)] * dxdt;
+			const double vy = m_allSpeciesData[species].particleYVelocities[static_cast<size_t>(i)] * dydt;
+			const double vz = m_allSpeciesData[species].particleZVelocities[static_cast<size_t>(i)] * dzdt;
 			kineticEnergy += 0.5 * (vx * vx + vy * vy + vz * vz) * particleMass;
 		}
 		m_particleKineticEnergy[species][m_timeStep] += kineticEnergy;

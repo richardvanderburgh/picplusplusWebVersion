@@ -55,7 +55,8 @@ inline void setRho3d(
 	const double invDx = 1.0 / grid.dx;
 	const double invDy = 1.0 / grid.dy;
 	const double invDz = 1.0 / grid.dz;
-	const double charge = allSpeciesData[species].particleCharge;
+	// Match 1D qdx = q/dx: deposit charge density q / dV, not raw charge.
+	const double chargeDensity = allSpeciesData[species].particleCharge / grid.cellVolume();
 
 	auto& speciesData = allSpeciesData[species];
 	for (int i = 0; i < speciesData.numParticles; ++i) {
@@ -69,7 +70,7 @@ inline void setRho3d(
 		depositParticle3d(
 			grid,
 			rho,
-			charge,
+			chargeDensity,
 			speciesData.particlePositions[i],
 			speciesData.particlePositionsY[i],
 			speciesData.particlePositionsZ[i]);
@@ -92,7 +93,7 @@ inline void move3d(
 		const std::vector<double>& vy = allSpeciesData[species].particleYVelocities;
 		const std::vector<double>& vz = allSpeciesData[species].particleZVelocities;
 		const int numParticles = allSpeciesData[species].numParticles;
-		const double charge = allSpeciesData[species].particleCharge;
+		const double chargeDensity = allSpeciesData[species].particleCharge / grid.cellVolume();
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -128,7 +129,7 @@ inline void move3d(
 				for (int a = 0; a < 2; ++a) {
 					for (int b = 0; b < 2; ++b) {
 						for (int c = 0; c < 2; ++c) {
-							const double weight = charge * wx[a] * wy[b] * wz[c];
+							const double weight = chargeDensity * wx[a] * wy[b] * wz[c];
 							localRho[grid.index(ix[a], iy[b], iz[c])] += weight;
 						}
 					}

@@ -311,6 +311,22 @@ TEST(ValidationTest, ThreeDPlasmaOscillationCompletesWithFiniteEnergy)
 		EXPECT_TRUE(std::isfinite(value));
 	}
 
+	const auto& ke = result->at("ke").get<std::vector<std::vector<double>>>();
+	ASSERT_FALSE(ke.empty());
+	ASSERT_EQ(ke[0].size(), ese.size());
+	const auto totalAt = [&](size_t i) {
+		double total = ese[i];
+		for (const auto& speciesKe : ke) {
+			total += speciesKe[i];
+		}
+		return total;
+	};
+	const double total0 = totalAt(0);
+	const double totalN = totalAt(ese.size() - 1);
+	ASSERT_GT(std::abs(total0), 0.0);
+	EXPECT_LT(std::abs(totalN - total0) / std::abs(total0), 0.15)
+		<< "Total energy should remain within 15% over the 3D plasma oscillation run";
+
 	const auto& frames = result->at("phaseFrames");
 	ASSERT_FALSE(frames.empty());
 	EXPECT_EQ(frames[0].at("dimension").get<int>(), 3);
