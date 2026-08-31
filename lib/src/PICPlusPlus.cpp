@@ -301,14 +301,20 @@ namespace PIC_PLUS_PLUS {
 		const int numGridPoints = m_simulationParams.numGrid + 1;
 		const std::vector<double>& field = m_electricField[m_timeStep];
 
-		double electrostaticEnergy = 0.0;
+		double instantaneousFieldEnergy = 0.0;
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+ : electrostaticEnergy) schedule(static) if(numGridPoints >= 1024)
+#pragma omp parallel for reduction(+ : instantaneousFieldEnergy) schedule(static) if(numGridPoints >= 1024)
 #endif
 		for (int i = 0; i < numGridPoints; i++) {
-			electrostaticEnergy += std::pow(field[i], 2) * halfGridSize;
+			instantaneousFieldEnergy += field[i] * field[i] * halfGridSize;
 		}
-		m_electrostaticEnergy[m_timeStep] += electrostaticEnergy;
+		// Pair KE(v^{n+1/2}) with ½(W_E^n + W_E^{n+1}) to remove the artificial
+		// 2ω_p wobble from mixing half-step KE with a single integer-step PE.
+		const double reportedFieldEnergy = (m_timeStep == 0)
+			? instantaneousFieldEnergy
+			: 0.5 * (m_previousFieldEnergy + instantaneousFieldEnergy);
+		m_electrostaticEnergy[m_timeStep] += reportedFieldEnergy;
+		m_previousFieldEnergy = instantaneousFieldEnergy;
 	}
 
 	DATA_STRUCTS::Frame PICPlusPlus::updateFrame() {

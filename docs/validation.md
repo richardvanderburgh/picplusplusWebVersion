@@ -335,3 +335,9 @@ Particle velocities are stored in cells/timestep for the leapfrog push. Kinetic
 energy diagnostics convert back to physical velocity so KE is commensurate with
 field energy **(1/2) ∫ E² dV**. Charge is deposited as density **q / (Δx Δy Δz)**,
 matching the 1D **q / Δx** convention.
+
+Reported field energy is **leapfrog-centered**: at step \(n \ge 1\),
+**ESE = ½ (W<sub>E</sub><sup>n</sup> + W<sub>E</sub><sup>n+1</sup>)** is paired with
+**KE(v<sup>n+1/2</sup>)**. A naive sum of half-step KE with a single integer-step
+PE oscillates at **2ω<sub>p</sub>** even when the advance is stable; centering
+removes that diagnostic artifact in both 1D and 3D.

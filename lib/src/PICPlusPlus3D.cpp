@@ -127,17 +127,23 @@ void PICPlusPlus::calculateEnergies3D() {
 	}
 
 	const size_t nCells = m_grid3D.numCells();
-	double electrostaticEnergy = 0.0;
+	double instantaneousFieldEnergy = 0.0;
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+ : electrostaticEnergy) schedule(static) if(nCells >= 4096)
+#pragma omp parallel for reduction(+ : instantaneousFieldEnergy) schedule(static) if(nCells >= 4096)
 #endif
 	for (size_t idx = 0; idx < nCells; ++idx) {
 		const double ex = m_electricFieldX3D[idx];
 		const double ey = m_electricFieldY3D[idx];
 		const double ez = m_electricFieldZ3D[idx];
-		electrostaticEnergy += (ex * ex + ey * ey + ez * ez) * 0.5 * cellVolume;
+		instantaneousFieldEnergy += (ex * ex + ey * ey + ez * ez) * 0.5 * cellVolume;
 	}
-	m_electrostaticEnergy[m_timeStep] += electrostaticEnergy;
+	// Pair KE(v^{n+1/2}) with ½(W_E^n + W_E^{n+1}) to remove the artificial
+	// 2ω_p wobble from mixing half-step KE with a single integer-step PE.
+	const double reportedFieldEnergy = (m_timeStep == 0)
+		? instantaneousFieldEnergy
+		: 0.5 * (m_previousFieldEnergy + instantaneousFieldEnergy);
+	m_electrostaticEnergy[m_timeStep] += reportedFieldEnergy;
+	m_previousFieldEnergy = instantaneousFieldEnergy;
 }
 
 std::vector<DATA_STRUCTS::Particle> PICPlusPlus::updateFrameParticles3D() {

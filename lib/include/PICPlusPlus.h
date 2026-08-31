@@ -35,6 +35,9 @@ namespace PIC_PLUS_PLUS {
 		std::vector<double> m_chargeDensity;
 		std::vector<double> m_electrostaticEnergy;
 		std::vector<double> m_totalEnergy;
+		// Instantaneous |E|² energy from the previous integer time level. Reported
+		// ESE is leapfrog-centered: ½(W_E^n + W_E^{n+1}) with KE(v^{n+1/2}).
+		double m_previousFieldEnergy = 0.0;
 
 		std::vector<std::vector<double>> m_electricField;
 		std::vector<std::vector<double>> m_particleKineticEnergy;
