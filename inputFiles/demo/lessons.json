@@ -58,5 +58,44 @@
         "prompt": "Run the cyclotron demo. Expect v_y to oscillate with period ≈ 2π while total energy stays flat."
       }
     ]
+  },
+  {
+    "id": "magnetic-field-showcase",
+    "title": "Lesson: Magnetic field showcase",
+    "description": "From pure cyclotron motion to 3D helices, oblique fields, and magnetized instabilities.",
+    "steps": [
+      {
+        "demoId": "cyclotronOrbit",
+        "prompt": "Start with clean 1D3V cyclotron motion — perpendicular velocity rotates at ω_c = 1."
+      },
+      {
+        "demoId": "larmorHelix3D",
+        "prompt": "3D Larmor helix: enable auto-rotate and play. Each particle wraps a helical path (v_x + gyration)."
+      },
+      {
+        "demoId": "cyclotronStorm3D",
+        "prompt": "1024 warm gyrators — watch the whole cloud spin like a storm."
+      },
+      {
+        "demoId": "obliqueB3D",
+        "prompt": "Tilted B breaks the x–y plane symmetry; rotate the view to see the inclined axis."
+      },
+      {
+        "demoId": "crossField3D",
+        "prompt": "B along x: gyration happens in the y–z plane instead."
+      },
+      {
+        "demoId": "magnetizedTwoStream3D",
+        "prompt": "Counter-streaming beams plus B_z — two colors mix in spiraling 3D structures."
+      },
+      {
+        "demoId": "magnetizedWave1D",
+        "prompt": "Plasma wave breathing and cyclotron gyration at the same time."
+      },
+      {
+        "demoId": "exbDrift1D",
+        "prompt": "Self-consistent E×B: slow drift in y on top of fast cyclotron wobble."
+      }
+    ]
   }
 ]

@@ -13,6 +13,110 @@
     ]
   },
   {
+    "id": "larmorHelix3D",
+    "file": "larmorHelix3D.json",
+    "title": "3D Larmor helix",
+    "category": "Magnetic field",
+    "description": "Electrons in B_z = 1 with parallel drift (v_x, v_z) and a perpendicular kick (v_y). Each particle traces a **helical Larmor orbit** while the cloud stays nearly neutral — weak ω_p = 0.06 keeps E small. Dense frame output (period 1) for smooth 3D playback: enable auto-rotate and watch the spring-like particle paths wrap the domain.",
+    "lookFor": [
+      "Helical trajectories in the rotatable 3D particle view",
+      "Cyclotron gyration in the x–y plane plus drift along x and z",
+      "Perpendicular kinetic energy oscillating at ω_c ≈ 1",
+      "Total energy flat (external B does no work)"
+    ]
+  },
+  {
+    "id": "cyclotronStorm3D",
+    "file": "cyclotronStorm3D.json",
+    "title": "3D cyclotron storm",
+    "category": "Magnetic field",
+    "description": "A **1024-particle** warm electron cloud in strong B_z = 1.25. Every particle gyrates at a slightly different phase; together they form a spinning, turbulent-looking **cyclotron storm** in the 3D view. Great for showcasing Boris stability with thermal spread (v_th = 0.18) and fast timestep (Δt = 0.06).",
+    "lookFor": [
+      "Dense, rapidly rotating 3D particle cloud",
+      "Broad perpendicular velocity spread from thermal gyration",
+      "Field energy tiny compared with kinetic (ω_p = 0.04)",
+      "Smooth animation with one frame per step"
+    ]
+  },
+  {
+    "id": "obliqueB3D",
+    "file": "obliqueB3D.json",
+    "title": "3D oblique B field",
+    "category": "Magnetic field",
+    "description": "Tilted uniform field **B = (0.35, 0.35, 0.85)** breaks symmetry: Larmor circles no longer lie in the x–y plane. Rotate the 3D view to see the **inclined gyration axis** and how a warm cloud (v_th = 0.12) fills a tilted torus-like volume.",
+    "lookFor": [
+      "Gyration axis tilted away from z in the 3D scatter view",
+      "Perpendicular motion split across all three velocity components",
+      "Different apparent orbit shapes from different camera angles",
+      "Energy budget dominated by gyrational kinetic energy"
+    ]
+  },
+  {
+    "id": "crossField3D",
+    "file": "crossField3D.json",
+    "title": "3D cross-field gyration (B_x)",
+    "category": "Magnetic field",
+    "description": "Field along **x** instead of z: **B = (1, 0, 0)**. Perpendicular drifts in y and z produce **pinwheel motion in the y–z plane** as particles slide along x. A striking change of perspective from the usual textbook B_z setup.",
+    "lookFor": [
+      "Circular motion primarily in the y–z plane (3D view)",
+      "Gyration frequency set by |B| = 1",
+      "Thermal spread smearing individual orbit radii",
+      "Auto-rotate highlights the transverse plane of gyration"
+    ]
+  },
+  {
+    "id": "magnetizedTwoStream3D",
+    "file": "magnetizedTwoStream3D.json",
+    "title": "3D magnetized two-stream",
+    "category": "Magnetic field",
+    "description": "Classic **counter-streaming beams** (v_x = ±1) plus **B_z = 0.75**. Gyroradius r_L ≈ v/ω_c modulates the instability: beams filament and wrap into **spiraling vortex-like structures** in 3D instead of flat 1D phase-space rolls. Two species colors in the scatter view.",
+    "lookFor": [
+      "Two colored beam populations mixing in 3D",
+      "Gyro-orbit scale visible before nonlinear saturation",
+      "Electrostatic energy growth from the two-stream drive",
+      "Instability + magnetization interplay (ω_p/ω_c ≈ 0.47)"
+    ]
+  },
+  {
+    "id": "magnetizedWave1D",
+    "file": "magnetizedWave1D.json",
+    "title": "Magnetized plasma wave",
+    "category": "Magnetic field",
+    "description": "Standing-wave density perturbation (sin, mode k = 1) in a warm magnetized plasma: **B_z = 1**, **ω_p = 0.25**, perpendicular drift v_y = 0.4. Watch **E(x) breathe** at the plasma frequency while every particle simultaneously **gyrates** at ω_c — two oscillations superposed in the energy budget.",
+    "lookFor": [
+      "E(x) oscillation plus cyclotron modulation in phase space",
+      "Competition between ω_p and ω_c in the Energy tab",
+      "Perpendicular velocity rotating at ω_c = 1",
+      "Total energy approximately conserved"
+    ]
+  },
+  {
+    "id": "magnetizedTwoStream1D",
+    "file": "magnetizedTwoStream1D.json",
+    "title": "Magnetized two-stream (1D3V)",
+    "category": "Magnetic field",
+    "description": "Two cold beams at **v_x = ±1** with **B_z = 0.7** and small perpendicular drifts (v_y = ±0.2). The instability still drives field growth, but phase space shows **rotating beamlets** instead of simple horizontal stripes — magnetization wraps the classic two-stream picture.",
+    "lookFor": [
+      "Phase-space filaments curved by cyclotron motion",
+      "Field energy rise from two-stream instability",
+      "Perpendicular velocity components in exported frames (velocityY)",
+      "ω_c ≈ 0.7, ω_p ≈ 0.5 — comparable magnetization"
+    ]
+  },
+  {
+    "id": "exbDrift1D",
+    "file": "exbDrift1D.json",
+    "title": "E×B drift (1D3V)",
+    "category": "Magnetic field",
+    "description": "Small sin perturbation seeds a self-consistent **E_x(x)** while **B_z = 1** pins cyclotron motion. Electrons simultaneously **gyrate** and **drift in y** with speed v_E ≈ E/B from the wave field — the textbook **E×B** pattern in a fully kinetic PIC setup (weak ω_p = 0.15).",
+    "lookFor": [
+      "Slow net drift in y superposed on fast cyclotron wobble",
+      "E(x) pattern sloshing while particles drift across it",
+      "Perpendicular kinetic energy >> field energy",
+      "Export velocityY in frame CSV to see drift + gyration"
+    ]
+  },
+  {
     "id": "vortexTwoStream",
     "file": "vortexTwoStream.json",
     "title": "Two-stream vortex formation",

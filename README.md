@@ -86,6 +86,21 @@ Uniform external **B** uses the Boris algorithm. Example JSON:
 
 Cyclotron frequency **ω_c = (q/m) B** (signed). The GUI exposes **B_x / B_y / B_z** and **Drift v_y**.
 
+**Magnetic demos** (GUI preset list, category *Magnetic field*):
+
+| Demo | Highlight |
+|------|-----------|
+| Cyclotron orbit | Pure 1D3V ω_c rotation |
+| 3D Larmor helix | Helical paths with auto-rotate |
+| 3D cyclotron storm | 1024 warm gyrators |
+| 3D oblique B | Tilted gyration axis |
+| 3D cross-field (B_x) | Pinwheel in y–z plane |
+| 3D magnetized two-stream | Instability + gyromotion |
+| Magnetized plasma wave | ω_p and ω_c together |
+| E×B drift | Drift on top of gyration |
+
+Guided path: **Lessons → Magnetic field showcase**.
+
 Write full time-series output (energies and phase frames) to a JSON file:
 
 ```bash
