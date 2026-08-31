@@ -299,3 +299,71 @@ Override paths if needed:
 - Field energy is a tiny fraction of total kinetic energy, so the KE curve looks flat.
 - Finite particle count and grid resolution set a numerical noise floor; the
   warm-vs-cold comparison isolates physical damping from that background.
+
+## 3D plasma oscillation
+
+A single-species cold plasma on a periodic cube is given a small mode-1
+density perturbation. The 3D electrostatic solver (separable FFT Poisson +
+trilinear gather/scatter) should exchange energy between the field and the
+particles while conserving total energy.
+
+### Input
+
+`inputFiles/validation/plasmaOscillation3D.json`
+
+| Parameter | Value |
+|-----------|------:|
+| `dimension` | 3 |
+| `numParticles` | 512 |
+| `numGrid` / `numGridY` / `numGridZ` | 8 / 8 / 8 |
+| `numTimeSteps` / `timeStepSize` | 40 / 0.1 |
+| `spatialPerturbationAmplitude` | 0.01 |
+
+### Automated checks
+
+`test/ValidationTest.cpp` verifies:
+
+1. **Finite field energy** — every `ese` sample is finite.
+2. **Energy budget** — total energy (kinetic + field) stays within 15% of its
+   initial value over the run.
+
+`scripts/verify_physics.py` applies the same 15% drift criterion.
+
+### Normalization notes
+
+Particle velocities are stored in cells/timestep for the leapfrog push. Kinetic
+energy diagnostics convert back to physical velocity so KE is commensurate with
+field energy **(1/2) ∫ E² dV**. Charge is deposited as density **q / (Δx Δy Δz)**,
+matching the 1D **q / Δx** convention.
+
+Reported field energy is **leapfrog-centered**: at step \(n \ge 1\),
+**ESE = ½ (W<sub>E</sub><sup>n</sup> + W<sub>E</sub><sup>n+1</sup>)** is paired with
+**KE(v<sup>n+1/2</sup>)**. A naive sum of half-step KE with a single integer-step
+PE oscillates at **2ω<sub>p</sub>** even when the advance is stable; centering
+removes that diagnostic artifact in both 1D and 3D.
+
+## Cyclotron orbit (external B)
+
+A uniform external magnetic field is applied with the **Boris** pusher while the
+electrostatic field remains self-consistent (usually weak when **ω<sub>p</sub> ≪ ω<sub>c</sub>**).
+1D runs with nonzero **B** are **1D3V**.
+
+### Input
+
+`inputFiles/validation/cyclotronOrbit.json`
+
+| Parameter | Value |
+|-----------|------:|
+| `magneticField` | `[0, 0, 1]` |
+| `driftVelocityY` | 0.5 |
+| `chargeMassRatio` | −1 |
+| `plasmaFrequency` | 0.05 |
+| `numTimeSteps` / `timeStepSize` | 126 / 0.05 |
+
+Expected cyclotron period **T = 2π / \|q B / m\| = 2π**.
+
+### Automated checks
+
+`test/ValidationTest.cpp` verifies that after one nominal period the mean
+**(v<sub>x</sub>, v<sub>y</sub>)** direction returns, perpendicular speed is
+preserved, and total energy stays within 15%.

@@ -1,4 +1,134 @@
 [
+	{
+    "id": "cyclotronOrbit",
+    "file": "cyclotronOrbit.json",
+    "title": "Cyclotron orbit (magnetized)",
+    "category": "Magnetic field",
+    "description": "1D3V electrons in a uniform Bz = 1 with a perpendicular drift. The Boris pusher rotates v_⊥ at the cyclotron frequency ω_c = |q/m| B while the weak self-consistent Ex stays small. Watch velocityY oscillate and total energy stay bounded.",
+    "lookFor": [
+      "Mean v_y oscillating at about the cyclotron period 2π",
+      "Phase-space motion with a rotating perpendicular velocity",
+      "Field energy remaining small (ω_p ≪ ω_c)",
+      "Total energy approximately conserved (B does no work)"
+    ]
+  },
+  {
+    "id": "larmorHelix3D",
+    "file": "larmorHelix3D.json",
+    "title": "3D Larmor helix",
+    "category": "Magnetic field",
+    "description": "Electrons in B_z = 1 with parallel drift (v_x, v_z) and a perpendicular kick (v_y). Each particle traces a **helical Larmor orbit** while the cloud stays nearly neutral — weak ω_p = 0.06 keeps E small. Dense frame output (period 1) for smooth 3D playback: enable auto-rotate and watch the spring-like particle paths wrap the domain.",
+    "lookFor": [
+      "Helical trajectories in the rotatable 3D particle view",
+      "Cyclotron gyration in the x–y plane plus drift along x and z",
+      "Perpendicular kinetic energy oscillating at ω_c ≈ 1",
+      "Total energy flat (external B does no work)"
+    ]
+  },
+  {
+    "id": "cyclotronStorm3D",
+    "file": "cyclotronStorm3D.json",
+    "title": "3D cyclotron storm",
+    "category": "Magnetic field",
+    "description": "A **1024-particle** warm electron cloud in strong B_z = 1.25. Every particle gyrates at a slightly different phase; together they form a spinning, turbulent-looking **cyclotron storm** in the 3D view. Great for showcasing Boris stability with thermal spread (v_th = 0.18) and fast timestep (Δt = 0.06).",
+    "lookFor": [
+      "Dense, rapidly rotating 3D particle cloud",
+      "Broad perpendicular velocity spread from thermal gyration",
+      "Field energy tiny compared with kinetic (ω_p = 0.04)",
+      "Smooth animation with one frame per step"
+    ]
+  },
+  {
+    "id": "obliqueB3D",
+    "file": "obliqueB3D.json",
+    "title": "3D oblique B field",
+    "category": "Magnetic field",
+    "description": "Tilted uniform field **B = (0.35, 0.35, 0.85)** breaks symmetry: Larmor circles no longer lie in the x–y plane. Rotate the 3D view to see the **inclined gyration axis** and how a warm cloud (v_th = 0.12) fills a tilted torus-like volume.",
+    "lookFor": [
+      "Gyration axis tilted away from z in the 3D scatter view",
+      "Perpendicular motion split across all three velocity components",
+      "Different apparent orbit shapes from different camera angles",
+      "Energy budget dominated by gyrational kinetic energy"
+    ]
+  },
+  {
+    "id": "crossField3D",
+    "file": "crossField3D.json",
+    "title": "3D cross-field gyration (B_x)",
+    "category": "Magnetic field",
+    "description": "Field along **x** instead of z: **B = (1, 0, 0)**. Perpendicular drifts in y and z produce **pinwheel motion in the y–z plane** as particles slide along x. A striking change of perspective from the usual textbook B_z setup.",
+    "lookFor": [
+      "Circular motion primarily in the y–z plane (3D view)",
+      "Gyration frequency set by |B| = 1",
+      "Thermal spread smearing individual orbit radii",
+      "Auto-rotate highlights the transverse plane of gyration"
+    ]
+  },
+  {
+    "id": "magnetizedTwoStream3D",
+    "file": "magnetizedTwoStream3D.json",
+    "title": "3D magnetized two-stream",
+    "category": "Magnetic field",
+    "description": "Classic **counter-streaming beams** (v_x = ±1) plus **B_z = 0.75**. Gyroradius r_L ≈ v/ω_c modulates the instability: beams filament and wrap into **spiraling vortex-like structures** in 3D instead of flat 1D phase-space rolls. Two species colors in the scatter view.",
+    "lookFor": [
+      "Two colored beam populations mixing in 3D",
+      "Gyro-orbit scale visible before nonlinear saturation",
+      "Electrostatic energy growth from the two-stream drive",
+      "Instability + magnetization interplay (ω_p/ω_c ≈ 0.47)"
+    ]
+  },
+  {
+    "id": "magnetizedWave1D",
+    "file": "magnetizedWave1D.json",
+    "title": "Magnetized plasma wave",
+    "category": "Magnetic field",
+    "description": "Standing-wave density perturbation (sin, mode k = 1) in a warm magnetized plasma: **B_z = 1**, **ω_p = 0.25**, perpendicular drift v_y = 0.4. Watch **E(x) breathe** at the plasma frequency while every particle simultaneously **gyrates** at ω_c — two oscillations superposed in the energy budget.",
+    "lookFor": [
+      "E(x) oscillation plus cyclotron modulation in phase space",
+      "Competition between ω_p and ω_c in the Energy tab",
+      "Perpendicular velocity rotating at ω_c = 1",
+      "Total energy approximately conserved"
+    ]
+  },
+  {
+    "id": "magnetizedTwoStream1D",
+    "file": "magnetizedTwoStream1D.json",
+    "title": "Magnetized two-stream (1D3V)",
+    "category": "Magnetic field",
+    "description": "Two cold beams at **v_x = ±1** with **B_z = 0.7** and small perpendicular drifts (v_y = ±0.2). The instability still drives field growth, but phase space shows **rotating beamlets** instead of simple horizontal stripes — magnetization wraps the classic two-stream picture.",
+    "lookFor": [
+      "Phase-space filaments curved by cyclotron motion",
+      "Field energy rise from two-stream instability",
+      "Perpendicular velocity components in exported frames (velocityY)",
+      "ω_c ≈ 0.7, ω_p ≈ 0.5 — comparable magnetization"
+    ]
+  },
+  {
+    "id": "exbDrift1D",
+    "file": "exbDrift1D.json",
+    "title": "E×B drift (1D3V)",
+    "category": "Magnetic field",
+    "description": "Small sin perturbation seeds a self-consistent **E_x(x)** while **B_z = 1** pins cyclotron motion. Electrons simultaneously **gyrate** and **drift in y** with speed v_E ≈ E/B from the wave field — the textbook **E×B** pattern in a fully kinetic PIC setup (weak ω_p = 0.15).",
+    "lookFor": [
+      "Slow net drift in y superposed on fast cyclotron wobble",
+      "E(x) pattern sloshing while particles drift across it",
+      "Perpendicular kinetic energy >> field energy",
+      "Export velocityY in frame CSV to see drift + gyration"
+    ]
+  },
+  {
+    "id": "vortexTwoStream",
+    "file": "vortexTwoStream.json",
+    "title": "Two-stream vortex formation",
+    "category": "Two-stream instability",
+    "description": "Strong counter-streaming beams (v = ±1.2, amplitude 0.012) on a 64-cell grid with dense frame output. Watch phase space roll into classic trapping vortices as electrostatic energy saturates. Auto-plays with interpolated frames for smooth motion.",
+    "lookFor": [
+      "Phase-space vortices / holes forming after linear growth",
+      "Rapid rise then saturation of field energy",
+      "Smooth animation (~300 keyframes with interpolation)",
+      "Best showcase of nonlinear two-stream dynamics"
+    ]
+  },
   {
     "id": "twoStreamQuick",
     "file": "twoStreamQuick.json",
@@ -9,7 +139,7 @@
       "Phase space: two separated beams that broaden and filament over time",
       "Electrostatic energy rises sharply after an initial quiet period",
       "Kinetic energy falls as particles exchange energy with the field",
-      "Fast web run (~300 particles, coarse 32-cell grid)"
+      "Fast run (~300 particles, coarse 32-cell grid)"
     ]
   },
   {
@@ -36,6 +166,45 @@
       "Instability still develops, but with more diffuse trapping structures",
       "Finer 64-cell grid resolves slightly more spatial structure",
       "Total energy should stay approximately conserved"
+    ]
+  },
+  {
+    "id": "plasmaRing",
+    "file": "plasmaRing.json",
+    "title": "Plasma oscillation (smooth)",
+    "category": "Plasma oscillation",
+    "description": "Cold electron plasma oscillation with dense frames (period 2) so the Animation tab shows a fluid ω ≈ ω_p cycle in phase space and E(x). Ideal for checking that playback interpolation looks natural.",
+    "lookFor": [
+      "Regular breathing of E(x) and electrostatic energy",
+      "Particles bunch and unbunch near v = 0",
+      "Smooth continuous motion between saved frames",
+      "Energy nearly conserved over many oscillation periods"
+    ]
+  },
+  {
+    "id": "electronOscillation",
+    "file": "electronOscillation.json",
+    "title": "Electron plasma oscillation",
+    "category": "Plasma oscillation",
+    "description": "Single cold electron species with a small standing-wave perturbation. In the absence of beams or thermal Landau damping, the system supports an undamped electron plasma oscillation at ω ≈ ω_p. A short, lightweight run ideal for watching basic wave physics.",
+    "lookFor": [
+      "Regular oscillation of E(x) and electrostatic energy",
+      "Phase space stays near v = 0 with modest spatial bunching",
+      "|E_k| envelope roughly constant after initial transients",
+      "Short run — good first demo to try"
+    ]
+  },
+  {
+    "id": "landauSmooth",
+    "file": "landauSmooth.json",
+    "title": "Landau damping (smooth)",
+    "category": "Landau damping",
+    "description": "Warm standing wave with dense frame sampling so the |E_k| decay and phase-space filamentation animate smoothly. Compare with Cold plasma (quick) to isolate physical Landau damping from numerical artifacts.",
+    "lookFor": [
+      "Smooth |E_k| envelope decay on a log scale",
+      "E(x) antinodes shrink while nodes stay fixed",
+      "Phase-space filaments near the resonant velocity",
+      "ESE late/early ratio well below 1"
     ]
   },
   {
@@ -78,19 +247,6 @@
     ]
   },
   {
-    "id": "electronOscillation",
-    "file": "electronOscillation.json",
-    "title": "Electron plasma oscillation",
-    "category": "Plasma oscillation",
-    "description": "Single cold electron species with a small standing-wave perturbation. In the absence of beams or thermal Landau damping, the system supports an undamped electron plasma oscillation at ω ≈ ω_p. A short, lightweight run ideal for watching basic wave physics.",
-    "lookFor": [
-      "Regular oscillation of E(x) and electrostatic energy",
-      "Phase space stays near v = 0 with modest spatial bunching",
-      "|E_k| envelope roughly constant after initial transients",
-      "Short run (300 steps) — good first demo to try"
-    ]
-  },
-  {
     "id": "driftingBeam",
     "file": "driftingBeam.json",
     "title": "Drifting warm beam",
@@ -104,11 +260,63 @@
     ]
   },
   {
+    "id": "twoStream3D",
+    "file": "twoStream3D.json",
+    "title": "3D two-stream",
+    "category": "3D",
+    "description": "Counter-streaming electron beams in 3D on an 8³ grid. Use the rotatable 3D particle view (auto-rotate on by default) to watch the two populations mix. Dense frames plus interpolation keep the motion smooth.",
+    "lookFor": [
+      "Two colored populations in the 3D scatter view",
+      "Drag or auto-rotate to inspect filamentation",
+      "Field energy growth as the instability develops",
+      "2D slices tab for XY/XZ/YZ projections"
+    ]
+  },
+  {
+    "id": "plasmaBreathing3D",
+    "file": "plasmaBreathing3D.json",
+    "title": "3D plasma breathing",
+    "category": "3D",
+    "description": "Longer 3D cold-plasma oscillation (120 steps, frame period 2) so the cloud visibly breathes in the rotatable view. Turn on auto-rotate and Play for a cinematic loop.",
+    "lookFor": [
+      "3D density modulation oscillating in time",
+      "Smooth interpolated particle motion",
+      "Ex mid-plane slice tracking ω_p",
+      "Auto-rotate + loop for a continuous presentation"
+    ]
+  },
+  {
+    "id": "plasmaOscillation3D",
+    "file": "plasmaOscillation3D.json",
+    "title": "3D plasma oscillation (quick)",
+    "category": "3D",
+    "description": "Single-species 3D electrostatic plasma oscillation on an 8³ grid with 512 particles. The desktop GUI shows an interactive rotatable 3D particle view (drag to rotate, scroll to zoom), optional 2D slice projections, and a mid-plane Ex slice.",
+    "lookFor": [
+      "3D particles tab: drag to rotate the cloud, scroll to zoom",
+      "Ghost trails show motion between saved frames",
+      "Ex mid-plane slice oscillates with the plasma frequency",
+      "2D slices tab for XY/XZ/YZ projections"
+    ]
+  },
+  {
+    "id": "ionElectronOscillation",
+    "file": "ionElectronOscillation.json",
+    "title": "Ion–electron oscillation",
+    "category": "Multi-species",
+    "description": "Cold electrons plus light ions (q/m = +0.05, ω_p,i ≪ ω_p,e). Electrons oscillate rapidly while ions provide a slower neutralizing background — useful for discussing multi-species electrostatic response.",
+    "lookFor": [
+      "Two species in phase space with different velocity scales",
+      "Field energy oscillates with an electron-dominated period",
+      "Ions barely move compared with electrons",
+      "Run from the demo file (not the simplified form) to preserve ion parameters"
+    ]
+  },
+  {
     "id": "landauFull",
     "file": "landauFull.json",
     "title": "Landau damping (full)",
     "category": "Landau damping",
-    "description": "Validation-resolution warm Landau case: 8000 particles and a 256-cell grid, matching inputFiles/validation/landauDamping.json. Slower in the browser but produces clean |E_k| decay and the same physics cited in docs/validation.md.",
+    "description": "Validation-resolution warm Landau case: 8000 particles and a 256-cell grid, matching inputFiles/validation/landauDamping.json. Slower but produces clean |E_k| decay and the same physics cited in docs/validation.md.",
     "lookFor": [
       "Clear |E_k| end/start ratio ≈ 0.2–0.3 (strong damping)",
       "Smooth E(x) snapshots with well-resolved nodes and antinodes",

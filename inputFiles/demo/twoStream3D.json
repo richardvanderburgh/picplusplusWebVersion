@@ -1,0 +1,35 @@
+{
+  "dimension": 3,
+  "species": [
+    {
+      "name": "Beam1",
+      "numParticles": 400,
+      "spatialPerturbationMode": 1,
+      "driftVelocity": 1.0,
+      "spatialPerturbationAmplitude": 0.01,
+      "thermalVelocity": 0,
+      "plasmaFrequency": 1,
+      "chargeMassRatio": -1
+    },
+    {
+      "name": "Beam2",
+      "numParticles": 400,
+      "spatialPerturbationMode": 1,
+      "driftVelocity": -1.0,
+      "spatialPerturbationAmplitude": 0.01,
+      "thermalVelocity": 0,
+      "plasmaFrequency": 1,
+      "chargeMassRatio": -1
+    }
+  ],
+  "spatialLength": 6.28318530717958,
+  "spatialLengthY": 6.28318530717958,
+  "spatialLengthZ": 6.28318530717958,
+  "numTimeSteps": 80,
+  "timeStepSize": 0.15,
+  "numGrid": 8,
+  "numGridY": 8,
+  "numGridZ": 8,
+  "numSpecies": 2,
+  "framePeriod": 2
+}

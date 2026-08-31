@@ -45,6 +45,20 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     echo "      brew install libomp" >&2
     echo "" >&2
   fi
+
+  # Homebrew Qt is keg-only; export CMAKE_PREFIX_PATH so CMake finds Widgets + Charts.
+  if [[ -z "${CMAKE_PREFIX_PATH:-}" ]] && command -v brew &>/dev/null; then
+    for formula in qt qt@6; do
+      if brew --prefix "$formula" &>/dev/null; then
+        qt_prefix="$(brew --prefix "$formula")"
+        if [[ -d "$qt_prefix/lib/cmake/Qt6" ]]; then
+          export CMAKE_PREFIX_PATH="${qt_prefix}${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+          echo "Using Homebrew Qt at $qt_prefix"
+          break
+        fi
+      fi
+    done
+  fi
 fi
 
 echo "Using Conan profile: $PROFILE"
@@ -55,6 +69,24 @@ echo ""
 echo "Build complete."
 echo "  Run:  ./build/bin/PIC++Main inputFiles/exampleInput.json"
 echo "  Test: ctest --test-dir build --output-on-failure"
+
+if [[ -x "$ROOT/build/bin/PIC++GUI" ]]; then
+  echo "  GUI:  ./build/bin/PIC++GUI"
+elif [[ -d "$ROOT/gui" ]]; then
+  echo "" >&2
+  echo "PIC++GUI was not built (Qt 6 Widgets + Charts not found)." >&2
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    echo "  brew install qt" >&2
+    echo "  export CMAKE_PREFIX_PATH=\"\$(brew --prefix qt)\"" >&2
+    echo "  rm -f build/CMakeCache.txt && ./scripts/build.sh" >&2
+  else
+    echo "  Install Qt 6 development packages, then reconfigure CMake." >&2
+    echo "  Ubuntu: sudo apt install qt6-base-dev qt6-charts-dev qt6-datavisualization-dev qt6-declarative-dev" >&2
+  fi
+elif [[ ! -d "$ROOT/gui" ]]; then
+  echo "" >&2
+  echo "PIC++GUI is not in this branch. Check out a branch with gui/ (e.g. cursor/3d-simulation-8672)." >&2
+fi
 
 if [[ -x "$ROOT/scripts/verify_openmp.sh" ]]; then
   echo ""

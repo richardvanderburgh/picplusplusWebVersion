@@ -106,6 +106,7 @@ On Windows the binary is at `build\bin\PIC++Main.exe` (or `build\bin\Release\PIC
 | Binary | Purpose |
 |--------|---------|
 | `build/bin/PIC++Main` | Run simulations from JSON input |
+| `build/bin/PIC++GUI` | Qt desktop GUI for interactive simulation |
 | `build/bin/PIC++Main_Test` | Integration, regression, and validation tests |
 | `build/bin/PIC++Lib_Test` | Unit tests for library kernels |
 

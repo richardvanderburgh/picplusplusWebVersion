@@ -1,21 +1,32 @@
 # PIC++
 
-PIC++ is a **1D electrostatic Particle-in-Cell (PIC)** plasma simulator written in modern C++20. It models collisionless plasma dynamics by coupling a particle push with a spectral Poisson field solve. The hot particle kernels are **OpenMP-parallelized** over a cache-friendly Structure-of-Arrays layout, and the project includes regression tests, physics validation, benchmark inputs, and optional web visualization.
+PIC++ is a **Particle-in-Cell (PIC)** plasma simulator written in modern C++20.
+It models collisionless plasma dynamics by coupling a particle push with a
+spectral Poisson field solve, with an optional **uniform external magnetic field**
+(Boris pusher). The hot particle kernels are **OpenMP-parallelized** over a
+cache-friendly Structure-of-Arrays layout, and the project includes regression
+tests, physics validation, benchmark inputs, and optional web/desktop visualization.
 
 ## Physics
 
-The code implements a standard ES-PIC cycle:
+The code implements a standard ES-PIC cycle with an optional Lorentz force:
 
 1. **Deposit charge** — cloud-in-cell assignment of particle charge onto the grid
 2. **Solve fields** — FFT-based Poisson solve for the electric potential and field
-3. **Push particles** — leapfrog update of particle velocities and positions
+3. **Push particles** — leapfrog / Boris update of particle velocities and positions
 4. **Repeat** for each time step
+
+Set `"magneticField": [Bx, By, Bz]` (or `magneticFieldX/Y/Z`) for a uniform
+external **B**. When any component is nonzero, the **Boris** pusher is used.
+1D runs become **1D3V** (three velocity components on a 1D mesh). Self-consistent
+magnetic fields / Maxwell solvers are not included — B is prescribed.
 
 Supported benchmark problems include:
 
 - **Two-stream instability** — counter-propagating cold beams (`inputFiles/validation/twoStreamInstability.json`)
 - **Landau damping** — warm plasma with spatial perturbation (`inputFiles/validation/landauDamping.json`); cold control at `inputFiles/validation/coldPlasmaWave.json`
-- **Web demos** — quick and full-resolution cases in `inputFiles/demo/` (loaded by the web UI)
+- **Cyclotron orbit** — magnetized 1D3V electrons (`inputFiles/validation/cyclotronOrbit.json`)
+- **Web/desktop demos** — quick and full-resolution cases in `inputFiles/demo/`
 - **Two-stream parameter study** (legacy params in `inputFiles/twoStream.txt`)
 
 All simulations are driven by **JSON input files**. The `.txt` files are legacy parameter lists kept for reference.
@@ -41,6 +52,54 @@ See [docs/building.md](docs/building.md) for Linux/Windows profiles, manual comm
 ```bash
 ./build/bin/PIC++Main inputFiles/exampleInput.json
 ```
+
+### 3D simulations
+
+Set `"dimension": 3` in the JSON input and provide cubic grid sizes (`numGrid`, `numGridY`, `numGridZ`) that are powers of two. Domain lengths default to `spatialLength` when `spatialLengthY` / `spatialLengthZ` are omitted.
+
+The Qt desktop GUI (`PIC++GUI`) supports both 1D and 3D runs. In 3D mode it shows an **interactive rotatable 3D particle view** (drag to rotate, scroll to zoom), optional 2D slice projections, a mid-plane electric-field slice, and the energy budget. Pick the **3D plasma oscillation (quick)** demo from the preset list to try it.
+
+### Desktop GUI extras
+
+- **File → Copy config JSON** and CSV/PNG export for energy, `|E_k|`, frames, and the active chart
+- **Theory overlays** on `|E_k|` (Landau / two-stream estimates) plus a measured growth/damping fit
+- **Velocity histogram** `f(v)` tab, guided **lessons**, and **parameter sweeps** (overlay field-energy curves)
+
+```bash
+./build/bin/PIC++Main inputFiles/validation/plasmaOscillation3D.json
+```
+
+3D runs use a separable FFT Poisson solver, trilinear charge deposition, and three-component particle velocities. Phase-frame output includes `positionY`, `positionZ`, `velocityY`, and `velocityZ` fields; `electricField` stores an Ex slice through the domain center for lightweight visualization.
+
+### Magnetic fields
+
+```bash
+./build/bin/PIC++Main inputFiles/validation/cyclotronOrbit.json
+```
+
+Uniform external **B** uses the Boris algorithm. Example JSON:
+
+```json
+"magneticField": [0.0, 0.0, 1.0],
+"species": [{ "driftVelocityY": 0.5, "chargeMassRatio": -1.0, ... }]
+```
+
+Cyclotron frequency **ω_c = (q/m) B** (signed). The GUI exposes **B_x / B_y / B_z** and **Drift v_y**.
+
+**Magnetic demos** (GUI preset list, category *Magnetic field*):
+
+| Demo | Highlight |
+|------|-----------|
+| Cyclotron orbit | Pure 1D3V ω_c rotation |
+| 3D Larmor helix | Helical paths with auto-rotate |
+| 3D cyclotron storm | 1024 warm gyrators |
+| 3D oblique B | Tilted gyration axis |
+| 3D cross-field (B_x) | Pinwheel in y–z plane |
+| 3D magnetized two-stream | Instability + gyromotion |
+| Magnetized plasma wave | ω_p and ω_c together |
+| E×B drift | Drift on top of gyration |
+
+Guided path: **Lessons → Magnetic field showcase**.
 
 Write full time-series output (energies and phase frames) to a JSON file:
 
@@ -103,12 +162,50 @@ python manage.py runserver
 
 Open http://127.0.0.1:8000/. The UI writes a temporary JSON config and calls `build/bin/PIC++Main`.
 
+## Desktop GUI (Qt)
+
+A native Qt 6 desktop application provides the same workflow as the web UI: pick a demo preset, adjust parameters, run the simulation in a background thread, and explore phase space, field, energy, and Fourier plots with frame animation.
+
+**Requirements:** Qt 6 with **Widgets** and **Charts** modules.
+
+| OS | Install |
+|----|---------|
+| macOS | `brew install qt` |
+| Ubuntu | `sudo apt install qt6-base-dev qt6-charts-dev qt6-datavisualization-dev qt6-declarative-dev` |
+
+Build with the rest of the project (enabled by default when Qt is found). Look for `PIC++: Qt GUI enabled` in the CMake output; if you see `skipping PIC++GUI`, Qt was not found.
+
+```bash
+./scripts/build.sh
+./build/bin/PIC++GUI
+```
+
+On macOS, if CMake still cannot find Qt after `brew install qt`:
+
+```bash
+export CMAKE_PREFIX_PATH="$(brew --prefix qt)"
+./scripts/build.sh
+```
+
+Pass the repository root if you launch from another directory:
+
+```bash
+./build/bin/PIC++GUI /path/to/picplusplus
+```
+
+To skip the GUI target:
+
+```bash
+cmake -S . -B build -DPICPP_BUILD_GUI=OFF
+```
+
 ## Project layout
 
 | Path | Description |
 |------|-------------|
 | `lib/` | PIC library — field solve, deposition, time loop |
 | `src/main.cpp` | CLI entry point |
+| `gui/` | Qt 6 desktop GUI |
 | `test/` | Integration, regression, and validation tests |
 | `lib/test/` | Unit tests for individual kernels |
 | `inputFiles/` | Example and benchmark inputs |

@@ -1,0 +1,26 @@
+{
+  "dimension": 3,
+  "species": [
+    {
+      "name": "Electrons",
+      "numParticles": 512,
+      "spatialPerturbationMode": 1,
+      "spatialPerturbationWaveform": "sin",
+      "driftVelocity": 0,
+      "spatialPerturbationAmplitude": 0.01,
+      "thermalVelocity": 0,
+      "plasmaFrequency": 1,
+      "chargeMassRatio": -1
+    }
+  ],
+  "spatialLength": 6.28318530717958,
+  "spatialLengthY": 6.28318530717958,
+  "spatialLengthZ": 6.28318530717958,
+  "numTimeSteps": 40,
+  "timeStepSize": 0.1,
+  "numGrid": 8,
+  "numGridY": 8,
+  "numGridZ": 8,
+  "numSpecies": 1,
+  "framePeriod": 10
+}

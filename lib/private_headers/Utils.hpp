@@ -33,6 +33,29 @@ inline std::optional<std::string> validateSimulationParams(
 	if (params.timeStepSize <= 0.0) {
 		return "timeStepSize must be positive";
 	}
+	if (params.dimension != 1 && params.dimension != 3) {
+		return "dimension must be 1 or 3 (got " + std::to_string(params.dimension) + ")";
+	}
+	if (params.dimension == 3) {
+		const int ny = params.numGridY > 0 ? params.numGridY : params.numGrid;
+		const int nz = params.numGridZ > 0 ? params.numGridZ : params.numGrid;
+		if (!isPowerOfTwo(ny)) {
+			return "numGridY must be a power of two for the 3D FFT field solver (got "
+				+ std::to_string(ny) + ")";
+		}
+		if (!isPowerOfTwo(nz)) {
+			return "numGridZ must be a power of two for the 3D FFT field solver (got "
+				+ std::to_string(nz) + ")";
+		}
+		const double ly = params.spatialLengthY > 0.0 ? params.spatialLengthY : params.spatialLength;
+		const double lz = params.spatialLengthZ > 0.0 ? params.spatialLengthZ : params.spatialLength;
+		if (ly <= 0.0) {
+			return "spatialLengthY must be positive";
+		}
+		if (lz <= 0.0) {
+			return "spatialLengthZ must be positive";
+		}
+	}
 	return std::nullopt;
 }
 

@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <numeric>
+#include <utility>
 
 #include <nlohmann/json.hpp>
 
@@ -264,4 +266,182 @@ TEST(ValidationTest, ThermalVelocityIsReproducible)
 	ASSERT_TRUE(resultA.has_value());
 	ASSERT_TRUE(resultB.has_value());
 	EXPECT_DOUBLE_EQ(sumKineticEnergy(*resultA), sumKineticEnergy(*resultB));
+}
+
+TEST(ValidationTest, ThreeDPlasmaOscillationCompletesWithFiniteEnergy)
+{
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = 3;
+	simulationParams.numGrid = 8;
+	simulationParams.numGridY = 8;
+	simulationParams.numGridZ = 8;
+	simulationParams.numTimeSteps = 20;
+	simulationParams.spatialLength = 6.28318530717958;
+	simulationParams.spatialLengthY = 6.28318530717958;
+	simulationParams.spatialLengthZ = 6.28318530717958;
+	simulationParams.timeStepSize = 0.1;
+	simulationParams.numSpecies = 1;
+	simulationParams.framePeriod = 5;
+
+	DATA_STRUCTS::SpeciesData species;
+	species.numParticles = 512;
+	species.spatialPerturbationMode = 1;
+	species.spatialPerturbationWaveform = "sin";
+	species.driftVelocity = 0.0;
+	species.spatialPerturbationAmplitude = 0.01;
+	species.thermalVelocity = 0.0;
+	species.plasmaFrequency = 1.0;
+	species.chargeMassRatio = -1.0;
+	species.particlePositions = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsY = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsZ = std::vector<double>(species.numParticles, 0.0);
+	species.particleXVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleYVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleZVelocities = std::vector<double>(species.numParticles, 0.0);
+
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = {species};
+
+	const auto result = PIC_PLUS_PLUS::PICPlusPlus(inputVariables).initialize();
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->at("dimension").get<int>(), 3);
+
+	const auto& ese = result->at("ese").get<std::vector<double>>();
+	ASSERT_FALSE(ese.empty());
+	for (double value : ese) {
+		EXPECT_TRUE(std::isfinite(value));
+	}
+
+	const auto& ke = result->at("ke").get<std::vector<std::vector<double>>>();
+	ASSERT_FALSE(ke.empty());
+	ASSERT_EQ(ke[0].size(), ese.size());
+	const auto totalAt = [&](size_t i) {
+		double total = ese[i];
+		for (const auto& speciesKe : ke) {
+			total += speciesKe[i];
+		}
+		return total;
+	};
+	const double total0 = totalAt(0);
+	const double totalN = totalAt(ese.size() - 1);
+	ASSERT_GT(std::abs(total0), 0.0);
+	EXPECT_LT(std::abs(totalN - total0) / std::abs(total0), 0.15)
+		<< "Total energy should remain within 15% over the 3D plasma oscillation run";
+
+	const auto& frames = result->at("phaseFrames");
+	ASSERT_FALSE(frames.empty());
+	EXPECT_EQ(frames[0].at("dimension").get<int>(), 3);
+	EXPECT_FALSE(frames[0].at("particles").empty());
+	EXPECT_EQ(frames[0].at("particles")[0].value("positionY", 0.0), frames[0].at("particles")[0].value("positionY", -1.0));
+}
+
+TEST(ValidationTest, RejectsInvalidThreeDGrid)
+{
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = 3;
+	simulationParams.numGrid = 8;
+	simulationParams.numGridY = 6;
+	simulationParams.numGridZ = 8;
+	simulationParams.numTimeSteps = 1;
+	simulationParams.spatialLength = 1.0;
+	simulationParams.timeStepSize = 0.1;
+	simulationParams.numSpecies = 1;
+
+	DATA_STRUCTS::SpeciesData species;
+	species.numParticles = 64;
+	species.plasmaFrequency = 1.0;
+	species.chargeMassRatio = -1.0;
+	species.particlePositions = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsY = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsZ = std::vector<double>(species.numParticles, 0.0);
+	species.particleXVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleYVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleZVelocities = std::vector<double>(species.numParticles, 0.0);
+
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = {species};
+
+	PIC_PLUS_PLUS::PICPlusPlus simulation(inputVariables);
+	const auto result = simulation.initialize();
+	EXPECT_FALSE(result.has_value());
+}
+
+TEST(ValidationTest, CyclotronOrbitCompletesOnePeriod)
+{
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = 1;
+	simulationParams.numGrid = 64;
+	simulationParams.numTimeSteps = 126;
+	simulationParams.spatialLength = 6.28318530717958;
+	simulationParams.timeStepSize = 0.05;
+	simulationParams.numSpecies = 1;
+	simulationParams.framePeriod = 1;
+	simulationParams.magneticFieldZ = 1.0;
+
+	DATA_STRUCTS::SpeciesData species;
+	species.numParticles = 256;
+	species.driftVelocity = 0.0;
+	species.driftVelocityY = 0.5;
+	species.driftVelocityZ = 0.0;
+	species.spatialPerturbationAmplitude = 0.0;
+	species.thermalVelocity = 0.0;
+	species.plasmaFrequency = 0.05;
+	species.chargeMassRatio = -1.0;
+	species.particlePositions = std::vector<double>(species.numParticles, 0.0);
+	species.particleXVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleYVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleZVelocities = std::vector<double>(species.numParticles, 0.0);
+
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = {species};
+
+	const auto result = PIC_PLUS_PLUS::PICPlusPlus(inputVariables).initialize();
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->contains("magneticField"));
+	EXPECT_DOUBLE_EQ(result->at("magneticField")[2].get<double>(), 1.0);
+
+	const auto& frames = result->at("phaseFrames");
+	ASSERT_GE(frames.size(), 2u);
+
+	auto meanVelocity = [](const nlohmann::json& frame) {
+		double vx = 0.0;
+		double vy = 0.0;
+		const auto& particles = frame.at("particles");
+		for (const auto& particle : particles) {
+			vx += particle.at("velocity").get<double>();
+			vy += particle.value("velocityY", 0.0);
+		}
+		const double n = static_cast<double>(particles.size());
+		return std::pair{vx / n, vy / n};
+	};
+
+	const auto [vx0, vy0] = meanVelocity(frames.front());
+	const auto [vxN, vyN] = meanVelocity(frames.back());
+	ASSERT_TRUE(std::isfinite(vx0) && std::isfinite(vy0) && std::isfinite(vxN) && std::isfinite(vyN));
+
+	// Velocities in the 1D exporter are still in cells/timestep; compare angles
+	// via the physical direction of the mean (vx, vy) vector.
+	const double ang0 = std::atan2(vy0, vx0);
+	const double angN = std::atan2(vyN, vxN);
+	double dang = angN - ang0;
+	while (dang > std::numbers::pi) {
+		dang -= 2.0 * std::numbers::pi;
+	}
+	while (dang < -std::numbers::pi) {
+		dang += 2.0 * std::numbers::pi;
+	}
+
+	EXPECT_NEAR(dang, 0.0, 0.15)
+		<< "After one cyclotron period the mean (vx,vy) direction should return";
+	EXPECT_NEAR(std::hypot(vxN, vyN), std::hypot(vx0, vy0), 0.05 * std::hypot(vx0, vy0) + 1e-6)
+		<< "Magnetic rotation should preserve perpendicular speed";
+
+	const double initialTotal = sumKineticEnergy(*result) + result->at("ese").front().get<double>();
+	const double finalTotal = sumKineticEnergy(*result) + result->at("ese").back().get<double>();
+	ASSERT_GT(initialTotal, 0.0);
+	EXPECT_LT(std::abs(finalTotal - initialTotal) / initialTotal, 0.15)
+		<< "External B does no work; total energy should stay bounded";
 }

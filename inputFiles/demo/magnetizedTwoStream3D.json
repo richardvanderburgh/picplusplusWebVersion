@@ -1,0 +1,38 @@
+{
+  "dimension": 3,
+  "magneticField": [0.0, 0.0, 0.75],
+  "species": [
+    {
+      "name": "Beam1",
+      "numParticles": 400,
+      "spatialPerturbationMode": 1,
+      "driftVelocity": 1.0,
+      "driftVelocityY": 0.15,
+      "spatialPerturbationAmplitude": 0.012,
+      "thermalVelocity": 0.05,
+      "plasmaFrequency": 0.35,
+      "chargeMassRatio": -1.0
+    },
+    {
+      "name": "Beam2",
+      "numParticles": 400,
+      "spatialPerturbationMode": 1,
+      "driftVelocity": -1.0,
+      "driftVelocityY": -0.15,
+      "spatialPerturbationAmplitude": 0.012,
+      "thermalVelocity": 0.05,
+      "plasmaFrequency": 0.35,
+      "chargeMassRatio": -1.0
+    }
+  ],
+  "spatialLength": 6.28318530717958,
+  "spatialLengthY": 6.28318530717958,
+  "spatialLengthZ": 6.28318530717958,
+  "numTimeSteps": 100,
+  "timeStepSize": 0.12,
+  "numGrid": 8,
+  "numGridY": 8,
+  "numGridZ": 8,
+  "numSpecies": 2,
+  "framePeriod": 2
+}

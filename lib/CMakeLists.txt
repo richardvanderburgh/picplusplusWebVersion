@@ -13,6 +13,11 @@ set(PRIVATE_HEADERS
     ./private_headers/Fields.hpp
     ./private_headers/fft.hpp
     ./private_headers/complex.hpp
+    ./private_headers/Accel3D.hpp
+    ./private_headers/Fields3D.hpp
+    ./private_headers/FFT3D.hpp
+    ./private_headers/Grid3D.hpp
+    ./private_headers/SetRho3D.hpp
     ./private_headers/SetRho.hpp
     ./private_headers/Utils.hpp
 )
@@ -20,7 +25,8 @@ set(PRIVATE_HEADERS
 set(SOURCE_FILES
 	./src/complex.cpp
 	./src/fft.cpp
-    ./src/PICPlusPlus.cpp
+	./src/PICPlusPlus.cpp
+	./src/PICPlusPlus3D.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC

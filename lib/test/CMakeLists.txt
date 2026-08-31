@@ -1,5 +1,6 @@
 add_executable(${PROJECT_NAME}_Test
     AccelTest.cpp
+    BorisTest.cpp
     DataStructsTest.cpp
     FieldsTest.cpp
     UtilsTest.cpp

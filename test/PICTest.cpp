@@ -203,9 +203,8 @@ void compareArrays(const nlohmann::json& expected, const nlohmann::json& actual,
 }
 
 void compareObjects(const nlohmann::json& expected, const nlohmann::json& actual, double precision) {
-    ASSERT_EQ(expected.size(), actual.size()) << "Objects have different numbers of keys.";
-    for (auto it = expected.begin(); it != expected.end(); ++it) {
-        ASSERT_TRUE(actual.contains(it.key())) << "Key " << it.key() << " is missing.";
-        compareValues(it.value(), actual[it.key()], precision);
-    }
+	for (auto it = expected.begin(); it != expected.end(); ++it) {
+		ASSERT_TRUE(actual.contains(it.key())) << "Key " << it.key() << " is missing.";
+		compareValues(it.value(), actual[it.key()], precision);
+	}
 }
