@@ -3,7 +3,9 @@
 #include "ChartPanel.h"
 #include "SimulationWorker.h"
 
-#include <QApplication>
+#include <QCheckBox>
+#include <QKeySequence>
+#include <QShortcut>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
@@ -144,7 +146,6 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	m_plasmaFrequency = makeDoubleSpin(1.0, 0.1);
 	m_chargeMassRatio = makeDoubleSpin(-1.0, 0.1);
 	m_framePeriod = makeIntSpin(5, 1, 10000);
-	m_animSpeed = makeIntSpin(80, 20, 2000);
 
 	m_spatialPerturbationWaveform = new QComboBox();
 	m_spatialPerturbationWaveform->addItem(QStringLiteral("cos — density perturbation"), QStringLiteral("cos"));
@@ -190,7 +191,6 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	m_paramsLayout->addRow(QStringLiteral("ω_p"), m_plasmaFrequency);
 	m_paramsLayout->addRow(QStringLiteral("q/m"), m_chargeMassRatio);
 	m_paramsLayout->addRow(QStringLiteral("Perturbation waveform"), m_spatialPerturbationWaveform);
-	m_paramsLayout->addRow(QStringLiteral("Anim speed (ms)"), m_animSpeed);
 
 	const auto markEdited = [this]() { markParamsCustomized(); };
 	for (auto* widget : std::initializer_list<QDoubleSpinBox*>{
@@ -200,7 +200,7 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	}
 	for (auto* widget : std::initializer_list<QSpinBox*>{
 		m_numParticles, m_timeSteps, m_numGrid, m_numGridY, m_numGridZ, m_spatialPerturbationMode,
-		m_numSpecies, m_framePeriod, m_animSpeed}) {
+		m_numSpecies, m_framePeriod}) {
 		connect(widget, QOverload<int>::of(&QSpinBox::valueChanged), this, markEdited);
 	}
 	connect(m_spatialPerturbationWaveform, QOverload<int>::of(&QComboBox::currentIndexChanged), this, markEdited);
@@ -230,28 +230,57 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	auto* resultsLayout = new QVBoxLayout(resultsPane);
 
 	auto* controls = new QHBoxLayout();
+	auto* firstButton = new QPushButton(QStringLiteral("⏮"));
+	auto* prevButton = new QPushButton(QStringLiteral("◀"));
 	m_playButton = new QPushButton(QStringLiteral("Play"));
 	m_pauseButton = new QPushButton(QStringLiteral("Pause"));
-	auto* prevButton = new QPushButton(QStringLiteral("◀"));
 	auto* nextButton = new QPushButton(QStringLiteral("▶"));
+	auto* lastButton = new QPushButton(QStringLiteral("⏭"));
 	m_frameSlider = new QSlider(Qt::Horizontal);
 	m_frameSlider->setEnabled(false);
 	m_frameLabel = new QLabel(QStringLiteral("—"));
+	m_loopPlayback = new QCheckBox(QStringLiteral("Loop"));
+	m_loopPlayback->setChecked(true);
+	m_animSpeedControl = makeIntSpin(80, 20, 2000);
+	m_animSpeedControl->setPrefix(QStringLiteral(""));
+	m_animSpeedControl->setSuffix(QStringLiteral(" ms"));
+	m_animSpeedControl->setToolTip(QStringLiteral("Milliseconds between animation frames"));
 
+	connect(firstButton, &QPushButton::clicked, this, &MainWindow::onFirstFrame);
+	connect(prevButton, &QPushButton::clicked, this, &MainWindow::onPrevFrame);
 	connect(m_playButton, &QPushButton::clicked, this, &MainWindow::onPlayClicked);
 	connect(m_pauseButton, &QPushButton::clicked, this, &MainWindow::onPauseClicked);
-	connect(prevButton, &QPushButton::clicked, this, &MainWindow::onPrevFrame);
 	connect(nextButton, &QPushButton::clicked, this, &MainWindow::onNextFrame);
+	connect(lastButton, &QPushButton::clicked, this, &MainWindow::onLastFrame);
 	connect(m_frameSlider, &QSlider::valueChanged, this, &MainWindow::onFrameSliderChanged);
+	connect(m_frameSlider, &QSlider::sliderPressed, this, &MainWindow::onFrameSliderPressed);
+	connect(m_frameSlider, &QSlider::sliderReleased, this, &MainWindow::onFrameSliderReleased);
 
-	controls->addWidget(new QLabel(QStringLiteral("Explore results:")));
+	controls->addWidget(new QLabel(QStringLiteral("Explore:")));
+	controls->addWidget(firstButton);
 	controls->addWidget(prevButton);
 	controls->addWidget(m_playButton);
 	controls->addWidget(m_pauseButton);
 	controls->addWidget(nextButton);
+	controls->addWidget(lastButton);
 	controls->addWidget(m_frameSlider, 1);
+	controls->addWidget(m_loopPlayback);
+	controls->addWidget(m_animSpeedControl);
 	controls->addWidget(m_frameLabel);
 	resultsLayout->addLayout(controls);
+
+	auto* shortcutPlayPause = new QShortcut(QKeySequence(Qt::Key_Space), this);
+	connect(shortcutPlayPause, &QShortcut::activated, this, [this]() {
+		if (m_animationTimer->isActive()) {
+			onPauseClicked();
+		} else {
+			onPlayClicked();
+		}
+	});
+	auto* shortcutPrev = new QShortcut(QKeySequence(Qt::Key_Left), this);
+	connect(shortcutPrev, &QShortcut::activated, this, &MainWindow::onPrevFrame);
+	auto* shortcutNext = new QShortcut(QKeySequence(Qt::Key_Right), this);
+	connect(shortcutNext, &QShortcut::activated, this, &MainWindow::onNextFrame);
 
 	m_chartPanel = new ChartPanel();
 	resultsLayout->addWidget(m_chartPanel, 1);
@@ -435,7 +464,7 @@ void MainWindow::onProgressUpdated(int percent, const QString& message) {
 
 void MainWindow::onSimulationFinished(const nlohmann::json& result) {
 	setRunning(false);
-	m_statusLabel->setText(QStringLiteral("Simulation complete. Scrub the slider or press Play to animate."));
+	m_statusLabel->setText(QStringLiteral("Simulation complete. Open the Animation tab, then press Play."));
 	m_chartPanel->renderResults(result);
 	updateSummary(result);
 
@@ -574,27 +603,60 @@ void MainWindow::onPlayClicked() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	m_animationTimer->start(m_animSpeed->value());
+	if (m_currentFrameIndex >= m_frameCount - 1) {
+		m_frameSlider->setValue(0);
+	}
+	m_animationTimer->start(m_animSpeedControl->value());
 }
 
 void MainWindow::onPauseClicked() {
 	m_animationTimer->stop();
 }
 
+void MainWindow::onFirstFrame() {
+	if (m_frameCount <= 0) {
+		return;
+	}
+	m_frameSlider->setValue(0);
+}
+
+void MainWindow::onLastFrame() {
+	if (m_frameCount <= 0) {
+		return;
+	}
+	m_frameSlider->setValue(m_frameCount - 1);
+}
+
 void MainWindow::onPrevFrame() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	m_currentFrameIndex = (m_currentFrameIndex - 1 + m_frameCount) % m_frameCount;
-	m_frameSlider->setValue(m_currentFrameIndex);
+	m_animationTimer->stop();
+	const int nextIndex = m_currentFrameIndex <= 0
+		? (m_loopPlayback->isChecked() ? m_frameCount - 1 : 0)
+		: m_currentFrameIndex - 1;
+	m_frameSlider->setValue(nextIndex);
 }
 
 void MainWindow::onNextFrame() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	m_currentFrameIndex = (m_currentFrameIndex + 1) % m_frameCount;
-	m_frameSlider->setValue(m_currentFrameIndex);
+	const int nextIndex = m_currentFrameIndex >= m_frameCount - 1
+		? (m_loopPlayback->isChecked() ? 0 : m_frameCount - 1)
+		: m_currentFrameIndex + 1;
+	m_frameSlider->setValue(nextIndex);
+}
+
+void MainWindow::onFrameSliderPressed() {
+	m_wasPlayingBeforeScrub = m_animationTimer->isActive();
+	m_animationTimer->stop();
+}
+
+void MainWindow::onFrameSliderReleased() {
+	if (m_wasPlayingBeforeScrub) {
+		m_animationTimer->start(m_animSpeedControl->value());
+	}
 }
 
 void MainWindow::onFrameSliderChanged(int value) {
@@ -610,5 +672,16 @@ void MainWindow::onFrameSliderChanged(int value) {
 }
 
 void MainWindow::onAnimationTick() {
+	if (m_frameCount <= 0) {
+		return;
+	}
+	if (m_currentFrameIndex >= m_frameCount - 1) {
+		if (m_loopPlayback->isChecked()) {
+			m_frameSlider->setValue(0);
+		} else {
+			m_animationTimer->stop();
+		}
+		return;
+	}
 	onNextFrame();
 }

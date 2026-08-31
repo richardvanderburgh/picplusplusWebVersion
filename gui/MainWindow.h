@@ -8,6 +8,7 @@
 #include "SimulationConfig.h"
 
 class ChartPanel;
+class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
 class QFormLayout;
@@ -38,6 +39,10 @@ private slots:
 	void onPrevFrame();
 	void onNextFrame();
 	void onFrameSliderChanged(int value);
+	void onFirstFrame();
+	void onLastFrame();
+	void onFrameSliderPressed();
+	void onFrameSliderReleased();
 	void onAnimationTick();
 
 private:
@@ -79,7 +84,6 @@ private:
 	QComboBox* m_spatialPerturbationWaveform = nullptr;
 	QComboBox* m_dimension = nullptr;
 	QSpinBox* m_framePeriod = nullptr;
-	QSpinBox* m_animSpeed = nullptr;
 	QSpinBox* m_numGridY = nullptr;
 	QSpinBox* m_numGridZ = nullptr;
 	QDoubleSpinBox* m_spatialLengthY = nullptr;
@@ -99,6 +103,8 @@ private:
 	QLabel* m_frameLabel = nullptr;
 	QPushButton* m_playButton = nullptr;
 	QPushButton* m_pauseButton = nullptr;
+	QCheckBox* m_loopPlayback = nullptr;
+	QSpinBox* m_animSpeedControl = nullptr;
 
 	ChartPanel* m_chartPanel = nullptr;
 
@@ -106,6 +112,7 @@ private:
 	SimulationWorker* m_worker = nullptr;
 
 	QTimer* m_animationTimer = nullptr;
+	bool m_wasPlayingBeforeScrub = false;
 	int m_currentFrameIndex = 0;
 	int m_frameCount = 0;
 };

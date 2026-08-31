@@ -16,6 +16,7 @@ class QLineSeries;
 class QScatterSeries;
 class QValueAxis;
 class QLogValueAxis;
+class QAbstractAxis;
 QT_END_NAMESPACE
 
 class ChartPanel : public QWidget {
@@ -31,12 +32,16 @@ public:
 
 private:
 	void setupCharts();
+	void prepareAnimationSeries();
 	void renderEnergyPlot(const nlohmann::json& result);
 	void renderModePlot(const nlohmann::json& result);
-	void renderPhasePlot(const DATA_STRUCTS::Frame& frame);
-	void renderFieldPlot(const DATA_STRUCTS::Frame& frame);
-	void renderProjectionPlots(const DATA_STRUCTS::Frame& frame);
-	void clearScatterSeries(std::vector<QScatterSeries*>& seriesList, QChart* chart);
+	void updatePhasePlot(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
+	void updateProjectionPlots(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
+	void updateFieldPlot(const DATA_STRUCTS::Frame& frame);
+	void updateTimeCursors(double time);
+	void updateChartTitles(double time);
+	void computeFieldBounds();
+	double frameTime(int frameIndex) const;
 	double fourierModeAmplitude(const std::vector<double>& field, int mode, double domainLength) const;
 
 	FormParams m_params;
@@ -47,6 +52,10 @@ private:
 	std::vector<double> m_modeTimes;
 	double m_phaseVelocityMin = -1.0;
 	double m_phaseVelocityMax = 1.0;
+	double m_fieldYMin = -1.0;
+	double m_fieldYMax = 1.0;
+	double m_energyYMax = 1.0;
+	int m_currentFrameIndex = -1;
 
 	QTabWidget* m_tabs = nullptr;
 	QStackedWidget* m_phaseStack = nullptr;
@@ -68,15 +77,33 @@ private:
 	QChart* m_modeChart = nullptr;
 
 	std::vector<QScatterSeries*> m_phaseSeries;
+	std::vector<QScatterSeries*> m_phaseTrailSeries;
 	std::vector<QScatterSeries*> m_projXYSeries;
+	std::vector<QScatterSeries*> m_projXYTrailSeries;
 	std::vector<QScatterSeries*> m_projXZSeries;
+	std::vector<QScatterSeries*> m_projXZTrailSeries;
 	std::vector<QScatterSeries*> m_projYZSeries;
+	std::vector<QScatterSeries*> m_projYZTrailSeries;
 	QLineSeries* m_fieldSeries = nullptr;
 	std::vector<QLineSeries*> m_keSeries;
 	QLineSeries* m_eseSeries = nullptr;
 	QLineSeries* m_totalSeries = nullptr;
 	QLineSeries* m_modeSeries = nullptr;
+	QLineSeries* m_energyTimeCursor = nullptr;
+	QLineSeries* m_modeTimeCursor = nullptr;
 
 	QValueAxis* m_phaseXAxis = nullptr;
 	QValueAxis* m_phaseYAxis = nullptr;
+	QValueAxis* m_projXYAxisX = nullptr;
+	QValueAxis* m_projXYAxisY = nullptr;
+	QValueAxis* m_projXZAxisX = nullptr;
+	QValueAxis* m_projXZAxisY = nullptr;
+	QValueAxis* m_projYZAxisX = nullptr;
+	QValueAxis* m_projYZAxisY = nullptr;
+	QValueAxis* m_fieldAxisX = nullptr;
+	QValueAxis* m_fieldAxisY = nullptr;
+	QValueAxis* m_energyAxisX = nullptr;
+	QValueAxis* m_energyAxisY = nullptr;
+	QAbstractAxis* m_modeAxisX = nullptr;
+	QAbstractAxis* m_modeAxisY = nullptr;
 };
