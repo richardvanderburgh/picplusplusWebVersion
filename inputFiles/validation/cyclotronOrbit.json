@@ -1,0 +1,25 @@
+{
+  "dimension": 1,
+  "magneticField": [0.0, 0.0, 1.0],
+  "species": [
+    {
+      "name": "Electrons",
+      "numParticles": 256,
+      "spatialPerturbationMode": 0,
+      "spatialPerturbationWaveform": "cos",
+      "driftVelocity": 0.0,
+      "driftVelocityY": 0.5,
+      "driftVelocityZ": 0.0,
+      "spatialPerturbationAmplitude": 0.0,
+      "thermalVelocity": 0.0,
+      "plasmaFrequency": 0.05,
+      "chargeMassRatio": -1.0
+    }
+  ],
+  "spatialLength": 6.28318530717958,
+  "numTimeSteps": 126,
+  "timeStepSize": 0.05,
+  "numGrid": 64,
+  "numSpecies": 1,
+  "framePeriod": 2
+}

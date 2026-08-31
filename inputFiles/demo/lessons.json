@@ -47,5 +47,16 @@
         "prompt": "3D breathing cloud — enable auto-rotate and loop the animation."
       }
     ]
+  },
+  {
+    "id": "magnetized-cyclotron",
+    "title": "Lesson: Cyclotron motion in B",
+    "description": "Apply a uniform B_z and watch electrons rotate at ω_c = |q/m| B with the Boris pusher.",
+    "steps": [
+      {
+        "demoId": "cyclotronOrbit",
+        "prompt": "Run the cyclotron demo. Expect v_y to oscillate with period ≈ 2π while total energy stays flat."
+      }
+    ]
   }
 ]

@@ -28,6 +28,11 @@ struct FormParams {
 	double chargeMassRatio = -1.0;
 	std::string spatialPerturbationWaveform = "cos";
 	int framePeriod = 5;
+	double magneticFieldX = 0.0;
+	double magneticFieldY = 0.0;
+	double magneticFieldZ = 0.0;
+	double driftVelocityY = 0.0;
+	double driftVelocityZ = 0.0;
 };
 
 Q_DECLARE_METATYPE(FormParams)

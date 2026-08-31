@@ -1,21 +1,32 @@
 # PIC++
 
-PIC++ is a **1D electrostatic Particle-in-Cell (PIC)** plasma simulator written in modern C++20. It models collisionless plasma dynamics by coupling a particle push with a spectral Poisson field solve. The hot particle kernels are **OpenMP-parallelized** over a cache-friendly Structure-of-Arrays layout, and the project includes regression tests, physics validation, benchmark inputs, and optional web visualization.
+PIC++ is a **Particle-in-Cell (PIC)** plasma simulator written in modern C++20.
+It models collisionless plasma dynamics by coupling a particle push with a
+spectral Poisson field solve, with an optional **uniform external magnetic field**
+(Boris pusher). The hot particle kernels are **OpenMP-parallelized** over a
+cache-friendly Structure-of-Arrays layout, and the project includes regression
+tests, physics validation, benchmark inputs, and optional web/desktop visualization.
 
 ## Physics
 
-The code implements a standard ES-PIC cycle:
+The code implements a standard ES-PIC cycle with an optional Lorentz force:
 
 1. **Deposit charge** — cloud-in-cell assignment of particle charge onto the grid
 2. **Solve fields** — FFT-based Poisson solve for the electric potential and field
-3. **Push particles** — leapfrog update of particle velocities and positions
+3. **Push particles** — leapfrog / Boris update of particle velocities and positions
 4. **Repeat** for each time step
+
+Set `"magneticField": [Bx, By, Bz]` (or `magneticFieldX/Y/Z`) for a uniform
+external **B**. When any component is nonzero, the **Boris** pusher is used.
+1D runs become **1D3V** (three velocity components on a 1D mesh). Self-consistent
+magnetic fields / Maxwell solvers are not included — B is prescribed.
 
 Supported benchmark problems include:
 
 - **Two-stream instability** — counter-propagating cold beams (`inputFiles/validation/twoStreamInstability.json`)
 - **Landau damping** — warm plasma with spatial perturbation (`inputFiles/validation/landauDamping.json`); cold control at `inputFiles/validation/coldPlasmaWave.json`
-- **Web demos** — quick and full-resolution cases in `inputFiles/demo/` (loaded by the web UI)
+- **Cyclotron orbit** — magnetized 1D3V electrons (`inputFiles/validation/cyclotronOrbit.json`)
+- **Web/desktop demos** — quick and full-resolution cases in `inputFiles/demo/`
 - **Two-stream parameter study** (legacy params in `inputFiles/twoStream.txt`)
 
 All simulations are driven by **JSON input files**. The `.txt` files are legacy parameter lists kept for reference.
@@ -59,6 +70,21 @@ The Qt desktop GUI (`PIC++GUI`) supports both 1D and 3D runs. In 3D mode it show
 ```
 
 3D runs use a separable FFT Poisson solver, trilinear charge deposition, and three-component particle velocities. Phase-frame output includes `positionY`, `positionZ`, `velocityY`, and `velocityZ` fields; `electricField` stores an Ex slice through the domain center for lightweight visualization.
+
+### Magnetic fields
+
+```bash
+./build/bin/PIC++Main inputFiles/validation/cyclotronOrbit.json
+```
+
+Uniform external **B** uses the Boris algorithm. Example JSON:
+
+```json
+"magneticField": [0.0, 0.0, 1.0],
+"species": [{ "driftVelocityY": 0.5, "chargeMassRatio": -1.0, ... }]
+```
+
+Cyclotron frequency **ω_c = (q/m) B** (signed). The GUI exposes **B_x / B_y / B_z** and **Drift v_y**.
 
 Write full time-series output (energies and phase frames) to a JSON file:
 

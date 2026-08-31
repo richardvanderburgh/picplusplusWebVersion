@@ -23,12 +23,28 @@ namespace DATA_STRUCTS {
 		// is useful for large performance runs where storing every frame would
 		// dominate runtime and memory.
 		int framePeriod = 1;
+		// Uniform external magnetic field (electrostatic PIC + Lorentz force).
+		// When any component is nonzero, the Boris pusher is used and 1D runs
+		// become 1D3V (three velocity components on a 1D mesh).
+		double magneticFieldX = 0.0;
+		double magneticFieldY = 0.0;
+		double magneticFieldZ = 0.0;
+
+		[[nodiscard]] bool hasMagneticField() const {
+			return magneticFieldX != 0.0 || magneticFieldY != 0.0 || magneticFieldZ != 0.0;
+		}
+
+		[[nodiscard]] bool usesVelocity3V() const {
+			return dimension == 3 || hasMagneticField();
+		}
 	};
 
 	struct SpeciesData {
 		std::string name;
 		int numParticles;
 		double driftVelocity;
+		double driftVelocityY = 0.0;
+		double driftVelocityZ = 0.0;
 		double thermalVelocity;
 		double spatialPerturbationAmplitude;
 		int spatialPerturbationMode;

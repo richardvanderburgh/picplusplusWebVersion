@@ -68,6 +68,16 @@ void PICPlusPlus::initializeVelocities3D(DATA_STRUCTS::SpeciesData& speciesData)
 			speciesData.particleXVelocities[static_cast<size_t>(i)] += speciesData.driftVelocity;
 		}
 	}
+	if (speciesData.driftVelocityY != 0.0) {
+		for (int i = 0; i < speciesData.numParticles; ++i) {
+			speciesData.particleYVelocities[static_cast<size_t>(i)] += speciesData.driftVelocityY;
+		}
+	}
+	if (speciesData.driftVelocityZ != 0.0) {
+		for (int i = 0; i < speciesData.numParticles; ++i) {
+			speciesData.particleZVelocities[static_cast<size_t>(i)] += speciesData.driftVelocityZ;
+		}
+	}
 	if (speciesData.thermalVelocity != 0.0) {
 		addThermalVelocity3D(speciesData);
 	}
@@ -267,6 +277,11 @@ std::optional<nlohmann::json> PICPlusPlus::initialize3D() {
 
 	nlohmann::json jsonResult;
 	jsonResult["dimension"] = 3;
+	jsonResult["magneticField"] = {
+		m_simulationParams.magneticFieldX,
+		m_simulationParams.magneticFieldY,
+		m_simulationParams.magneticFieldZ
+	};
 	jsonResult["ke"] = m_particleKineticEnergy;
 	jsonResult["ese"] = m_electrostaticEnergy;
 	jsonResult["phaseFrames"] = mPicData.frames;

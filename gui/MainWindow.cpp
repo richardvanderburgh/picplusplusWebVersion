@@ -166,6 +166,13 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	m_spatialLengthZ = makeDoubleSpin(6.28318530717958, 0.1);
 	m_spatialPerturbationMode = makeIntSpin(1, 0, 64);
 	m_driftVelocity = makeDoubleSpin(1.0, 0.1);
+	m_driftVelocityY = makeDoubleSpin(0.0, 0.1);
+	m_magneticFieldX = makeDoubleSpin(0.0, 0.1);
+	m_magneticFieldY = makeDoubleSpin(0.0, 0.1);
+	m_magneticFieldZ = makeDoubleSpin(0.0, 0.1);
+	m_magneticFieldX->setMinimum(-100.0);
+	m_magneticFieldY->setMinimum(-100.0);
+	m_magneticFieldZ->setMinimum(-100.0);
 	m_numSpecies = makeIntSpin(2, 1, 2);
 	m_spatialPerturbationAmplitude = makeDoubleSpin(0.001, 0.0001, 8);
 	m_thermalVelocity = makeDoubleSpin(0.0, 0.01);
@@ -209,7 +216,11 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	gridZLayout->addWidget(m_numGridZ);
 	m_paramsLayout->addRow(QStringLiteral("Grid cells (z)"), m_grid3DRowZ);
 	m_paramsLayout->addRow(QStringLiteral("Frame period"), m_framePeriod);
-	m_paramsLayout->addRow(QStringLiteral("Drift v"), m_driftVelocity);
+	m_paramsLayout->addRow(QStringLiteral("Drift v_x"), m_driftVelocity);
+	m_paramsLayout->addRow(QStringLiteral("Drift v_y"), m_driftVelocityY);
+	m_paramsLayout->addRow(QStringLiteral("B_x"), m_magneticFieldX);
+	m_paramsLayout->addRow(QStringLiteral("B_y"), m_magneticFieldY);
+	m_paramsLayout->addRow(QStringLiteral("B_z"), m_magneticFieldZ);
 	m_paramsLayout->addRow(QStringLiteral("Species"), m_numSpecies);
 	m_paramsLayout->addRow(QStringLiteral("Mode m"), m_spatialPerturbationMode);
 	m_paramsLayout->addRow(QStringLiteral("Pert. amplitude"), m_spatialPerturbationAmplitude);
@@ -221,6 +232,7 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	const auto markEdited = [this]() { markParamsCustomized(); };
 	for (auto* widget : std::initializer_list<QDoubleSpinBox*>{
 		m_spatialLength, m_spatialLengthY, m_spatialLengthZ, m_timeStepSize, m_driftVelocity,
+		m_driftVelocityY, m_magneticFieldX, m_magneticFieldY, m_magneticFieldZ,
 		m_spatialPerturbationAmplitude, m_thermalVelocity, m_plasmaFrequency, m_chargeMassRatio}) {
 		connect(widget, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, markEdited);
 	}
@@ -440,6 +452,10 @@ void MainWindow::applyFormParams(const FormParams& params) {
 	m_numGridZ->setValue(params.numGridZ);
 	m_spatialPerturbationMode->setValue(params.spatialPerturbationMode);
 	m_driftVelocity->setValue(params.driftVelocity);
+	m_driftVelocityY->setValue(params.driftVelocityY);
+	m_magneticFieldX->setValue(params.magneticFieldX);
+	m_magneticFieldY->setValue(params.magneticFieldY);
+	m_magneticFieldZ->setValue(params.magneticFieldZ);
 	m_numSpecies->setValue(params.numSpecies);
 	m_spatialPerturbationAmplitude->setValue(params.spatialPerturbationAmplitude);
 	m_thermalVelocity->setValue(params.thermalVelocity);
@@ -469,6 +485,10 @@ FormParams MainWindow::collectFormParams() const {
 	params.numGridZ = m_numGridZ->value();
 	params.spatialPerturbationMode = m_spatialPerturbationMode->value();
 	params.driftVelocity = m_driftVelocity->value();
+	params.driftVelocityY = m_driftVelocityY->value();
+	params.magneticFieldX = m_magneticFieldX->value();
+	params.magneticFieldY = m_magneticFieldY->value();
+	params.magneticFieldZ = m_magneticFieldZ->value();
 	params.numSpecies = m_numSpecies->value();
 	params.spatialPerturbationAmplitude = m_spatialPerturbationAmplitude->value();
 	params.thermalVelocity = m_thermalVelocity->value();
@@ -699,6 +719,10 @@ void MainWindow::markParamsCustomized() {
 		current.numGridZ == saved.numGridZ &&
 		current.spatialPerturbationMode == saved.spatialPerturbationMode &&
 		current.driftVelocity == saved.driftVelocity &&
+		current.driftVelocityY == saved.driftVelocityY &&
+		current.magneticFieldX == saved.magneticFieldX &&
+		current.magneticFieldY == saved.magneticFieldY &&
+		current.magneticFieldZ == saved.magneticFieldZ &&
 		current.numSpecies == saved.numSpecies &&
 		current.spatialPerturbationAmplitude == saved.spatialPerturbationAmplitude &&
 		current.thermalVelocity == saved.thermalVelocity &&

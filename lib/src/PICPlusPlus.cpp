@@ -95,8 +95,31 @@ namespace PIC_PLUS_PLUS {
 				initializePositions(speciesData.particlePositions, speciesData.numParticles, speciesData.chargeCloudWidth);
 				initializeVelocities(speciesData.particleXVelocities, speciesData.numParticles, speciesData.driftVelocity, speciesData.thermalVelocity);
 
+				if (m_simulationParams.usesVelocity3V()) {
+					if (speciesData.particleYVelocities.size() != static_cast<size_t>(speciesData.numParticles)) {
+						speciesData.particleYVelocities.assign(static_cast<size_t>(speciesData.numParticles), 0.0);
+					}
+					if (speciesData.particleZVelocities.size() != static_cast<size_t>(speciesData.numParticles)) {
+						speciesData.particleZVelocities.assign(static_cast<size_t>(speciesData.numParticles), 0.0);
+					}
+					initializeVelocities(speciesData.particleYVelocities, speciesData.numParticles, speciesData.driftVelocityY, 0.0);
+					initializeVelocities(speciesData.particleZVelocities, speciesData.numParticles, speciesData.driftVelocityZ, 0.0);
+					if (speciesData.thermalVelocity != 0.0) {
+						std::mt19937 gen(43);
+						std::normal_distribution<> dis(0, 1);
+						for (int i = 0; i < speciesData.numParticles; ++i) {
+							speciesData.particleYVelocities[static_cast<size_t>(i)] += speciesData.thermalVelocity * dis(gen);
+							speciesData.particleZVelocities[static_cast<size_t>(i)] += speciesData.thermalVelocity * dis(gen);
+						}
+					}
+				}
+
 				for (int K = 0; K < speciesData.numParticles; ++K) {
 					speciesData.particleXVelocities[K] *= m_dtdx;
+					if (m_simulationParams.usesVelocity3V()) {
+						speciesData.particleYVelocities[static_cast<size_t>(K)] *= m_dtdx;
+						speciesData.particleZVelocities[static_cast<size_t>(K)] *= m_dtdx;
+					}
 				}
 
 				if (m_allSpeciesData[species].spatialPerturbationAmplitude != 0) {
@@ -188,6 +211,11 @@ namespace PIC_PLUS_PLUS {
 
 		nlohmann::json JSON;
 		JSON["dimension"] = 1;
+		JSON["magneticField"] = {
+			m_simulationParams.magneticFieldX,
+			m_simulationParams.magneticFieldY,
+			m_simulationParams.magneticFieldZ
+		};
 		JSON["ke"] = m_particleKineticEnergy;
 		JSON["ese"] = m_electrostaticEnergy;
 		JSON["phaseFrames"] = mPicData.frames;
@@ -280,6 +308,7 @@ namespace PIC_PLUS_PLUS {
 		// Velocities are stored in cells/timestep; convert to physical units so
 		// KE is commensurate with PE = (Δx/2) Σ E².
 		const double dxdt = m_simulationParams.gridStepSize / m_simulationParams.timeStepSize;
+		const bool velocity3V = m_simulationParams.usesVelocity3V();
 
 		for (int species = 0; species < m_simulationParams.numSpecies; species++) {
 			const std::vector<double>& velocities = m_allSpeciesData[species].particleXVelocities;
@@ -291,8 +320,14 @@ namespace PIC_PLUS_PLUS {
 #pragma omp parallel for reduction(+ : kineticEnergy) schedule(static)
 #endif
 			for (int i = 0; i < numParticles; i++) {
-				const double vPhys = velocities[i] * dxdt;
-				kineticEnergy += 0.5 * vPhys * vPhys * particleMass;
+				const double vx = velocities[i] * dxdt;
+				double v2 = vx * vx;
+				if (velocity3V) {
+					const double vy = m_allSpeciesData[species].particleYVelocities[static_cast<size_t>(i)] * dxdt;
+					const double vz = m_allSpeciesData[species].particleZVelocities[static_cast<size_t>(i)] * dxdt;
+					v2 += vy * vy + vz * vz;
+				}
+				kineticEnergy += 0.5 * v2 * particleMass;
 			}
 			m_particleKineticEnergy[species][m_timeStep] += kineticEnergy;
 		}
@@ -342,6 +377,10 @@ namespace PIC_PLUS_PLUS {
 				particle.id = particleId++;
 				particle.position = m_allSpeciesData[species].particlePositions[i];
 				particle.velocity = m_allSpeciesData[species].particleXVelocities[i];
+				if (m_simulationParams.usesVelocity3V()) {
+					particle.velocityY = m_allSpeciesData[species].particleYVelocities[static_cast<size_t>(i)];
+					particle.velocityZ = m_allSpeciesData[species].particleZVelocities[static_cast<size_t>(i)];
+				}
 				particle.species = species;
 			}
 		}

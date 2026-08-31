@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <numeric>
+#include <utility>
 
 #include <nlohmann/json.hpp>
 
@@ -364,4 +366,82 @@ TEST(ValidationTest, RejectsInvalidThreeDGrid)
 	PIC_PLUS_PLUS::PICPlusPlus simulation(inputVariables);
 	const auto result = simulation.initialize();
 	EXPECT_FALSE(result.has_value());
+}
+
+TEST(ValidationTest, CyclotronOrbitCompletesOnePeriod)
+{
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = 1;
+	simulationParams.numGrid = 64;
+	simulationParams.numTimeSteps = 126;
+	simulationParams.spatialLength = 6.28318530717958;
+	simulationParams.timeStepSize = 0.05;
+	simulationParams.numSpecies = 1;
+	simulationParams.framePeriod = 1;
+	simulationParams.magneticFieldZ = 1.0;
+
+	DATA_STRUCTS::SpeciesData species;
+	species.numParticles = 256;
+	species.driftVelocity = 0.0;
+	species.driftVelocityY = 0.5;
+	species.driftVelocityZ = 0.0;
+	species.spatialPerturbationAmplitude = 0.0;
+	species.thermalVelocity = 0.0;
+	species.plasmaFrequency = 0.05;
+	species.chargeMassRatio = -1.0;
+	species.particlePositions = std::vector<double>(species.numParticles, 0.0);
+	species.particleXVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleYVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleZVelocities = std::vector<double>(species.numParticles, 0.0);
+
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = {species};
+
+	const auto result = PIC_PLUS_PLUS::PICPlusPlus(inputVariables).initialize();
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->contains("magneticField"));
+	EXPECT_DOUBLE_EQ(result->at("magneticField")[2].get<double>(), 1.0);
+
+	const auto& frames = result->at("phaseFrames");
+	ASSERT_GE(frames.size(), 2u);
+
+	auto meanVelocity = [](const nlohmann::json& frame) {
+		double vx = 0.0;
+		double vy = 0.0;
+		const auto& particles = frame.at("particles");
+		for (const auto& particle : particles) {
+			vx += particle.at("velocity").get<double>();
+			vy += particle.value("velocityY", 0.0);
+		}
+		const double n = static_cast<double>(particles.size());
+		return std::pair{vx / n, vy / n};
+	};
+
+	const auto [vx0, vy0] = meanVelocity(frames.front());
+	const auto [vxN, vyN] = meanVelocity(frames.back());
+	ASSERT_TRUE(std::isfinite(vx0) && std::isfinite(vy0) && std::isfinite(vxN) && std::isfinite(vyN));
+
+	// Velocities in the 1D exporter are still in cells/timestep; compare angles
+	// via the physical direction of the mean (vx, vy) vector.
+	const double ang0 = std::atan2(vy0, vx0);
+	const double angN = std::atan2(vyN, vxN);
+	double dang = angN - ang0;
+	while (dang > std::numbers::pi) {
+		dang -= 2.0 * std::numbers::pi;
+	}
+	while (dang < -std::numbers::pi) {
+		dang += 2.0 * std::numbers::pi;
+	}
+
+	EXPECT_NEAR(dang, 0.0, 0.15)
+		<< "After one cyclotron period the mean (vx,vy) direction should return";
+	EXPECT_NEAR(std::hypot(vxN, vyN), std::hypot(vx0, vy0), 0.05 * std::hypot(vx0, vy0) + 1e-6)
+		<< "Magnetic rotation should preserve perpendicular speed";
+
+	const double initialTotal = sumKineticEnergy(*result) + result->at("ese").front().get<double>();
+	const double finalTotal = sumKineticEnergy(*result) + result->at("ese").back().get<double>();
+	ASSERT_GT(initialTotal, 0.0);
+	EXPECT_LT(std::abs(finalTotal - initialTotal) / initialTotal, 0.15)
+		<< "External B does no work; total energy should stay bounded";
 }

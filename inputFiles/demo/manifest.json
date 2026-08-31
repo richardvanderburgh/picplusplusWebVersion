@@ -1,4 +1,17 @@
 [
+	{
+    "id": "cyclotronOrbit",
+    "file": "cyclotronOrbit.json",
+    "title": "Cyclotron orbit (magnetized)",
+    "category": "Magnetic field",
+    "description": "1D3V electrons in a uniform Bz = 1 with a perpendicular drift. The Boris pusher rotates v_⊥ at the cyclotron frequency ω_c = |q/m| B while the weak self-consistent Ex stays small. Watch velocityY oscillate and total energy stay bounded.",
+    "lookFor": [
+      "Mean v_y oscillating at about the cyclotron period 2π",
+      "Phase-space motion with a rotating perpendicular velocity",
+      "Field energy remaining small (ω_p ≪ ω_c)",
+      "Total energy approximately conserved (B does no work)"
+    ]
+  },
   {
     "id": "vortexTwoStream",
     "file": "vortexTwoStream.json",

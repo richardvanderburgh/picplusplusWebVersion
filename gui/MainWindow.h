@@ -118,6 +118,10 @@ private:
 	QSpinBox* m_numGrid = nullptr;
 	QSpinBox* m_spatialPerturbationMode = nullptr;
 	QDoubleSpinBox* m_driftVelocity = nullptr;
+	QDoubleSpinBox* m_driftVelocityY = nullptr;
+	QDoubleSpinBox* m_magneticFieldX = nullptr;
+	QDoubleSpinBox* m_magneticFieldY = nullptr;
+	QDoubleSpinBox* m_magneticFieldZ = nullptr;
 	QSpinBox* m_numSpecies = nullptr;
 	QDoubleSpinBox* m_spatialPerturbationAmplitude = nullptr;
 	QDoubleSpinBox* m_thermalVelocity = nullptr;

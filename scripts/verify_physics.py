@@ -207,9 +207,28 @@ def main() -> int:
         ok,
     )
 
+    # Cyclotron / external B
+    cyc = run_case(ROOT / "inputFiles/validation/cyclotronOrbit.json")
+    cyc_finite = all(math.isfinite(x) for x in cyc["ese"])
+    cyc_totals = total_energy(cyc)
+    cyc_drift = abs(cyc_totals[-1] - cyc_totals[0]) / max(abs(cyc_totals[0]), 1e-30)
+    cyc_b = cyc.get("magneticField", [0, 0, 0])
+    ok = cyc_finite and cyc_drift < 0.15 and abs(cyc_b[2] - 1.0) < 1e-12
+    failures += not ok
+    report(
+        "Cyclotron orbit (external B)",
+        [
+            f"magneticField = {cyc_b}",
+            f"All ESE samples finite: {cyc_finite}",
+            f"Total energy drift = {100 * cyc_drift:.3f}% (criterion < 15%)",
+            "Boris pusher; ω_c = |q/m| B = 1 for this case.",
+        ],
+        ok,
+    )
+
     print("\n=== Verdict ===")
     if failures == 0:
-        print("Documented electrostatic validation criteria: PASSED (1D and 3D).")
+        print("Documented validation criteria: PASSED (1D, 3D, and magnetized).")
         return 0
     print(f"{failures} primary check group(s) FAILED.")
     return 1

@@ -26,6 +26,17 @@ inline DATA_STRUCTS::InputVariables loadJSONFile(const nlohmann::json& config) {
 	simulationParams.numSpecies = config.value("numSpecies", 0);
 	simulationParams.framePeriod = config.value("framePeriod", 1);
 
+	if (config.contains("magneticField") && config["magneticField"].is_array()
+		&& config["magneticField"].size() >= 3) {
+		simulationParams.magneticFieldX = config["magneticField"][0].get<double>();
+		simulationParams.magneticFieldY = config["magneticField"][1].get<double>();
+		simulationParams.magneticFieldZ = config["magneticField"][2].get<double>();
+	} else {
+		simulationParams.magneticFieldX = config.value("magneticFieldX", 0.0);
+		simulationParams.magneticFieldY = config.value("magneticFieldY", 0.0);
+		simulationParams.magneticFieldZ = config.value("magneticFieldZ", 0.0);
+	}
+
 	std::vector<DATA_STRUCTS::SpeciesData> allSpeciesData;
 
 	for (const auto& speciesConfig : config["species"]) {
@@ -34,18 +45,22 @@ inline DATA_STRUCTS::InputVariables loadJSONFile(const nlohmann::json& config) {
 		speciesData.numParticles = speciesConfig.value("numParticles", 0);
 		speciesData.spatialPerturbationMode = speciesConfig.value("spatialPerturbationMode", 0);
 		speciesData.driftVelocity = speciesConfig.value("driftVelocity", 0.0);
+		speciesData.driftVelocityY = speciesConfig.value("driftVelocityY", 0.0);
+		speciesData.driftVelocityZ = speciesConfig.value("driftVelocityZ", 0.0);
 		speciesData.spatialPerturbationAmplitude = speciesConfig.value("spatialPerturbationAmplitude", 0.0);
 		speciesData.spatialPerturbationWaveform = speciesConfig.value("spatialPerturbationWaveform", "cos");
 		speciesData.thermalVelocity = speciesConfig.value("thermalVelocity", 0.0);
-		speciesData.plasmaFrequency = speciesConfig.value("plasmaFrequency", 0);
-		speciesData.chargeMassRatio = speciesConfig.value("chargeMassRatio", 0);
+		speciesData.plasmaFrequency = speciesConfig.value("plasmaFrequency", 0.0);
+		speciesData.chargeMassRatio = speciesConfig.value("chargeMassRatio", 0.0);
 
 		speciesData.particlePositions = std::vector<double>(speciesData.numParticles, 0);
 		speciesData.particleXVelocities = std::vector<double>(speciesData.numParticles, 0);
 
-		if (simulationParams.dimension == 3) {
-			speciesData.particlePositionsY = std::vector<double>(speciesData.numParticles, 0);
-			speciesData.particlePositionsZ = std::vector<double>(speciesData.numParticles, 0);
+		if (simulationParams.dimension == 3 || simulationParams.hasMagneticField()) {
+			if (simulationParams.dimension == 3) {
+				speciesData.particlePositionsY = std::vector<double>(speciesData.numParticles, 0);
+				speciesData.particlePositionsZ = std::vector<double>(speciesData.numParticles, 0);
+			}
 			speciesData.particleYVelocities = std::vector<double>(speciesData.numParticles, 0);
 			speciesData.particleZVelocities = std::vector<double>(speciesData.numParticles, 0);
 		}

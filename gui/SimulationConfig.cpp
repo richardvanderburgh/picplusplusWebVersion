@@ -28,6 +28,9 @@ DATA_STRUCTS::SimulationParams toSimulationParams(const FormParams& params) {
 	simulationParams.timeStepSize = params.timeStepSize;
 	simulationParams.numSpecies = params.numSpecies;
 	simulationParams.framePeriod = params.framePeriod;
+	simulationParams.magneticFieldX = params.magneticFieldX;
+	simulationParams.magneticFieldY = params.magneticFieldY;
+	simulationParams.magneticFieldZ = params.magneticFieldZ;
 	return simulationParams;
 }
 
@@ -94,6 +97,18 @@ FormParams SimulationConfig::formParamsFromJsonConfig(const nlohmann::json& conf
 	params.chargeMassRatio = species0.value("chargeMassRatio", params.chargeMassRatio);
 	params.spatialPerturbationWaveform = species0.value("spatialPerturbationWaveform", params.spatialPerturbationWaveform);
 	params.framePeriod = config.value("framePeriod", params.framePeriod);
+	params.driftVelocityY = species0.value("driftVelocityY", params.driftVelocityY);
+	params.driftVelocityZ = species0.value("driftVelocityZ", params.driftVelocityZ);
+	if (config.contains("magneticField") && config["magneticField"].is_array()
+		&& config["magneticField"].size() >= 3) {
+		params.magneticFieldX = config["magneticField"][0].get<double>();
+		params.magneticFieldY = config["magneticField"][1].get<double>();
+		params.magneticFieldZ = config["magneticField"][2].get<double>();
+	} else {
+		params.magneticFieldX = config.value("magneticFieldX", params.magneticFieldX);
+		params.magneticFieldY = config.value("magneticFieldY", params.magneticFieldY);
+		params.magneticFieldZ = config.value("magneticFieldZ", params.magneticFieldZ);
+	}
 	if (params.framePeriod < 1) {
 		params.framePeriod = 5;
 	}
@@ -225,16 +240,22 @@ nlohmann::json SimulationConfig::buildConfig(const FormParams& params) {
 		auto s = speciesTemplate;
 		s["name"] = "Species1";
 		s["driftVelocity"] = params.driftVelocity;
+		s["driftVelocityY"] = params.driftVelocityY;
+		s["driftVelocityZ"] = params.driftVelocityZ;
 		species.push_back(s);
 	} else {
 		auto s1 = speciesTemplate;
 		s1["name"] = "Species1";
 		s1["driftVelocity"] = params.driftVelocity;
+		s1["driftVelocityY"] = params.driftVelocityY;
+		s1["driftVelocityZ"] = params.driftVelocityZ;
 		species.push_back(s1);
 
 		auto s2 = speciesTemplate;
 		s2["name"] = "Species2";
 		s2["driftVelocity"] = -params.driftVelocity;
+		s2["driftVelocityY"] = params.driftVelocityY;
+		s2["driftVelocityZ"] = params.driftVelocityZ;
 		species.push_back(s2);
 	}
 
@@ -249,6 +270,9 @@ nlohmann::json SimulationConfig::buildConfig(const FormParams& params) {
 		{"numGrid", params.numGrid},
 		{"numSpecies", static_cast<int>(species.size())},
 		{"framePeriod", framePeriod},
+		{"magneticField", nlohmann::json::array({
+			params.magneticFieldX, params.magneticFieldY, params.magneticFieldZ
+		})},
 	};
 
 	if (params.dimension == 3) {

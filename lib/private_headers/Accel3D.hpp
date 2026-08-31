@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <DataStructs.h>
+#include "Boris.hpp"
 #include "Grid3D.hpp"
 
 inline double trilinearSample(
@@ -59,21 +60,20 @@ inline void accel3d(
 	const double dxdt = grid.dx / simulationParams.timeStepSize;
 	const double dydt = grid.dy / simulationParams.timeStepSize;
 	const double dzdt = grid.dz / simulationParams.timeStepSize;
+	const bool magnetized = simulationParams.hasMagneticField();
+	const double bx = simulationParams.magneticFieldX;
+	const double by = simulationParams.magneticFieldY;
+	const double bz = simulationParams.magneticFieldZ;
+	const double dt = simulationParams.timeStepSize;
+	// Leapfrog half-step back at t = 0 (electric + magnetic).
+	const double pushDt = (timeStep == 0) ? -0.5 * dt : dt;
 
 	for (int species = 0; species < simulationParams.numSpecies; ++species) {
-		double aeX = (allSpeciesData[species].particleCharge / allSpeciesData[species].particleMass)
-			* (simulationParams.timeStepSize / dxdt);
-		double aeY = (allSpeciesData[species].particleCharge / allSpeciesData[species].particleMass)
-			* (simulationParams.timeStepSize / dydt);
-		double aeZ = (allSpeciesData[species].particleCharge / allSpeciesData[species].particleMass)
-			* (simulationParams.timeStepSize / dzdt);
-
-		if (timeStep == 0) {
-			aeX = -0.5 * aeX;
-			aeY = -0.5 * aeY;
-			aeZ = -0.5 * aeZ;
-		}
-
+		const double qm = allSpeciesData[species].particleCharge / allSpeciesData[species].particleMass;
+		// ae converts E → full (or half at t=0) code-unit Δv for this push.
+		const double aeX = qm * (pushDt / dxdt);
+		const double aeY = qm * (pushDt / dydt);
+		const double aeZ = qm * (pushDt / dzdt);
 		ael = aeX;
 
 		std::vector<double>& vx = allSpeciesData[species].particleXVelocities;
@@ -88,14 +88,24 @@ inline void accel3d(
 #pragma omp parallel for schedule(static)
 #endif
 		for (int i = 0; i < numParticles; ++i) {
-			// Sample E, then scale into code-unit Δv = (q/m)(dt²/d{x,y,z}) E
-			// (same normalization as the 1D accel pusher).
 			const double ax = trilinearSample(ex, grid, px[i], py[i], pz[i]);
 			const double ay = trilinearSample(ey, grid, px[i], py[i], pz[i]);
 			const double az = trilinearSample(ez, grid, px[i], py[i], pz[i]);
-			vx[i] += aeX * ax;
-			vy[i] += aeY * ay;
-			vz[i] += aeZ * az;
+
+			if (!magnetized) {
+				vx[i] += aeX * ax;
+				vy[i] += aeY * ay;
+				vz[i] += aeZ * az;
+				continue;
+			}
+
+			borisPushCodeUnits(
+				vx[i], vy[i], vz[i],
+				ax, ay, az,
+				aeX, aeY, aeZ,
+				qm, pushDt,
+				dxdt, dydt, dzdt,
+				bx, by, bz);
 		}
 	}
 }

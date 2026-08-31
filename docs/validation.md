@@ -341,3 +341,29 @@ Reported field energy is **leapfrog-centered**: at step \(n \ge 1\),
 **KE(v<sup>n+1/2</sup>)**. A naive sum of half-step KE with a single integer-step
 PE oscillates at **2ω<sub>p</sub>** even when the advance is stable; centering
 removes that diagnostic artifact in both 1D and 3D.
+
+## Cyclotron orbit (external B)
+
+A uniform external magnetic field is applied with the **Boris** pusher while the
+electrostatic field remains self-consistent (usually weak when **ω<sub>p</sub> ≪ ω<sub>c</sub>**).
+1D runs with nonzero **B** are **1D3V**.
+
+### Input
+
+`inputFiles/validation/cyclotronOrbit.json`
+
+| Parameter | Value |
+|-----------|------:|
+| `magneticField` | `[0, 0, 1]` |
+| `driftVelocityY` | 0.5 |
+| `chargeMassRatio` | −1 |
+| `plasmaFrequency` | 0.05 |
+| `numTimeSteps` / `timeStepSize` | 126 / 0.05 |
+
+Expected cyclotron period **T = 2π / \|q B / m\| = 2π**.
+
+### Automated checks
+
+`test/ValidationTest.cpp` verifies that after one nominal period the mean
+**(v<sub>x</sub>, v<sub>y</sub>)** direction returns, perpendicular speed is
+preserved, and total energy stays within 15%.
