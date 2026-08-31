@@ -1,5 +1,7 @@
 #include "ChartPanel.h"
 
+#include "ParticleView3D.h"
+
 #include <QChart>
 #include <QChartView>
 #include <QGridLayout>
@@ -130,6 +132,10 @@ void ChartPanel::setupCharts() {
 	m_phaseView = makeChartView(m_phaseChart);
 	m_phaseStack->addWidget(m_phaseView);
 
+	m_particleView3D = new ParticleView3D();
+	m_view3DTabs = new QTabWidget();
+	m_view3DTabs->addTab(m_particleView3D, QStringLiteral("3D particles"));
+
 	auto* projectionTabs = new QTabWidget();
 	m_projXYChart = new QChart();
 	m_projXYChart->setTitle(QStringLiteral("Particle projection XY"));
@@ -149,7 +155,8 @@ void ChartPanel::setupCharts() {
 	m_projYZView = makeChartView(m_projYZChart);
 	projectionTabs->addTab(m_projYZView, QStringLiteral("YZ"));
 
-	m_phaseStack->addWidget(projectionTabs);
+	m_view3DTabs->addTab(projectionTabs, QStringLiteral("2D slices"));
+	m_phaseStack->addWidget(m_view3DTabs);
 
 	m_fieldChart = new QChart();
 	m_fieldChart->setTitle(QStringLiteral("Electric field E(x)"));
@@ -189,6 +196,10 @@ void ChartPanel::clearResults() {
 	m_modeTimes.clear();
 	m_is3D = false;
 	m_currentFrameIndex = -1;
+
+	if (m_particleView3D != nullptr) {
+		m_particleView3D->clearView();
+	}
 
 	auto clearScatter = [](std::vector<QScatterSeries*>& current, std::vector<QScatterSeries*>& trail, QChart* chart) {
 		for (auto* series : current) {
@@ -321,6 +332,15 @@ void ChartPanel::prepareAnimationSeries() {
 	createSpeciesSeries(m_projXZChart, m_projXZAxisX, m_projXZAxisY, m_projXZSeries, m_projXZTrailSeries);
 	createSpeciesSeries(m_projYZChart, m_projYZAxisX, m_projYZAxisY, m_projYZSeries, m_projYZTrailSeries);
 
+	if (m_is3D && m_particleView3D != nullptr) {
+		m_particleView3D->configureDomain(
+			m_params.spatialLength,
+			m_params.spatialLengthY,
+			m_params.spatialLengthZ,
+			m_params.numSpecies,
+			m_params.numParticles);
+	}
+
 	m_phaseXAxis->setRange(0.0, m_params.spatialLength);
 	m_phaseYAxis->setRange(m_phaseVelocityMin, m_phaseVelocityMax);
 	m_projXYAxisX->setRange(0.0, m_params.spatialLength);
@@ -365,6 +385,9 @@ void ChartPanel::renderResults(const nlohmann::json& result) {
 
 	computeFieldBounds();
 	m_phaseStack->setCurrentIndex(m_is3D ? 1 : 0);
+	if (m_is3D && m_view3DTabs != nullptr) {
+		m_view3DTabs->setCurrentIndex(0);
+	}
 	m_tabs->setTabVisible(m_tabs->indexOf(m_modeView), !m_is3D);
 
 	renderEnergyPlot(result);
@@ -392,6 +415,7 @@ void ChartPanel::showFrame(int frameIndex) {
 	}
 
 	if (m_is3D) {
+		updateParticleView3D(frame, previousFrame);
 		updateProjectionPlots(frame, previousFrame);
 	} else {
 		updatePhasePlot(frame, previousFrame);
@@ -402,6 +426,12 @@ void ChartPanel::showFrame(int frameIndex) {
 	updateTimeCursors(time);
 	updateChartTitles(time);
 	m_currentFrameIndex = clamped;
+}
+
+void ChartPanel::updateParticleView3D(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame) {
+	if (m_particleView3D != nullptr) {
+		m_particleView3D->setFrame(frame, previousFrame);
+	}
 }
 
 void ChartPanel::updatePhasePlot(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame) {
@@ -459,7 +489,7 @@ void ChartPanel::updateFieldPlot(const DATA_STRUCTS::Frame& frame) {
 void ChartPanel::updateChartTitles(double time) {
 	const QString timeSuffix = QStringLiteral(" · t = %1").arg(time, 0, 'f', 2);
 	if (m_is3D) {
-		m_phaseChart->setTitle(QStringLiteral("Phase space (3D)"));
+		m_view3DTabs->setTabText(0, QStringLiteral("3D particles") + timeSuffix);
 		m_projXYChart->setTitle(QStringLiteral("Particle projection XY") + timeSuffix);
 		m_projXZChart->setTitle(QStringLiteral("Particle projection XZ") + timeSuffix);
 		m_projYZChart->setTitle(QStringLiteral("Particle projection YZ") + timeSuffix);

@@ -46,7 +46,7 @@ See [docs/building.md](docs/building.md) for Linux/Windows profiles, manual comm
 
 Set `"dimension": 3` in the JSON input and provide cubic grid sizes (`numGrid`, `numGridY`, `numGridZ`) that are powers of two. Domain lengths default to `spatialLength` when `spatialLengthY` / `spatialLengthZ` are omitted.
 
-The Qt desktop GUI (`PIC++GUI`) supports both 1D and 3D runs. In 3D mode it shows particle projections (XY, XZ, YZ), a mid-plane electric-field slice, and the energy budget. Pick the **3D plasma oscillation (quick)** demo from the preset list to try it.
+The Qt desktop GUI (`PIC++GUI`) supports both 1D and 3D runs. In 3D mode it shows an **interactive rotatable 3D particle view** (drag to rotate, scroll to zoom), optional 2D slice projections, a mid-plane electric-field slice, and the energy budget. Pick the **3D plasma oscillation (quick)** demo from the preset list to try it.
 
 ```bash
 ./build/bin/PIC++Main inputFiles/validation/plasmaOscillation3D.json
@@ -124,7 +124,7 @@ A native Qt 6 desktop application provides the same workflow as the web UI: pick
 | OS | Install |
 |----|---------|
 | macOS | `brew install qt` |
-| Ubuntu | `sudo apt install qt6-base-dev qt6-charts-dev` |
+| Ubuntu | `sudo apt install qt6-base-dev qt6-charts-dev qt6-datavisualization-dev qt6-declarative-dev` |
 
 Build with the rest of the project (enabled by default when Qt is found). Look for `PIC++: Qt GUI enabled` in the CMake output; if you see `skipping PIC++GUI`, Qt was not found.
 

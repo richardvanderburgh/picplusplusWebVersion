@@ -134,12 +134,12 @@
     "file": "plasmaOscillation3D.json",
     "title": "3D plasma oscillation (quick)",
     "category": "3D",
-    "description": "Single-species 3D electrostatic plasma oscillation on an 8³ grid with 512 particles. The desktop GUI shows XY, XZ, and YZ particle projections plus a mid-plane Ex slice. A short run for exploring 3D visualization.",
+    "description": "Single-species 3D electrostatic plasma oscillation on an 8³ grid with 512 particles. The desktop GUI shows an interactive rotatable 3D particle view (drag to rotate, scroll to zoom), optional 2D slice projections, and a mid-plane Ex slice. A short run for exploring 3D visualization.",
     "lookFor": [
-      "Particle projection tabs: spatial structure in each plane",
+      "3D particles tab: drag to rotate the cloud, scroll to zoom",
+      "Ghost trails show motion between saved frames",
       "Ex mid-plane slice oscillates with the plasma frequency",
-      "Energy budget stays approximately conserved",
-      "Switch Dimension to 3D in the parameter panel to customize grid sizes"
+      "2D slices tab for XY/XZ/YZ projections"
     ]
   }
 ]

@@ -81,6 +81,7 @@ elif [[ -d "$ROOT/gui" ]]; then
     echo "  rm -f build/CMakeCache.txt && ./scripts/build.sh" >&2
   else
     echo "  Install Qt 6 development packages, then reconfigure CMake." >&2
+    echo "  Ubuntu: sudo apt install qt6-base-dev qt6-charts-dev qt6-datavisualization-dev qt6-declarative-dev" >&2
   fi
 elif [[ ! -d "$ROOT/gui" ]]; then
   echo "" >&2

@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Charts DataVisualization)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -8,6 +8,7 @@ add_executable(PIC++GUI
     main.cpp
     MainWindow.cpp
     ChartPanel.cpp
+    ParticleView3D.cpp
     SimulationConfig.cpp
     SimulationWorker.cpp
 )
@@ -23,6 +24,7 @@ target_link_libraries(PIC++GUI
     PIC++Lib
     Qt6::Widgets
     Qt6::Charts
+    Qt6::DataVisualization
     project_warnings
 )
 

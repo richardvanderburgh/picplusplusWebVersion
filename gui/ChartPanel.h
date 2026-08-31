@@ -10,6 +10,8 @@
 #include <DataStructs.h>
 #include "SimulationConfig.h"
 
+class ParticleView3D;
+
 QT_BEGIN_NAMESPACE
 class QChart;
 class QLineSeries;
@@ -37,6 +39,7 @@ private:
 	void renderModePlot(const nlohmann::json& result);
 	void updatePhasePlot(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
 	void updateProjectionPlots(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
+	void updateParticleView3D(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
 	void updateFieldPlot(const DATA_STRUCTS::Frame& frame);
 	void updateTimeCursors(double time);
 	void updateChartTitles(double time);
@@ -59,6 +62,8 @@ private:
 
 	QTabWidget* m_tabs = nullptr;
 	QStackedWidget* m_phaseStack = nullptr;
+	QTabWidget* m_view3DTabs = nullptr;
+	ParticleView3D* m_particleView3D = nullptr;
 
 	QChartView* m_phaseView = nullptr;
 	QChartView* m_projXYView = nullptr;
