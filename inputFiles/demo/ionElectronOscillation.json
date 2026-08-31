@@ -1,0 +1,32 @@
+{
+  "species": [
+    {
+      "name": "Electrons",
+      "numParticles": 800,
+      "spatialPerturbationMode": 1,
+      "spatialPerturbationWaveform": "sin",
+      "driftVelocity": 0,
+      "spatialPerturbationAmplitude": 0.01,
+      "thermalVelocity": 0,
+      "plasmaFrequency": 1,
+      "chargeMassRatio": -1
+    },
+    {
+      "name": "Ions",
+      "numParticles": 800,
+      "spatialPerturbationMode": 1,
+      "spatialPerturbationWaveform": "sin",
+      "driftVelocity": 0,
+      "spatialPerturbationAmplitude": 0.0,
+      "thermalVelocity": 0,
+      "plasmaFrequency": 0.05,
+      "chargeMassRatio": 0.05
+    }
+  ],
+  "spatialLength": 6.28318530717958,
+  "numTimeSteps": 400,
+  "timeStepSize": 0.1,
+  "numGrid": 64,
+  "numSpecies": 2,
+  "framePeriod": 2
+}

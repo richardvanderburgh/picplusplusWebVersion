@@ -5,9 +5,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include "ChartPanel.h"
 #include "SimulationConfig.h"
 
-class ChartPanel;
 class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
@@ -44,13 +44,26 @@ private slots:
 	void onFrameSliderPressed();
 	void onFrameSliderReleased();
 	void onAnimationTick();
-
 	void onAnimSpeedChanged(int value);
+
+	void onCopyConfig();
+	void onExportEnergyCsv();
+	void onExportModeCsv();
+	void onExportFramesCsv();
+	void onExportChartPng();
+	void onLessonChanged(int index);
+	void onLessonPrev();
+	void onLessonNext();
+	void onSweepClicked();
 
 private:
 	void populateDemoSelector();
+	void populateLessonSelector();
+	void setupMenus();
 	void applyFormParams(const FormParams& params);
 	FormParams collectFormParams() const;
+	nlohmann::json currentRunConfig() const;
+	void startSimulation(const nlohmann::json& config, const FormParams& contextParams);
 	void setRunning(bool running);
 	void updateSummary(const nlohmann::json& result);
 	void markParamsCustomized();
@@ -58,14 +71,20 @@ private:
 	void updateDimensionControls();
 	void updateFrameLabel(double continuousIndex);
 	void seekPlayback(double continuousIndex, bool updateSlider);
+	void applyLessonStep();
+	void continueSweepIfNeeded(const nlohmann::json& result);
+	QString exportPath(const QString& suffix) const;
 
 	static constexpr int kInterpSteps = 4;
 
 	std::string m_repoRoot;
 	std::vector<DemoEntry> m_demos;
+	std::vector<LessonEntry> m_lessons;
 	FormParams m_savedDemoParams;
 	QString m_activeDemoId;
 	bool m_paramsCustomized = false;
+	nlohmann::json m_lastConfig;
+	nlohmann::json m_lastResult;
 
 	QComboBox* m_demoSelect = nullptr;
 	QLabel* m_demoDescription = nullptr;
@@ -74,6 +93,23 @@ private:
 	QProgressBar* m_progressBar = nullptr;
 	QLabel* m_statusLabel = nullptr;
 	QLabel* m_customizedBadge = nullptr;
+
+	QComboBox* m_lessonSelect = nullptr;
+	QLabel* m_lessonPrompt = nullptr;
+	QPushButton* m_lessonPrevButton = nullptr;
+	QPushButton* m_lessonNextButton = nullptr;
+	int m_lessonIndex = -1;
+	int m_lessonStep = 0;
+
+	QComboBox* m_sweepParam = nullptr;
+	QDoubleSpinBox* m_sweepStart = nullptr;
+	QDoubleSpinBox* m_sweepEnd = nullptr;
+	QSpinBox* m_sweepCount = nullptr;
+	QPushButton* m_sweepButton = nullptr;
+	bool m_sweepActive = false;
+	int m_sweepIndex = 0;
+	std::vector<FormParams> m_sweepJobs;
+	std::vector<SweepSeriesData> m_sweepResults;
 
 	QDoubleSpinBox* m_spatialLength = nullptr;
 	QSpinBox* m_numParticles = nullptr;
@@ -104,6 +140,9 @@ private:
 	QLabel* m_statEnergyDrift = nullptr;
 	QLabel* m_statEkRatio = nullptr;
 	QLabel* m_statEsePeak = nullptr;
+	QLabel* m_statGrowth = nullptr;
+	QLabel* m_statTheory = nullptr;
+	QGroupBox* m_summaryGroup = nullptr;
 
 	QSlider* m_frameSlider = nullptr;
 	QLabel* m_frameLabel = nullptr;

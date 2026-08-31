@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <DataStructs.h>
+#include "PhysicsAnalysis.hpp"
 #include "SimulationConfig.h"
 
 class ParticleView3D;
@@ -15,11 +16,20 @@ class ParticleView3D;
 QT_BEGIN_NAMESPACE
 class QChart;
 class QLineSeries;
+class QBarSeries;
+class QBarSet;
+class QBarCategoryAxis;
 class QScatterSeries;
 class QValueAxis;
 class QLogValueAxis;
 class QAbstractAxis;
 QT_END_NAMESPACE
+
+struct SweepSeriesData {
+	QString label;
+	std::vector<double> times;
+	std::vector<double> ese;
+};
 
 class ChartPanel : public QWidget {
 	Q_OBJECT
@@ -35,15 +45,27 @@ public:
 	int frameCount() const;
 	double continuousTime(double continuousIndex) const;
 
+	PhysicsAnalysis::GrowthFit lastGrowthFit() const { return m_growthFit; }
+	PhysicsAnalysis::TheoryCurve lastTheory() const { return m_theory; }
+
+	bool exportEnergyCsv(const QString& path, QString& error) const;
+	bool exportModeCsv(const QString& path, QString& error) const;
+	bool exportFramesCsv(const QString& path, QString& error) const;
+	bool exportActiveChartPng(const QString& path, QString& error) const;
+	void setSweepOverlay(const std::vector<SweepSeriesData>& sweeps);
+	void clearSweepOverlay();
+
 private:
 	void setupCharts();
 	void prepareAnimationSeries();
 	void renderEnergyPlot(const nlohmann::json& result);
 	void renderModePlot(const nlohmann::json& result);
+	void renderTheoryOverlay();
 	void updatePhasePlot(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
 	void updateProjectionPlots(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
 	void updateParticleView3D(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame);
 	void updateFieldPlot(const DATA_STRUCTS::Frame& frame);
+	void updateVelocityHistogram(const DATA_STRUCTS::Frame& frame);
 	void updateTimeCursors(double time);
 	void updateChartTitles(double time);
 	void computeFieldBounds();
@@ -58,6 +80,8 @@ private:
 	std::vector<DATA_STRUCTS::Frame> m_frames;
 	std::vector<double> m_modeAmplitudes;
 	std::vector<double> m_modeTimes;
+	PhysicsAnalysis::GrowthFit m_growthFit;
+	PhysicsAnalysis::TheoryCurve m_theory;
 	double m_phaseVelocityMin = -1.0;
 	double m_phaseVelocityMax = 1.0;
 	double m_fieldYMin = -1.0;
@@ -77,6 +101,7 @@ private:
 	QChartView* m_fieldView = nullptr;
 	QChartView* m_energyView = nullptr;
 	QChartView* m_modeView = nullptr;
+	QChartView* m_histView = nullptr;
 
 	QChart* m_phaseChart = nullptr;
 	QChart* m_projXYChart = nullptr;
@@ -85,6 +110,7 @@ private:
 	QChart* m_fieldChart = nullptr;
 	QChart* m_energyChart = nullptr;
 	QChart* m_modeChart = nullptr;
+	QChart* m_histChart = nullptr;
 
 	std::vector<QScatterSeries*> m_phaseSeries;
 	std::vector<QScatterSeries*> m_phaseTrailSeries;
@@ -99,8 +125,13 @@ private:
 	QLineSeries* m_eseSeries = nullptr;
 	QLineSeries* m_totalSeries = nullptr;
 	QLineSeries* m_modeSeries = nullptr;
+	QLineSeries* m_theorySeries = nullptr;
+	QLineSeries* m_fitSeries = nullptr;
 	QLineSeries* m_energyTimeCursor = nullptr;
 	QLineSeries* m_modeTimeCursor = nullptr;
+	std::vector<QLineSeries*> m_sweepSeries;
+	QBarSeries* m_histSeries = nullptr;
+	QBarSet* m_histSet = nullptr;
 
 	QValueAxis* m_phaseXAxis = nullptr;
 	QValueAxis* m_phaseYAxis = nullptr;

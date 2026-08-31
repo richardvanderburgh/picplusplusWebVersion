@@ -136,6 +136,79 @@ std::optional<FormParams> SimulationConfig::formParamsFromDemo(
 	return formParamsFromJsonConfig(config);
 }
 
+std::optional<nlohmann::json> SimulationConfig::loadDemoJson(
+	const std::string& repoRoot, const std::string& demoId, std::string& error) {
+	const auto demos = loadDemoManifest(repoRoot, error);
+	if (!error.empty()) {
+		return std::nullopt;
+	}
+
+	const DemoEntry* match = nullptr;
+	for (const auto& demo : demos) {
+		if (demo.id == demoId) {
+			match = &demo;
+			break;
+		}
+	}
+	if (match == nullptr) {
+		error = "Unknown demo: " + demoId;
+		return std::nullopt;
+	}
+
+	std::ifstream demoFile(demoConfigPath(repoRoot, match->file));
+	if (!demoFile.is_open()) {
+		error = "Could not open demo config: " + match->file;
+		return std::nullopt;
+	}
+
+	nlohmann::json config;
+	try {
+		demoFile >> config;
+	} catch (const std::exception& ex) {
+		error = std::string("Invalid demo JSON: ") + ex.what();
+		return std::nullopt;
+	}
+	return config;
+}
+
+std::vector<LessonEntry> SimulationConfig::loadLessons(const std::string& repoRoot, std::string& error) {
+	std::ifstream lessonsFile(repoRoot + "/inputFiles/demo/lessons.json");
+	if (!lessonsFile.is_open()) {
+		error = "Could not open lessons.json.";
+		return {};
+	}
+
+	nlohmann::json lessonsJson;
+	try {
+		lessonsFile >> lessonsJson;
+	} catch (const std::exception& ex) {
+		error = std::string("Invalid lessons JSON: ") + ex.what();
+		return {};
+	}
+
+	std::vector<LessonEntry> lessons;
+	for (const auto& entry : lessonsJson) {
+		LessonEntry lesson;
+		lesson.id = entry.value("id", "");
+		lesson.title = entry.value("title", lesson.id);
+		lesson.description = entry.value("description", "");
+		if (entry.contains("steps") && entry["steps"].is_array()) {
+			for (const auto& stepJson : entry["steps"]) {
+				LessonStep step;
+				step.demoId = stepJson.value("demoId", "");
+				step.prompt = stepJson.value("prompt", "");
+				if (!step.demoId.empty()) {
+					lesson.steps.push_back(step);
+				}
+			}
+		}
+		if (!lesson.id.empty() && !lesson.steps.empty()) {
+			lessons.push_back(lesson);
+		}
+	}
+	return lessons;
+}
+
 nlohmann::json SimulationConfig::buildConfig(const FormParams& params) {
 	nlohmann::json speciesTemplate = {
 		{"numParticles", params.numParticles},

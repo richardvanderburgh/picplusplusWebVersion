@@ -48,6 +48,12 @@ Set `"dimension": 3` in the JSON input and provide cubic grid sizes (`numGrid`, 
 
 The Qt desktop GUI (`PIC++GUI`) supports both 1D and 3D runs. In 3D mode it shows an **interactive rotatable 3D particle view** (drag to rotate, scroll to zoom), optional 2D slice projections, a mid-plane electric-field slice, and the energy budget. Pick the **3D plasma oscillation (quick)** demo from the preset list to try it.
 
+### Desktop GUI extras
+
+- **File → Copy config JSON** and CSV/PNG export for energy, `|E_k|`, frames, and the active chart
+- **Theory overlays** on `|E_k|` (Landau / two-stream estimates) plus a measured growth/damping fit
+- **Velocity histogram** `f(v)` tab, guided **lessons**, and **parameter sweeps** (overlay field-energy curves)
+
 ```bash
 ./build/bin/PIC++Main inputFiles/validation/plasmaOscillation3D.json
 ```

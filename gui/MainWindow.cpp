@@ -3,19 +3,23 @@
 #include "ChartPanel.h"
 #include "SimulationWorker.h"
 
+#include <QApplication>
 #include <QCheckBox>
-#include <QKeySequence>
-#include <QShortcut>
+#include <QClipboard>
 #include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
+#include <QKeySequence>
 #include <QLabel>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QShortcut>
 #include <QSlider>
 #include <QSpinBox>
 #include <QSplitter>
@@ -24,6 +28,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 
 namespace {
 
@@ -64,7 +69,8 @@ double meanSlice(const std::vector<double>& values, size_t begin, size_t end) {
 MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	: QMainWindow(parent), m_repoRoot(repoRoot) {
 	setWindowTitle(QStringLiteral("PIC++ Plasma Simulator"));
-	resize(1280, 820);
+	resize(1320, 860);
+	setupMenus();
 
 	m_workerThread = new QThread(this);
 	m_worker = new SimulationWorker();
@@ -101,6 +107,26 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	m_demoDescription->setWordWrap(true);
 	m_demoDescription->setStyleSheet(QStringLiteral("color: #64748b;"));
 	sidebarLayout->addWidget(m_demoDescription);
+
+	m_lessonSelect = new QComboBox();
+	m_lessonSelect->addItem(QStringLiteral("— no lesson —"), QString());
+	connect(m_lessonSelect, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onLessonChanged);
+	sidebarLayout->addWidget(new QLabel(QStringLiteral("Guided lesson")));
+	sidebarLayout->addWidget(m_lessonSelect);
+	m_lessonPrompt = new QLabel();
+	m_lessonPrompt->setWordWrap(true);
+	m_lessonPrompt->setStyleSheet(QStringLiteral("color: #0f766e;"));
+	sidebarLayout->addWidget(m_lessonPrompt);
+	auto* lessonRow = new QHBoxLayout();
+	m_lessonPrevButton = new QPushButton(QStringLiteral("◀ Lesson step"));
+	m_lessonNextButton = new QPushButton(QStringLiteral("Lesson step ▶"));
+	m_lessonPrevButton->setEnabled(false);
+	m_lessonNextButton->setEnabled(false);
+	connect(m_lessonPrevButton, &QPushButton::clicked, this, &MainWindow::onLessonPrev);
+	connect(m_lessonNextButton, &QPushButton::clicked, this, &MainWindow::onLessonNext);
+	lessonRow->addWidget(m_lessonPrevButton);
+	lessonRow->addWidget(m_lessonNextButton);
+	sidebarLayout->addLayout(lessonRow);
 
 	auto* runRow = new QHBoxLayout();
 	m_runButton = new QPushButton(QStringLiteral("Run simulation"));
@@ -209,21 +235,45 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	auto* paramsScroll = new QScrollArea();
 	paramsScroll->setWidget(paramsGroup);
 	paramsScroll->setWidgetResizable(true);
-	paramsScroll->setMaximumHeight(360);
+	paramsScroll->setMaximumHeight(300);
 	sidebarLayout->addWidget(paramsScroll);
 
-	auto* summaryGroup = new QGroupBox(QStringLiteral("Analysis summary"));
-	auto* summaryLayout = new QFormLayout(summaryGroup);
+	auto* sweepGroup = new QGroupBox(QStringLiteral("Parameter sweep"));
+	auto* sweepLayout = new QFormLayout(sweepGroup);
+	m_sweepParam = new QComboBox();
+	m_sweepParam->addItem(QStringLiteral("Perturbation amplitude"), QStringLiteral("amplitude"));
+	m_sweepParam->addItem(QStringLiteral("Thermal velocity"), QStringLiteral("vth"));
+	m_sweepParam->addItem(QStringLiteral("Mode m"), QStringLiteral("mode"));
+	m_sweepParam->addItem(QStringLiteral("Drift velocity"), QStringLiteral("drift"));
+	m_sweepStart = makeDoubleSpin(0.001, 0.001, 6);
+	m_sweepEnd = makeDoubleSpin(0.01, 0.001, 6);
+	m_sweepCount = makeIntSpin(4, 2, 8);
+	m_sweepButton = new QPushButton(QStringLiteral("Run sweep"));
+	connect(m_sweepButton, &QPushButton::clicked, this, &MainWindow::onSweepClicked);
+	sweepLayout->addRow(QStringLiteral("Parameter"), m_sweepParam);
+	sweepLayout->addRow(QStringLiteral("Start"), m_sweepStart);
+	sweepLayout->addRow(QStringLiteral("End"), m_sweepEnd);
+	sweepLayout->addRow(QStringLiteral("Runs"), m_sweepCount);
+	sweepLayout->addRow(QString(), m_sweepButton);
+	sidebarLayout->addWidget(sweepGroup);
+
+	m_summaryGroup = new QGroupBox(QStringLiteral("Analysis summary"));
+	auto* summaryLayout = new QFormLayout(m_summaryGroup);
 	m_statEseRatio = new QLabel(QStringLiteral("—"));
 	m_statEnergyDrift = new QLabel(QStringLiteral("—"));
 	m_statEkRatio = new QLabel(QStringLiteral("—"));
 	m_statEsePeak = new QLabel(QStringLiteral("—"));
+	m_statGrowth = new QLabel(QStringLiteral("—"));
+	m_statTheory = new QLabel(QStringLiteral("—"));
+	m_statTheory->setWordWrap(true);
 	summaryLayout->addRow(QStringLiteral("Field energy late / early"), m_statEseRatio);
 	summaryLayout->addRow(QStringLiteral("Total energy drift"), m_statEnergyDrift);
 	summaryLayout->addRow(QStringLiteral("|E_k| end / start"), m_statEkRatio);
 	summaryLayout->addRow(QStringLiteral("Peak field / initial"), m_statEsePeak);
-	summaryGroup->hide();
-	sidebarLayout->addWidget(summaryGroup);
+	summaryLayout->addRow(QStringLiteral("Measured γ"), m_statGrowth);
+	summaryLayout->addRow(QStringLiteral("Theory overlay"), m_statTheory);
+	m_summaryGroup->hide();
+	sidebarLayout->addWidget(m_summaryGroup);
 	sidebarLayout->addStretch();
 
 	auto* resultsPane = new QWidget();
@@ -292,6 +342,7 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	splitter->setSizes({360, 900});
 
 	populateDemoSelector();
+	populateLessonSelector();
 
 	std::string error;
 	if (const auto params = SimulationConfig::formParamsFromDemo(m_repoRoot, "vortexTwoStream", error)) {
@@ -307,6 +358,27 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 		m_statusLabel->setText(QString::fromStdString(error));
 	}
 	updateDimensionControls();
+}
+
+void MainWindow::populateLessonSelector() {
+	std::string error;
+	m_lessons = SimulationConfig::loadLessons(m_repoRoot, error);
+	if (!error.empty()) {
+		return;
+	}
+	for (const auto& lesson : m_lessons) {
+		m_lessonSelect->addItem(QString::fromStdString(lesson.title), QString::fromStdString(lesson.id));
+	}
+}
+
+void MainWindow::setupMenus() {
+	auto* fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
+	fileMenu->addAction(QStringLiteral("Copy config JSON"), this, &MainWindow::onCopyConfig, QKeySequence::Copy);
+	fileMenu->addSeparator();
+	fileMenu->addAction(QStringLiteral("Export energy CSV…"), this, &MainWindow::onExportEnergyCsv);
+	fileMenu->addAction(QStringLiteral("Export |E_k| CSV…"), this, &MainWindow::onExportModeCsv);
+	fileMenu->addAction(QStringLiteral("Export frames CSV…"), this, &MainWindow::onExportFramesCsv);
+	fileMenu->addAction(QStringLiteral("Export active chart PNG…"), this, &MainWindow::onExportChartPng);
 }
 
 void MainWindow::populateDemoSelector() {
@@ -435,21 +507,40 @@ void MainWindow::onDemoChanged(int index) {
 
 void MainWindow::onRunClicked() {
 	const FormParams params = collectFormParams();
-	if (const auto validationError = SimulationConfig::validateFormParams(params)) {
-		QMessageBox::warning(this, QStringLiteral("Invalid parameters"), QString::fromStdString(*validationError));
-		return;
+	nlohmann::json config;
+
+	if (!m_paramsCustomized && !m_activeDemoId.isEmpty()) {
+		std::string error;
+		if (const auto demoConfig = SimulationConfig::loadDemoJson(m_repoRoot, m_activeDemoId.toStdString(), error)) {
+			config = *demoConfig;
+		} else {
+			QMessageBox::warning(this, QStringLiteral("Demo load failed"), QString::fromStdString(error));
+			return;
+		}
+	} else {
+		if (const auto validationError = SimulationConfig::validateFormParams(params)) {
+			QMessageBox::warning(this, QStringLiteral("Invalid parameters"), QString::fromStdString(*validationError));
+			return;
+		}
+		config = SimulationConfig::buildConfig(params);
 	}
 
+	m_sweepActive = false;
+	startSimulation(config, params);
+}
+
+void MainWindow::startSimulation(const nlohmann::json& config, const FormParams& contextParams) {
 	m_animationTimer->stop();
-	m_chartPanel->setSimulationContext(params);
+	m_lastConfig = config;
+	m_chartPanel->setSimulationContext(contextParams);
 	setRunning(true);
 	m_statusLabel->clear();
 
 	QMetaObject::invokeMethod(
 		m_worker,
-		"runSimulation",
+		"runConfigJson",
 		Qt::QueuedConnection,
-		Q_ARG(FormParams, params));
+		Q_ARG(QString, QString::fromStdString(config.dump())));
 }
 
 void MainWindow::onResetClicked() {
@@ -463,8 +554,14 @@ void MainWindow::onProgressUpdated(int percent, const QString& message) {
 }
 
 void MainWindow::onSimulationFinished(const nlohmann::json& result) {
+	if (m_sweepActive) {
+		continueSweepIfNeeded(result);
+		return;
+	}
+
 	setRunning(false);
-	m_statusLabel->setText(QStringLiteral("Simulation complete — playing animation."));
+	m_lastResult = result;
+	m_statusLabel->setText(QStringLiteral("Simulation complete — playing animation. File menu exports results."));
 	m_chartPanel->renderResults(result);
 	updateSummary(result);
 
@@ -483,9 +580,7 @@ void MainWindow::onSimulationFinished(const nlohmann::json& result) {
 	m_updatingSlider = false;
 	seekPlayback(0.0, false);
 
-	if (auto* summaryGroup = qobject_cast<QGroupBox*>(m_statEseRatio->parent()->parent())) {
-		summaryGroup->show();
-	}
+	m_summaryGroup->show();
 
 	if (m_frameCount > 1) {
 		onPlayClicked();
@@ -501,6 +596,8 @@ void MainWindow::onSimulationFailed(const QString& error) {
 void MainWindow::setRunning(bool running) {
 	m_runButton->setDisabled(running);
 	m_demoSelect->setDisabled(running);
+	m_sweepButton->setDisabled(running);
+	m_lessonSelect->setDisabled(running);
 	m_progressBar->setVisible(running);
 	if (running) {
 		m_progressBar->setValue(0);
@@ -569,6 +666,18 @@ void MainWindow::updateSummary(const nlohmann::json& result) {
 	m_statEkRatio->setText(params.dimension == 3
 		? QStringLiteral("N/A")
 		: (ekRatio > 0.0 ? QString::number(ekRatio, 'f', 2) : QStringLiteral("—")));
+
+	const auto fit = m_chartPanel->lastGrowthFit();
+	const auto theory = m_chartPanel->lastTheory();
+	m_statGrowth->setText(fit.valid
+		? QString("%1 = %2").arg(QString::fromStdString(fit.label), QString::number(fit.rate, 'g', 3))
+		: QStringLiteral("—"));
+	if (theory.valid) {
+		m_statTheory->setText(QString("%1 γ = %2").arg(
+			QString::fromStdString(theory.name), QString::number(theory.rate, 'g', 3)));
+	} else {
+		m_statTheory->setText(QString::fromStdString(theory.note.empty() ? "—" : theory.note));
+	}
 }
 
 void MainWindow::markParamsCustomized() {
@@ -727,4 +836,222 @@ void MainWindow::onAnimationTick() {
 		}
 	}
 	seekPlayback(next, true);
+}
+
+nlohmann::json MainWindow::currentRunConfig() const {
+	if (!m_lastConfig.is_null()) {
+		return m_lastConfig;
+	}
+	return SimulationConfig::buildConfig(collectFormParams());
+}
+
+QString MainWindow::exportPath(const QString& suffix) const {
+	return QFileDialog::getSaveFileName(
+		const_cast<MainWindow*>(this),
+		QStringLiteral("Export"),
+		QStringLiteral("picpp_%1").arg(suffix),
+		QStringLiteral("All files (*)"));
+}
+
+void MainWindow::onCopyConfig() {
+	const auto config = currentRunConfig();
+	QApplication::clipboard()->setText(QString::fromStdString(config.dump(2)));
+	m_statusLabel->setText(QStringLiteral("Config JSON copied to clipboard."));
+}
+
+void MainWindow::onExportEnergyCsv() {
+	const QString path = exportPath(QStringLiteral("energy.csv"));
+	if (path.isEmpty()) {
+		return;
+	}
+	QString error;
+	if (!m_chartPanel->exportEnergyCsv(path, error)) {
+		QMessageBox::warning(this, QStringLiteral("Export failed"), error);
+		return;
+	}
+	m_statusLabel->setText(QStringLiteral("Exported energy CSV."));
+}
+
+void MainWindow::onExportModeCsv() {
+	const QString path = exportPath(QStringLiteral("mode.csv"));
+	if (path.isEmpty()) {
+		return;
+	}
+	QString error;
+	if (!m_chartPanel->exportModeCsv(path, error)) {
+		QMessageBox::warning(this, QStringLiteral("Export failed"), error);
+		return;
+	}
+	m_statusLabel->setText(QStringLiteral("Exported |E_k| CSV."));
+}
+
+void MainWindow::onExportFramesCsv() {
+	const QString path = exportPath(QStringLiteral("frames.csv"));
+	if (path.isEmpty()) {
+		return;
+	}
+	QString error;
+	if (!m_chartPanel->exportFramesCsv(path, error)) {
+		QMessageBox::warning(this, QStringLiteral("Export failed"), error);
+		return;
+	}
+	m_statusLabel->setText(QStringLiteral("Exported frames CSV."));
+}
+
+void MainWindow::onExportChartPng() {
+	const QString path = exportPath(QStringLiteral("chart.png"));
+	if (path.isEmpty()) {
+		return;
+	}
+	QString error;
+	if (!m_chartPanel->exportActiveChartPng(path, error)) {
+		QMessageBox::warning(this, QStringLiteral("Export failed"), error);
+		return;
+	}
+	m_statusLabel->setText(QStringLiteral("Exported chart PNG."));
+}
+
+void MainWindow::onLessonChanged(int index) {
+	const QString lessonId = m_lessonSelect->itemData(index).toString();
+	m_lessonIndex = -1;
+	m_lessonStep = 0;
+	if (lessonId.isEmpty()) {
+		m_lessonPrompt->clear();
+		m_lessonPrevButton->setEnabled(false);
+		m_lessonNextButton->setEnabled(false);
+		return;
+	}
+	for (int i = 0; i < static_cast<int>(m_lessons.size()); ++i) {
+		if (m_lessons[static_cast<size_t>(i)].id == lessonId.toStdString()) {
+			m_lessonIndex = i;
+			break;
+		}
+	}
+	applyLessonStep();
+}
+
+void MainWindow::onLessonPrev() {
+	if (m_lessonIndex < 0 || m_lessonStep <= 0) {
+		return;
+	}
+	--m_lessonStep;
+	applyLessonStep();
+}
+
+void MainWindow::onLessonNext() {
+	if (m_lessonIndex < 0) {
+		return;
+	}
+	const auto& lesson = m_lessons[static_cast<size_t>(m_lessonIndex)];
+	if (m_lessonStep + 1 >= static_cast<int>(lesson.steps.size())) {
+		return;
+	}
+	++m_lessonStep;
+	applyLessonStep();
+}
+
+void MainWindow::applyLessonStep() {
+	if (m_lessonIndex < 0) {
+		return;
+	}
+	const auto& lesson = m_lessons[static_cast<size_t>(m_lessonIndex)];
+	const auto& step = lesson.steps[static_cast<size_t>(m_lessonStep)];
+	m_lessonPrompt->setText(QString("Step %1/%2 — %3")
+		.arg(m_lessonStep + 1)
+		.arg(static_cast<int>(lesson.steps.size()))
+		.arg(QString::fromStdString(step.prompt)));
+	m_lessonPrevButton->setEnabled(m_lessonStep > 0);
+	m_lessonNextButton->setEnabled(m_lessonStep + 1 < static_cast<int>(lesson.steps.size()));
+
+	for (int i = 0; i < m_demoSelect->count(); ++i) {
+		if (m_demoSelect->itemData(i).toString() == QString::fromStdString(step.demoId)) {
+			m_demoSelect->setCurrentIndex(i);
+			break;
+		}
+	}
+}
+
+void MainWindow::onSweepClicked() {
+	FormParams base = collectFormParams();
+	if (!m_paramsCustomized && !m_activeDemoId.isEmpty()) {
+		std::string error;
+		if (const auto params = SimulationConfig::formParamsFromDemo(m_repoRoot, m_activeDemoId.toStdString(), error)) {
+			base = *params;
+		}
+	}
+	if (base.dimension != 1) {
+		QMessageBox::information(this, QStringLiteral("Sweep"), QStringLiteral("Parameter sweeps currently target 1D runs."));
+		return;
+	}
+
+	const QString key = m_sweepParam->currentData().toString();
+	const double start = m_sweepStart->value();
+	const double end = m_sweepEnd->value();
+	const int count = m_sweepCount->value();
+	m_sweepJobs.clear();
+	m_sweepResults.clear();
+	for (int i = 0; i < count; ++i) {
+		const double t = count == 1 ? 0.0 : static_cast<double>(i) / static_cast<double>(count - 1);
+		const double value = start + (end - start) * t;
+		FormParams job = base;
+		QString label;
+		if (key == QStringLiteral("amplitude")) {
+			job.spatialPerturbationAmplitude = value;
+			label = QString("A=%1").arg(value, 0, 'g', 3);
+		} else if (key == QStringLiteral("vth")) {
+			job.thermalVelocity = value;
+			label = QString("vth=%1").arg(value, 0, 'g', 3);
+		} else if (key == QStringLiteral("mode")) {
+			job.spatialPerturbationMode = std::max(1, static_cast<int>(std::lround(value)));
+			label = QString("m=%1").arg(job.spatialPerturbationMode);
+		} else {
+			job.driftVelocity = value;
+			label = QString("vd=%1").arg(value, 0, 'g', 3);
+		}
+		if (const auto err = SimulationConfig::validateFormParams(job)) {
+			QMessageBox::warning(this, QStringLiteral("Invalid sweep"), QString::fromStdString(*err));
+			return;
+		}
+		m_sweepJobs.push_back(job);
+		m_sweepResults.push_back(SweepSeriesData{label, {}, {}});
+	}
+
+	m_sweepActive = true;
+	m_sweepIndex = 0;
+	m_chartPanel->clearSweepOverlay();
+	m_statusLabel->setText(QStringLiteral("Sweep 1/%1…").arg(count));
+	startSimulation(SimulationConfig::buildConfig(m_sweepJobs.front()), m_sweepJobs.front());
+}
+
+void MainWindow::continueSweepIfNeeded(const nlohmann::json& result) {
+	const auto& job = m_sweepJobs[static_cast<size_t>(m_sweepIndex)];
+	auto& series = m_sweepResults[static_cast<size_t>(m_sweepIndex)];
+	series.times.clear();
+	series.ese.clear();
+	const auto ese = result.at("ese").get<std::vector<double>>();
+	for (size_t i = 0; i < ese.size(); ++i) {
+		series.times.push_back(static_cast<double>(i) * job.timeStepSize);
+		series.ese.push_back(ese[i]);
+	}
+
+	++m_sweepIndex;
+	if (m_sweepIndex < static_cast<int>(m_sweepJobs.size())) {
+		m_statusLabel->setText(QStringLiteral("Sweep %1/%2…")
+			.arg(m_sweepIndex + 1)
+			.arg(static_cast<int>(m_sweepJobs.size())));
+		startSimulation(
+			SimulationConfig::buildConfig(m_sweepJobs[static_cast<size_t>(m_sweepIndex)]),
+			m_sweepJobs[static_cast<size_t>(m_sweepIndex)]);
+		return;
+	}
+
+	m_sweepActive = false;
+	setRunning(false);
+	m_chartPanel->setSimulationContext(job);
+	m_chartPanel->renderResults(result);
+	m_chartPanel->setSweepOverlay(m_sweepResults);
+	m_lastResult = result;
+	updateSummary(result);
+	m_summaryGroup->show();
+	m_statusLabel->setText(QStringLiteral("Sweep complete — compare field-energy curves on the Energy tab."));
 }

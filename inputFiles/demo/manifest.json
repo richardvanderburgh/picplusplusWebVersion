@@ -182,6 +182,19 @@
     ]
   },
   {
+    "id": "ionElectronOscillation",
+    "file": "ionElectronOscillation.json",
+    "title": "Ion–electron oscillation",
+    "category": "Multi-species",
+    "description": "Cold electrons plus light ions (q/m = +0.05, ω_p,i ≪ ω_p,e). Electrons oscillate rapidly while ions provide a slower neutralizing background — useful for discussing multi-species electrostatic response.",
+    "lookFor": [
+      "Two species in phase space with different velocity scales",
+      "Field energy oscillates with an electron-dominated period",
+      "Ions barely move compared with electrons",
+      "Run from the demo file (not the simplified form) to preserve ion parameters"
+    ]
+  },
+  {
     "id": "landauFull",
     "file": "landauFull.json",
     "title": "Landau damping (full)",

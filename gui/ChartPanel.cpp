@@ -2,8 +2,12 @@
 
 #include "ParticleView3D.h"
 
+#include <QBarCategoryAxis>
+#include <QBarSeries>
+#include <QBarSet>
 #include <QChart>
 #include <QChartView>
+#include <QFile>
 #include <QGridLayout>
 #include <QLineSeries>
 #include <QLogValueAxis>
@@ -12,6 +16,7 @@
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QTabWidget>
+#include <QTextStream>
 #include <QValueAxis>
 
 #include <algorithm>
@@ -212,6 +217,12 @@ void ChartPanel::setupCharts() {
 	m_modeChart->createDefaultAxes();
 	m_modeView = makeChartView(m_modeChart);
 	m_tabs->addTab(m_modeView, QStringLiteral("|E_k|"));
+
+	m_histChart = new QChart();
+	m_histChart->setTitle(QStringLiteral("Velocity histogram"));
+	m_histChart->setAnimationOptions(QChart::NoAnimation);
+	m_histView = makeChartView(m_histChart);
+	m_tabs->addTab(m_histView, QStringLiteral("f(v)"));
 }
 
 void ChartPanel::clearResults() {
@@ -274,6 +285,31 @@ void ChartPanel::clearResults() {
 		delete m_modeTimeCursor;
 		m_modeTimeCursor = nullptr;
 	}
+	if (m_theorySeries != nullptr) {
+		m_modeChart->removeSeries(m_theorySeries);
+		delete m_theorySeries;
+		m_theorySeries = nullptr;
+	}
+	if (m_fitSeries != nullptr) {
+		m_modeChart->removeSeries(m_fitSeries);
+		delete m_fitSeries;
+		m_fitSeries = nullptr;
+	}
+	clearSweepOverlay();
+
+	if (m_histSeries != nullptr) {
+		m_histChart->removeSeries(m_histSeries);
+		delete m_histSeries;
+		m_histSeries = nullptr;
+		m_histSet = nullptr;
+	}
+	for (auto* axis : m_histChart->axes()) {
+		m_histChart->removeAxis(axis);
+		delete axis;
+	}
+
+	m_growthFit = {};
+	m_theory = {};
 
 	for (auto* axis : m_energyChart->axes()) {
 		m_energyChart->removeAxis(axis);
@@ -414,6 +450,7 @@ void ChartPanel::renderResults(const nlohmann::json& result) {
 		m_view3DTabs->setCurrentIndex(0);
 	}
 	m_tabs->setTabVisible(m_tabs->indexOf(m_modeView), !m_is3D);
+	m_tabs->setTabVisible(m_tabs->indexOf(m_histView), !m_is3D);
 
 	renderEnergyPlot(result);
 	if (!m_is3D) {
@@ -483,6 +520,7 @@ void ChartPanel::displayFrame(
 		updateProjectionPlots(frame, previousFrame);
 	} else {
 		updatePhasePlot(frame, previousFrame);
+		updateVelocityHistogram(frame);
 	}
 	updateFieldPlot(frame);
 	updateTimeCursors(time);
@@ -750,5 +788,256 @@ void ChartPanel::renderModePlot(const nlohmann::json& result) {
 	}
 
 	m_modeTimeCursor = makeTimeCursor(m_modeChart, m_modeAxisX, m_modeAxisY, QColor("#ef4444"));
+	renderTheoryOverlay();
 	m_modeChart->setTitle(QString("Fourier amplitude |E_k| (mode %1)").arg(mode));
+}
+
+void ChartPanel::renderTheoryOverlay() {
+	m_theory = PhysicsAnalysis::selectTheory(m_params);
+	const bool preferGrowth = m_theory.valid && !m_theory.isDamping;
+	m_growthFit = PhysicsAnalysis::fitExponentialRate(m_modeTimes, m_modeAmplitudes, preferGrowth);
+
+	if (m_modeTimes.empty() || m_modeAxisX == nullptr || m_modeAxisY == nullptr) {
+		return;
+	}
+
+	double a0 = m_modeAmplitudes.front();
+	for (const double value : m_modeAmplitudes) {
+		if (value > 0.0) {
+			a0 = value;
+			break;
+		}
+	}
+
+	if (m_theory.valid && a0 > 0.0) {
+		m_theorySeries = new QLineSeries();
+		m_theorySeries->setName(QString::fromStdString(m_theory.name));
+		m_theorySeries->setPen(QPen(QColor("#059669"), 2, Qt::DashLine));
+		for (const double t : m_modeTimes) {
+			const double amp = a0 * std::exp(m_theory.rate * (t - m_modeTimes.front()));
+			if (amp > 0.0) {
+				m_theorySeries->append(t, amp);
+			}
+		}
+		m_modeChart->addSeries(m_theorySeries);
+		m_theorySeries->attachAxis(m_modeAxisX);
+		m_theorySeries->attachAxis(m_modeAxisY);
+	}
+
+	if (m_growthFit.valid) {
+		m_fitSeries = new QLineSeries();
+		m_fitSeries->setName(QString::fromStdString(m_growthFit.label));
+		m_fitSeries->setPen(QPen(QColor("#ea580c"), 2, Qt::DotLine));
+		for (const double t : m_modeTimes) {
+			if (t < m_growthFit.tStart || t > m_growthFit.tEnd) {
+				continue;
+			}
+			const double amp = m_growthFit.amplitude0 * std::exp(m_growthFit.rate * t);
+			if (amp > 0.0) {
+				m_fitSeries->append(t, amp);
+			}
+		}
+		m_modeChart->addSeries(m_fitSeries);
+		m_fitSeries->attachAxis(m_modeAxisX);
+		m_fitSeries->attachAxis(m_modeAxisY);
+	}
+}
+
+void ChartPanel::updateVelocityHistogram(const DATA_STRUCTS::Frame& frame) {
+	constexpr int binCount = 40;
+	if (m_histSeries != nullptr) {
+		m_histChart->removeSeries(m_histSeries);
+		delete m_histSeries;
+		m_histSeries = nullptr;
+		m_histSet = nullptr;
+	}
+	for (auto* axis : m_histChart->axes()) {
+		m_histChart->removeAxis(axis);
+		delete axis;
+	}
+
+	const double vMin = m_phaseVelocityMin;
+	const double vMax = m_phaseVelocityMax;
+	if (!(vMax > vMin)) {
+		return;
+	}
+	const double binWidth = (vMax - vMin) / binCount;
+	std::vector<int> counts(static_cast<size_t>(binCount), 0);
+	for (const auto& particle : frame.particles) {
+		int bin = static_cast<int>(std::floor((particle.velocity - vMin) / binWidth));
+		bin = std::clamp(bin, 0, binCount - 1);
+		counts[static_cast<size_t>(bin)] += 1;
+	}
+
+	m_histSeries = new QBarSeries();
+	m_histSet = new QBarSet(QStringLiteral("f(v)"));
+	m_histSet->setColor(QColor("#2563eb"));
+	QStringList categories;
+	for (int i = 0; i < binCount; ++i) {
+		*m_histSet << counts[static_cast<size_t>(i)];
+		if (i % 5 == 0) {
+			categories << QString::number(vMin + (i + 0.5) * binWidth, 'f', 2);
+		} else {
+			categories << QString();
+		}
+	}
+	m_histSeries->append(m_histSet);
+	m_histChart->addSeries(m_histSeries);
+
+	auto* axisX = new QBarCategoryAxis();
+	axisX->append(categories);
+	axisX->setTitleText(QStringLiteral("velocity"));
+	m_histChart->addAxis(axisX, Qt::AlignBottom);
+	m_histSeries->attachAxis(axisX);
+
+	auto* axisY = new QValueAxis();
+	axisY->setTitleText(QStringLiteral("count"));
+	m_histChart->addAxis(axisY, Qt::AlignLeft);
+	m_histSeries->attachAxis(axisY);
+	m_histChart->setTitle(QStringLiteral("Velocity histogram f(v)"));
+}
+
+void ChartPanel::clearSweepOverlay() {
+	for (auto* series : m_sweepSeries) {
+		m_energyChart->removeSeries(series);
+		delete series;
+	}
+	m_sweepSeries.clear();
+}
+
+void ChartPanel::setSweepOverlay(const std::vector<SweepSeriesData>& sweeps) {
+	clearSweepOverlay();
+	const QColor colors[] = {
+		QColor("#7c3aed"), QColor("#db2777"), QColor("#0891b2"),
+		QColor("#ca8a04"), QColor("#16a34a"), QColor("#ea580c"),
+	};
+	for (size_t i = 0; i < sweeps.size(); ++i) {
+		auto* series = new QLineSeries();
+		series->setName(sweeps[i].label);
+		series->setColor(colors[i % 6]);
+		const size_t n = std::min(sweeps[i].times.size(), sweeps[i].ese.size());
+		for (size_t j = 0; j < n; ++j) {
+			series->append(sweeps[i].times[j], sweeps[i].ese[j]);
+			m_energyYMax = std::max(m_energyYMax, sweeps[i].ese[j]);
+		}
+		m_energyChart->addSeries(series);
+		if (m_energyAxisX != nullptr) {
+			series->attachAxis(m_energyAxisX);
+		}
+		if (m_energyAxisY != nullptr) {
+			series->attachAxis(m_energyAxisY);
+			m_energyAxisY->setMax(m_energyYMax * 1.05);
+		}
+		m_sweepSeries.push_back(series);
+	}
+	m_tabs->setCurrentWidget(m_energyView);
+}
+
+bool ChartPanel::exportEnergyCsv(const QString& path, QString& error) const {
+	if (!m_result.contains("ese")) {
+		error = QStringLiteral("No energy data to export.");
+		return false;
+	}
+	QFile file(path);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+		error = QStringLiteral("Could not write %1").arg(path);
+		return false;
+	}
+	QTextStream out(&file);
+	out << "time,ese";
+	const auto ke = m_result.at("ke").get<std::vector<std::vector<double>>>();
+	for (size_t s = 0; s < ke.size(); ++s) {
+		out << ",ke_species_" << static_cast<int>(s);
+	}
+	out << ",total\n";
+	const auto ese = m_result.at("ese").get<std::vector<double>>();
+	const double dt = m_params.timeStepSize;
+	for (size_t i = 0; i < ese.size(); ++i) {
+		double totalKe = 0.0;
+		out << (static_cast<double>(i) * dt) << ',' << ese[i];
+		for (const auto& speciesKe : ke) {
+			const double value = i < speciesKe.size() ? speciesKe[i] : 0.0;
+			totalKe += value;
+			out << ',' << value;
+		}
+		out << ',' << (totalKe + ese[i]) << '\n';
+	}
+	return true;
+}
+
+bool ChartPanel::exportModeCsv(const QString& path, QString& error) const {
+	if (m_modeTimes.empty()) {
+		error = QStringLiteral("No |E_k| data to export.");
+		return false;
+	}
+	QFile file(path);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+		error = QStringLiteral("Could not write %1").arg(path);
+		return false;
+	}
+	QTextStream out(&file);
+	out << "time,mode_amplitude";
+	if (m_theory.valid) {
+		out << ",theory_amplitude";
+	}
+	if (m_growthFit.valid) {
+		out << ",fit_amplitude";
+	}
+	out << '\n';
+	double a0 = 0.0;
+	for (const double value : m_modeAmplitudes) {
+		if (value > 0.0) {
+			a0 = value;
+			break;
+		}
+	}
+	for (size_t i = 0; i < m_modeTimes.size(); ++i) {
+		out << m_modeTimes[i] << ',' << m_modeAmplitudes[i];
+		if (m_theory.valid) {
+			out << ',' << (a0 * std::exp(m_theory.rate * (m_modeTimes[i] - m_modeTimes.front())));
+		}
+		if (m_growthFit.valid) {
+			out << ',' << (m_growthFit.amplitude0 * std::exp(m_growthFit.rate * m_modeTimes[i]));
+		}
+		out << '\n';
+	}
+	return true;
+}
+
+bool ChartPanel::exportFramesCsv(const QString& path, QString& error) const {
+	if (m_frames.empty()) {
+		error = QStringLiteral("No frames to export.");
+		return false;
+	}
+	QFile file(path);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+		error = QStringLiteral("Could not write %1").arg(path);
+		return false;
+	}
+	QTextStream out(&file);
+	out << "frame,time,particle_id,species,x,y,z,vx,vy,vz\n";
+	for (const auto& frame : m_frames) {
+		const double time = frame.frameNumber * m_params.timeStepSize;
+		for (const auto& particle : frame.particles) {
+			out << frame.frameNumber << ',' << time << ',' << particle.id << ',' << particle.species
+				<< ',' << particle.position << ',' << particle.positionY << ',' << particle.positionZ
+				<< ',' << particle.velocity << ',' << particle.velocityY << ',' << particle.velocityZ
+				<< '\n';
+		}
+	}
+	return true;
+}
+
+bool ChartPanel::exportActiveChartPng(const QString& path, QString& error) const {
+	QWidget* current = m_tabs->currentWidget();
+	if (current == nullptr) {
+		error = QStringLiteral("No chart to export.");
+		return false;
+	}
+	const QPixmap pixmap = current->grab();
+	if (!pixmap.save(path, "PNG")) {
+		error = QStringLiteral("Could not save PNG to %1").arg(path);
+		return false;
+	}
+	return true;
 }

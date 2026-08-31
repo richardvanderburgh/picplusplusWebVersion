@@ -41,10 +41,24 @@ struct DemoEntry {
 	std::vector<std::string> lookFor;
 };
 
+struct LessonStep {
+	std::string demoId;
+	std::string prompt;
+};
+
+struct LessonEntry {
+	std::string id;
+	std::string title;
+	std::string description;
+	std::vector<LessonStep> steps;
+};
+
 class SimulationConfig {
 public:
 	static std::vector<DemoEntry> loadDemoManifest(const std::string& repoRoot, std::string& error);
+	static std::vector<LessonEntry> loadLessons(const std::string& repoRoot, std::string& error);
 	static std::optional<FormParams> formParamsFromDemo(const std::string& repoRoot, const std::string& demoId, std::string& error);
+	static std::optional<nlohmann::json> loadDemoJson(const std::string& repoRoot, const std::string& demoId, std::string& error);
 	static nlohmann::json buildConfig(const FormParams& params);
 	static std::optional<std::string> validateFormParams(const FormParams& params);
 	static FormParams formParamsFromJsonConfig(const nlohmann::json& config);

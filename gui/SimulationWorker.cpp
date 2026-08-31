@@ -53,12 +53,18 @@ SimulationWorker::SimulationWorker(QObject* parent)
 	: QObject(parent) {}
 
 void SimulationWorker::runSimulation(const FormParams& params) {
-	if (const auto validationError = SimulationConfig::validateFormParams(params)) {
-		emit simulationFailed(QString::fromStdString(*validationError));
+	runConfigJson(QString::fromStdString(SimulationConfig::buildConfig(params).dump()));
+}
+
+void SimulationWorker::runConfigJson(const QString& configJson) {
+	nlohmann::json config;
+	try {
+		config = nlohmann::json::parse(configJson.toStdString());
+	} catch (const std::exception& ex) {
+		emit simulationFailed(QStringLiteral("Invalid config JSON: %1").arg(ex.what()));
 		return;
 	}
 
-	const nlohmann::json config = SimulationConfig::buildConfig(params);
 	DATA_STRUCTS::InputVariables inputVariables = loadJSONFile(config);
 
 	if (const auto validationError = validateSimulationParams(inputVariables.simulationParams)) {

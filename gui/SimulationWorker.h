@@ -15,6 +15,7 @@ public:
 
 public slots:
 	void runSimulation(const FormParams& params);
+	void runConfigJson(const QString& configJson);
 
 signals:
 	void progressUpdated(int percent, const QString& message);

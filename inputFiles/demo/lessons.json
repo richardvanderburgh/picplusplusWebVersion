@@ -1,0 +1,51 @@
+[
+  {
+    "id": "cold-to-landau",
+    "title": "Lesson: Cold wave → Landau damping",
+    "description": "Compare an undamped cold plasma oscillation with a warm Landau case. Watch |E_k| stay flat when v_th = 0, then decay when a thermal tail can resonate.",
+    "steps": [
+      {
+        "demoId": "coldPlasmaQuick",
+        "prompt": "Run this cold control first. Expect |E_k| to oscillate without a steady envelope decay."
+      },
+      {
+        "demoId": "landauSmooth",
+        "prompt": "Now run the warm Landau case. Compare |E_k| decay and the theory overlay / measured γ in the summary."
+      }
+    ]
+  },
+  {
+    "id": "two-stream-story",
+    "title": "Lesson: Two-stream → vortices",
+    "description": "Follow the classic two-stream pathway from linear growth to nonlinear trapping vortices in phase space.",
+    "steps": [
+      {
+        "demoId": "twoStreamQuick",
+        "prompt": "Start with the quick two-stream. Watch field energy rise after a quiet period."
+      },
+      {
+        "demoId": "vortexTwoStream",
+        "prompt": "Run the vortex showcase. Scrub phase space near saturation to see trapping islands."
+      },
+      {
+        "demoId": "twoStream3D",
+        "prompt": "Optional 3D view: rotate the counter-streaming beams as they mix."
+      }
+    ]
+  },
+  {
+    "id": "oscillation-basics",
+    "title": "Lesson: Plasma oscillation basics",
+    "description": "See undamped electron plasma oscillations in 1D and 3D with smooth playback.",
+    "steps": [
+      {
+        "demoId": "plasmaRing",
+        "prompt": "1D smooth oscillation — watch E(x) and energy breathe at ω ≈ ω_p."
+      },
+      {
+        "demoId": "plasmaBreathing3D",
+        "prompt": "3D breathing cloud — enable auto-rotate and loop the animation."
+      }
+    ]
+  }
+]
