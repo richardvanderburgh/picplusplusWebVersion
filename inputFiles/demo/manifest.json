@@ -128,5 +128,18 @@
       "Peak ESE many times the initial perturbation level",
       "Good for portfolio screenshots; moderate run time"
     ]
+  },
+  {
+    "id": "plasmaOscillation3D",
+    "file": "plasmaOscillation3D.json",
+    "title": "3D plasma oscillation (quick)",
+    "category": "3D",
+    "description": "Single-species 3D electrostatic plasma oscillation on an 8³ grid with 512 particles. The desktop GUI shows XY, XZ, and YZ particle projections plus a mid-plane Ex slice. A short run for exploring 3D visualization.",
+    "lookFor": [
+      "Particle projection tabs: spatial structure in each plane",
+      "Ex mid-plane slice oscillates with the plasma frequency",
+      "Energy budget stays approximately conserved",
+      "Switch Dimension to 3D in the parameter panel to customize grid sizes"
+    ]
   }
 ]
