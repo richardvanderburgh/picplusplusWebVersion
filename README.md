@@ -42,6 +42,16 @@ See [docs/building.md](docs/building.md) for Linux/Windows profiles, manual comm
 ./build/bin/PIC++Main inputFiles/exampleInput.json
 ```
 
+### 3D simulations
+
+Set `"dimension": 3` in the JSON input and provide cubic grid sizes (`numGrid`, `numGridY`, `numGridZ`) that are powers of two. Domain lengths default to `spatialLength` when `spatialLengthY` / `spatialLengthZ` are omitted.
+
+```bash
+./build/bin/PIC++Main inputFiles/validation/plasmaOscillation3D.json
+```
+
+3D runs use a separable FFT Poisson solver, trilinear charge deposition, and three-component particle velocities. Phase-frame output includes `positionY`, `positionZ`, `velocityY`, and `velocityZ` fields; `electricField` stores an Ex slice through the domain center for lightweight visualization.
+
 Write full time-series output (energies and phase frames) to a JSON file:
 
 ```bash

@@ -15,9 +15,14 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 	DATA_STRUCTS::InputVariables inputVariables;
 
 	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = config.value("dimension", 1);
 	simulationParams.numGrid = config.value("numGrid", 0);
+	simulationParams.numGridY = config.value("numGridY", 0);
+	simulationParams.numGridZ = config.value("numGridZ", 0);
 	simulationParams.numTimeSteps = config.value("numTimeSteps", 0);
 	simulationParams.spatialLength = config.value("spatialLength", 0.0);
+	simulationParams.spatialLengthY = config.value("spatialLengthY", 0.0);
+	simulationParams.spatialLengthZ = config.value("spatialLengthZ", 0.0);
 	simulationParams.timeStepSize = config.value("timeStepSize", 0.0);
 	simulationParams.numSpecies = config.value("numSpecies", 0);
 	simulationParams.framePeriod = config.value("framePeriod", 1);
@@ -42,6 +47,12 @@ DATA_STRUCTS::InputVariables loadJSONFile(nlohmann::json config) {
 		speciesData.particlePositions = particlePositions;
 		speciesData.particleXVelocities = particleXVelocities;
 
+		if (simulationParams.dimension == 3) {
+			speciesData.particlePositionsY = std::vector<double>(speciesData.numParticles, 0);
+			speciesData.particlePositionsZ = std::vector<double>(speciesData.numParticles, 0);
+			speciesData.particleYVelocities = std::vector<double>(speciesData.numParticles, 0);
+			speciesData.particleZVelocities = std::vector<double>(speciesData.numParticles, 0);
+		}
 
 		allSpeciesData.push_back(speciesData);
 	}
@@ -85,6 +96,14 @@ int main(int argc, char* argv[]) {
 	std::cout << "numTimeSteps: " << inputVariables.simulationParams.numTimeSteps << std::endl;
 	std::cout << "numGrid: "	  << inputVariables.simulationParams.numGrid << std::endl;
 	std::cout << "numSpecies: "   << inputVariables.simulationParams.numSpecies << std::endl;
+	std::cout << "dimension: "    << inputVariables.simulationParams.dimension << std::endl;
+	if (inputVariables.simulationParams.dimension == 3) {
+		const auto& p = inputVariables.simulationParams;
+		const int ny = p.numGridY > 0 ? p.numGridY : p.numGrid;
+		const int nz = p.numGridZ > 0 ? p.numGridZ : p.numGrid;
+		std::cout << "numGridY: " << ny << std::endl;
+		std::cout << "numGridZ: " << nz << std::endl;
+	}
 #ifdef _OPENMP
 	std::cout << "OpenMP threads: " << omp_get_max_threads() << std::endl;
 #else

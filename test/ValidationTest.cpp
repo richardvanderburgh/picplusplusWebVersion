@@ -265,3 +265,87 @@ TEST(ValidationTest, ThermalVelocityIsReproducible)
 	ASSERT_TRUE(resultB.has_value());
 	EXPECT_DOUBLE_EQ(sumKineticEnergy(*resultA), sumKineticEnergy(*resultB));
 }
+
+TEST(ValidationTest, ThreeDPlasmaOscillationCompletesWithFiniteEnergy)
+{
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = 3;
+	simulationParams.numGrid = 8;
+	simulationParams.numGridY = 8;
+	simulationParams.numGridZ = 8;
+	simulationParams.numTimeSteps = 20;
+	simulationParams.spatialLength = 6.28318530717958;
+	simulationParams.spatialLengthY = 6.28318530717958;
+	simulationParams.spatialLengthZ = 6.28318530717958;
+	simulationParams.timeStepSize = 0.1;
+	simulationParams.numSpecies = 1;
+	simulationParams.framePeriod = 5;
+
+	DATA_STRUCTS::SpeciesData species;
+	species.numParticles = 512;
+	species.spatialPerturbationMode = 1;
+	species.spatialPerturbationWaveform = "sin";
+	species.driftVelocity = 0.0;
+	species.spatialPerturbationAmplitude = 0.01;
+	species.thermalVelocity = 0.0;
+	species.plasmaFrequency = 1.0;
+	species.chargeMassRatio = -1.0;
+	species.particlePositions = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsY = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsZ = std::vector<double>(species.numParticles, 0.0);
+	species.particleXVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleYVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleZVelocities = std::vector<double>(species.numParticles, 0.0);
+
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = {species};
+
+	const auto result = PIC_PLUS_PLUS::PICPlusPlus(inputVariables).initialize();
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->at("dimension").get<int>(), 3);
+
+	const auto& ese = result->at("ese").get<std::vector<double>>();
+	ASSERT_FALSE(ese.empty());
+	for (double value : ese) {
+		EXPECT_TRUE(std::isfinite(value));
+	}
+
+	const auto& frames = result->at("phaseFrames");
+	ASSERT_FALSE(frames.empty());
+	EXPECT_EQ(frames[0].at("dimension").get<int>(), 3);
+	EXPECT_FALSE(frames[0].at("particles").empty());
+	EXPECT_EQ(frames[0].at("particles")[0].value("positionY", 0.0), frames[0].at("particles")[0].value("positionY", -1.0));
+}
+
+TEST(ValidationTest, RejectsInvalidThreeDGrid)
+{
+	DATA_STRUCTS::SimulationParams simulationParams;
+	simulationParams.dimension = 3;
+	simulationParams.numGrid = 8;
+	simulationParams.numGridY = 6;
+	simulationParams.numGridZ = 8;
+	simulationParams.numTimeSteps = 1;
+	simulationParams.spatialLength = 1.0;
+	simulationParams.timeStepSize = 0.1;
+	simulationParams.numSpecies = 1;
+
+	DATA_STRUCTS::SpeciesData species;
+	species.numParticles = 64;
+	species.plasmaFrequency = 1.0;
+	species.chargeMassRatio = -1.0;
+	species.particlePositions = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsY = std::vector<double>(species.numParticles, 0.0);
+	species.particlePositionsZ = std::vector<double>(species.numParticles, 0.0);
+	species.particleXVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleYVelocities = std::vector<double>(species.numParticles, 0.0);
+	species.particleZVelocities = std::vector<double>(species.numParticles, 0.0);
+
+	DATA_STRUCTS::InputVariables inputVariables;
+	inputVariables.simulationParams = simulationParams;
+	inputVariables.allSpeciesData = {species};
+
+	PIC_PLUS_PLUS::PICPlusPlus simulation(inputVariables);
+	const auto result = simulation.initialize();
+	EXPECT_FALSE(result.has_value());
+}
