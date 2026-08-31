@@ -241,10 +241,9 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	m_frameLabel = new QLabel(QStringLiteral("—"));
 	m_loopPlayback = new QCheckBox(QStringLiteral("Loop"));
 	m_loopPlayback->setChecked(true);
-	m_animSpeedControl = makeIntSpin(80, 20, 2000);
-	m_animSpeedControl->setPrefix(QStringLiteral(""));
+	m_animSpeedControl = makeIntSpin(33, 10, 500);
 	m_animSpeedControl->setSuffix(QStringLiteral(" ms"));
-	m_animSpeedControl->setToolTip(QStringLiteral("Milliseconds between animation frames"));
+	m_animSpeedControl->setToolTip(QStringLiteral("Milliseconds between interpolated animation steps"));
 
 	connect(firstButton, &QPushButton::clicked, this, &MainWindow::onFirstFrame);
 	connect(prevButton, &QPushButton::clicked, this, &MainWindow::onPrevFrame);
@@ -255,6 +254,7 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	connect(m_frameSlider, &QSlider::valueChanged, this, &MainWindow::onFrameSliderChanged);
 	connect(m_frameSlider, &QSlider::sliderPressed, this, &MainWindow::onFrameSliderPressed);
 	connect(m_frameSlider, &QSlider::sliderReleased, this, &MainWindow::onFrameSliderReleased);
+	connect(m_animSpeedControl, QOverload<int>::of(&QSpinBox::valueChanged), this, &MainWindow::onAnimSpeedChanged);
 
 	controls->addWidget(new QLabel(QStringLiteral("Explore:")));
 	controls->addWidget(firstButton);
@@ -294,11 +294,11 @@ MainWindow::MainWindow(const std::string& repoRoot, QWidget* parent)
 	populateDemoSelector();
 
 	std::string error;
-	if (const auto params = SimulationConfig::formParamsFromDemo(m_repoRoot, "twoStreamQuick", error)) {
+	if (const auto params = SimulationConfig::formParamsFromDemo(m_repoRoot, "vortexTwoStream", error)) {
 		applyFormParams(*params);
 		m_savedDemoParams = *params;
 		for (int i = 0; i < m_demoSelect->count(); ++i) {
-			if (m_demoSelect->itemData(i).toString() == QStringLiteral("twoStreamQuick")) {
+			if (m_demoSelect->itemData(i).toString() == QStringLiteral("vortexTwoStream")) {
 				m_demoSelect->setCurrentIndex(i);
 				break;
 			}
@@ -464,7 +464,7 @@ void MainWindow::onProgressUpdated(int percent, const QString& message) {
 
 void MainWindow::onSimulationFinished(const nlohmann::json& result) {
 	setRunning(false);
-	m_statusLabel->setText(QStringLiteral("Simulation complete. Open the Animation tab, then press Play."));
+	m_statusLabel->setText(QStringLiteral("Simulation complete — playing animation."));
 	m_chartPanel->renderResults(result);
 	updateSummary(result);
 
@@ -475,13 +475,20 @@ void MainWindow::onSimulationFinished(const nlohmann::json& result) {
 	}
 
 	m_currentFrameIndex = 0;
+	m_playbackPosition = 0.0;
 	m_frameSlider->setEnabled(m_frameCount > 0);
 	m_frameSlider->setMaximum(std::max(0, m_frameCount - 1));
+	m_updatingSlider = true;
 	m_frameSlider->setValue(0);
-	onFrameSliderChanged(0);
+	m_updatingSlider = false;
+	seekPlayback(0.0, false);
 
 	if (auto* summaryGroup = qobject_cast<QGroupBox*>(m_statEseRatio->parent()->parent())) {
 		summaryGroup->show();
+	}
+
+	if (m_frameCount > 1) {
+		onPlayClicked();
 	}
 }
 
@@ -599,12 +606,38 @@ void MainWindow::setParamsCustomized(bool customized) {
 	m_resetButton->setEnabled(customized);
 }
 
+void MainWindow::updateFrameLabel(double continuousIndex) {
+	const double simTime = m_chartPanel->continuousTime(continuousIndex);
+	const int keyframe = static_cast<int>(std::floor(continuousIndex + 1e-9)) + 1;
+	m_frameLabel->setText(QString("Frame %1 / %2 · t ≈ %3")
+		.arg(std::min(keyframe, m_frameCount))
+		.arg(m_frameCount)
+		.arg(simTime, 0, 'f', 2));
+}
+
+void MainWindow::seekPlayback(double continuousIndex, bool updateSlider) {
+	if (m_frameCount <= 0) {
+		return;
+	}
+	const double maxIndex = static_cast<double>(m_frameCount - 1);
+	m_playbackPosition = std::clamp(continuousIndex, 0.0, maxIndex);
+	m_currentFrameIndex = static_cast<int>(std::floor(m_playbackPosition + 1e-9));
+	m_chartPanel->showPlaybackPosition(m_playbackPosition);
+	updateFrameLabel(m_playbackPosition);
+
+	if (updateSlider) {
+		m_updatingSlider = true;
+		m_frameSlider->setValue(m_currentFrameIndex);
+		m_updatingSlider = false;
+	}
+}
+
 void MainWindow::onPlayClicked() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	if (m_currentFrameIndex >= m_frameCount - 1) {
-		m_frameSlider->setValue(0);
+	if (m_playbackPosition >= static_cast<double>(m_frameCount - 1) - 1e-9) {
+		seekPlayback(0.0, true);
 	}
 	m_animationTimer->start(m_animSpeedControl->value());
 }
@@ -613,18 +646,26 @@ void MainWindow::onPauseClicked() {
 	m_animationTimer->stop();
 }
 
+void MainWindow::onAnimSpeedChanged(int value) {
+	if (m_animationTimer->isActive()) {
+		m_animationTimer->setInterval(value);
+	}
+}
+
 void MainWindow::onFirstFrame() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	m_frameSlider->setValue(0);
+	m_animationTimer->stop();
+	seekPlayback(0.0, true);
 }
 
 void MainWindow::onLastFrame() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	m_frameSlider->setValue(m_frameCount - 1);
+	m_animationTimer->stop();
+	seekPlayback(static_cast<double>(m_frameCount - 1), true);
 }
 
 void MainWindow::onPrevFrame() {
@@ -632,20 +673,22 @@ void MainWindow::onPrevFrame() {
 		return;
 	}
 	m_animationTimer->stop();
-	const int nextIndex = m_currentFrameIndex <= 0
-		? (m_loopPlayback->isChecked() ? m_frameCount - 1 : 0)
-		: m_currentFrameIndex - 1;
-	m_frameSlider->setValue(nextIndex);
+	double next = m_playbackPosition - 1.0;
+	if (next < 0.0) {
+		next = m_loopPlayback->isChecked() ? static_cast<double>(m_frameCount - 1) : 0.0;
+	}
+	seekPlayback(next, true);
 }
 
 void MainWindow::onNextFrame() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	const int nextIndex = m_currentFrameIndex >= m_frameCount - 1
-		? (m_loopPlayback->isChecked() ? 0 : m_frameCount - 1)
-		: m_currentFrameIndex + 1;
-	m_frameSlider->setValue(nextIndex);
+	double next = m_playbackPosition + 1.0;
+	if (next > static_cast<double>(m_frameCount - 1)) {
+		next = m_loopPlayback->isChecked() ? 0.0 : static_cast<double>(m_frameCount - 1);
+	}
+	seekPlayback(next, true);
 }
 
 void MainWindow::onFrameSliderPressed() {
@@ -660,28 +703,28 @@ void MainWindow::onFrameSliderReleased() {
 }
 
 void MainWindow::onFrameSliderChanged(int value) {
-	m_currentFrameIndex = value;
-	m_chartPanel->showFrame(value);
-
-	const FormParams params = collectFormParams();
-	const double simTime = value * params.timeStepSize * params.framePeriod;
-	m_frameLabel->setText(QString("Frame %1 / %2 · t ≈ %3")
-		.arg(value + 1)
-		.arg(m_frameCount)
-		.arg(simTime, 0, 'f', 2));
+	if (m_updatingSlider) {
+		return;
+	}
+	seekPlayback(static_cast<double>(value), false);
 }
 
 void MainWindow::onAnimationTick() {
 	if (m_frameCount <= 0) {
 		return;
 	}
-	if (m_currentFrameIndex >= m_frameCount - 1) {
+	const double maxIndex = static_cast<double>(m_frameCount - 1);
+	const double step = 1.0 / static_cast<double>(kInterpSteps);
+	double next = m_playbackPosition + step;
+	if (next > maxIndex + 1e-9) {
 		if (m_loopPlayback->isChecked()) {
-			m_frameSlider->setValue(0);
+			next = 0.0;
 		} else {
+			seekPlayback(maxIndex, true);
 			m_animationTimer->stop();
+			m_statusLabel->setText(QStringLiteral("Animation finished."));
+			return;
 		}
-		return;
 	}
-	onNextFrame();
+	seekPlayback(next, true);
 }

@@ -17,5 +17,5 @@
   "timeStepSize": 0.1,
   "numGrid": 128,
   "numSpecies": 1,
-  "framePeriod": 5
+  "framePeriod": 2
 }

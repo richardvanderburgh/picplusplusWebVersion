@@ -9,6 +9,7 @@
 class Q3DScatter;
 class QCheckBox;
 class QScatter3DSeries;
+class QTimer;
 
 class ParticleView3D : public QWidget {
 	Q_OBJECT
@@ -25,6 +26,8 @@ public slots:
 
 private slots:
 	void onTrailsToggled(bool enabled);
+	void onAutoRotateToggled(bool enabled);
+	void onAutoRotateTick();
 
 private:
 	void clearSeries();
@@ -34,6 +37,8 @@ private:
 	Q3DScatter* m_scatter = nullptr;
 	QWidget* m_container = nullptr;
 	QCheckBox* m_showTrails = nullptr;
+	QCheckBox* m_autoRotate = nullptr;
+	QTimer* m_rotateTimer = nullptr;
 
 	std::vector<QScatter3DSeries*> m_series;
 	std::vector<QScatter3DSeries*> m_trailSeries;

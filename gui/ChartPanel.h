@@ -31,6 +31,9 @@ public:
 	void setSimulationContext(const FormParams& params);
 	void renderResults(const nlohmann::json& result);
 	void showFrame(int frameIndex);
+	void showPlaybackPosition(double continuousIndex);
+	int frameCount() const;
+	double continuousTime(double continuousIndex) const;
 
 private:
 	void setupCharts();
@@ -44,6 +47,8 @@ private:
 	void updateTimeCursors(double time);
 	void updateChartTitles(double time);
 	void computeFieldBounds();
+	void displayFrame(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame, double time);
+	DATA_STRUCTS::Frame interpolateFrames(const DATA_STRUCTS::Frame& a, const DATA_STRUCTS::Frame& b, double alpha) const;
 	double frameTime(int frameIndex) const;
 	double fourierModeAmplitude(const std::vector<double>& field, int mode, double domainLength) const;
 

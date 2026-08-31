@@ -1,5 +1,18 @@
 [
   {
+    "id": "vortexTwoStream",
+    "file": "vortexTwoStream.json",
+    "title": "Two-stream vortex formation",
+    "category": "Two-stream instability",
+    "description": "Strong counter-streaming beams (v = ±1.2, amplitude 0.012) on a 64-cell grid with dense frame output. Watch phase space roll into classic trapping vortices as electrostatic energy saturates. Auto-plays with interpolated frames for smooth motion.",
+    "lookFor": [
+      "Phase-space vortices / holes forming after linear growth",
+      "Rapid rise then saturation of field energy",
+      "Smooth animation (~300 keyframes with interpolation)",
+      "Best showcase of nonlinear two-stream dynamics"
+    ]
+  },
+  {
     "id": "twoStreamQuick",
     "file": "twoStreamQuick.json",
     "title": "Two-stream (quick)",
@@ -9,7 +22,7 @@
       "Phase space: two separated beams that broaden and filament over time",
       "Electrostatic energy rises sharply after an initial quiet period",
       "Kinetic energy falls as particles exchange energy with the field",
-      "Fast web run (~300 particles, coarse 32-cell grid)"
+      "Fast run (~300 particles, coarse 32-cell grid)"
     ]
   },
   {
@@ -36,6 +49,45 @@
       "Instability still develops, but with more diffuse trapping structures",
       "Finer 64-cell grid resolves slightly more spatial structure",
       "Total energy should stay approximately conserved"
+    ]
+  },
+  {
+    "id": "plasmaRing",
+    "file": "plasmaRing.json",
+    "title": "Plasma oscillation (smooth)",
+    "category": "Plasma oscillation",
+    "description": "Cold electron plasma oscillation with dense frames (period 2) so the Animation tab shows a fluid ω ≈ ω_p cycle in phase space and E(x). Ideal for checking that playback interpolation looks natural.",
+    "lookFor": [
+      "Regular breathing of E(x) and electrostatic energy",
+      "Particles bunch and unbunch near v = 0",
+      "Smooth continuous motion between saved frames",
+      "Energy nearly conserved over many oscillation periods"
+    ]
+  },
+  {
+    "id": "electronOscillation",
+    "file": "electronOscillation.json",
+    "title": "Electron plasma oscillation",
+    "category": "Plasma oscillation",
+    "description": "Single cold electron species with a small standing-wave perturbation. In the absence of beams or thermal Landau damping, the system supports an undamped electron plasma oscillation at ω ≈ ω_p. A short, lightweight run ideal for watching basic wave physics.",
+    "lookFor": [
+      "Regular oscillation of E(x) and electrostatic energy",
+      "Phase space stays near v = 0 with modest spatial bunching",
+      "|E_k| envelope roughly constant after initial transients",
+      "Short run — good first demo to try"
+    ]
+  },
+  {
+    "id": "landauSmooth",
+    "file": "landauSmooth.json",
+    "title": "Landau damping (smooth)",
+    "category": "Landau damping",
+    "description": "Warm standing wave with dense frame sampling so the |E_k| decay and phase-space filamentation animate smoothly. Compare with Cold plasma (quick) to isolate physical Landau damping from numerical artifacts.",
+    "lookFor": [
+      "Smooth |E_k| envelope decay on a log scale",
+      "E(x) antinodes shrink while nodes stay fixed",
+      "Phase-space filaments near the resonant velocity",
+      "ESE late/early ratio well below 1"
     ]
   },
   {
@@ -78,19 +130,6 @@
     ]
   },
   {
-    "id": "electronOscillation",
-    "file": "electronOscillation.json",
-    "title": "Electron plasma oscillation",
-    "category": "Plasma oscillation",
-    "description": "Single cold electron species with a small standing-wave perturbation. In the absence of beams or thermal Landau damping, the system supports an undamped electron plasma oscillation at ω ≈ ω_p. A short, lightweight run ideal for watching basic wave physics.",
-    "lookFor": [
-      "Regular oscillation of E(x) and electrostatic energy",
-      "Phase space stays near v = 0 with modest spatial bunching",
-      "|E_k| envelope roughly constant after initial transients",
-      "Short run (300 steps) — good first demo to try"
-    ]
-  },
-  {
     "id": "driftingBeam",
     "file": "driftingBeam.json",
     "title": "Drifting warm beam",
@@ -104,11 +143,50 @@
     ]
   },
   {
+    "id": "twoStream3D",
+    "file": "twoStream3D.json",
+    "title": "3D two-stream",
+    "category": "3D",
+    "description": "Counter-streaming electron beams in 3D on an 8³ grid. Use the rotatable 3D particle view (auto-rotate on by default) to watch the two populations mix. Dense frames plus interpolation keep the motion smooth.",
+    "lookFor": [
+      "Two colored populations in the 3D scatter view",
+      "Drag or auto-rotate to inspect filamentation",
+      "Field energy growth as the instability develops",
+      "2D slices tab for XY/XZ/YZ projections"
+    ]
+  },
+  {
+    "id": "plasmaBreathing3D",
+    "file": "plasmaBreathing3D.json",
+    "title": "3D plasma breathing",
+    "category": "3D",
+    "description": "Longer 3D cold-plasma oscillation (120 steps, frame period 2) so the cloud visibly breathes in the rotatable view. Turn on auto-rotate and Play for a cinematic loop.",
+    "lookFor": [
+      "3D density modulation oscillating in time",
+      "Smooth interpolated particle motion",
+      "Ex mid-plane slice tracking ω_p",
+      "Auto-rotate + loop for a continuous presentation"
+    ]
+  },
+  {
+    "id": "plasmaOscillation3D",
+    "file": "plasmaOscillation3D.json",
+    "title": "3D plasma oscillation (quick)",
+    "category": "3D",
+    "description": "Single-species 3D electrostatic plasma oscillation on an 8³ grid with 512 particles. The desktop GUI shows an interactive rotatable 3D particle view (drag to rotate, scroll to zoom), optional 2D slice projections, and a mid-plane Ex slice.",
+    "lookFor": [
+      "3D particles tab: drag to rotate the cloud, scroll to zoom",
+      "Ghost trails show motion between saved frames",
+      "Ex mid-plane slice oscillates with the plasma frequency",
+      "2D slices tab for XY/XZ/YZ projections"
+    ]
+  },
+  {
     "id": "landauFull",
     "file": "landauFull.json",
     "title": "Landau damping (full)",
     "category": "Landau damping",
-    "description": "Validation-resolution warm Landau case: 8000 particles and a 256-cell grid, matching inputFiles/validation/landauDamping.json. Slower in the browser but produces clean |E_k| decay and the same physics cited in docs/validation.md.",
+    "description": "Validation-resolution warm Landau case: 8000 particles and a 256-cell grid, matching inputFiles/validation/landauDamping.json. Slower but produces clean |E_k| decay and the same physics cited in docs/validation.md.",
     "lookFor": [
       "Clear |E_k| end/start ratio ≈ 0.2–0.3 (strong damping)",
       "Smooth E(x) snapshots with well-resolved nodes and antinodes",
@@ -127,19 +205,6 @@
       "Strong phase-space filamentation and vortex-like structures",
       "Peak ESE many times the initial perturbation level",
       "Good for portfolio screenshots; moderate run time"
-    ]
-  },
-  {
-    "id": "plasmaOscillation3D",
-    "file": "plasmaOscillation3D.json",
-    "title": "3D plasma oscillation (quick)",
-    "category": "3D",
-    "description": "Single-species 3D electrostatic plasma oscillation on an 8³ grid with 512 particles. The desktop GUI shows an interactive rotatable 3D particle view (drag to rotate, scroll to zoom), optional 2D slice projections, and a mid-plane Ex slice. A short run for exploring 3D visualization.",
-    "lookFor": [
-      "3D particles tab: drag to rotate the cloud, scroll to zoom",
-      "Ghost trails show motion between saved frames",
-      "Ex mid-plane slice oscillates with the plasma frequency",
-      "2D slices tab for XY/XZ/YZ projections"
     ]
   }
 ]

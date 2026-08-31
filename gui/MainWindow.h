@@ -45,6 +45,8 @@ private slots:
 	void onFrameSliderReleased();
 	void onAnimationTick();
 
+	void onAnimSpeedChanged(int value);
+
 private:
 	void populateDemoSelector();
 	void applyFormParams(const FormParams& params);
@@ -54,6 +56,10 @@ private:
 	void markParamsCustomized();
 	void setParamsCustomized(bool customized);
 	void updateDimensionControls();
+	void updateFrameLabel(double continuousIndex);
+	void seekPlayback(double continuousIndex, bool updateSlider);
+
+	static constexpr int kInterpSteps = 4;
 
 	std::string m_repoRoot;
 	std::vector<DemoEntry> m_demos;
@@ -113,6 +119,8 @@ private:
 
 	QTimer* m_animationTimer = nullptr;
 	bool m_wasPlayingBeforeScrub = false;
+	bool m_updatingSlider = false;
+	double m_playbackPosition = 0.0;
 	int m_currentFrameIndex = 0;
 	int m_frameCount = 0;
 };

@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include <cmath>
@@ -44,8 +45,14 @@ ParticleView3D::ParticleView3D(QWidget* parent)
 	auto* resetButton = new QPushButton(QStringLiteral("Reset view"));
 	m_showTrails = new QCheckBox(QStringLiteral("Show trails"));
 	m_showTrails->setChecked(true);
+	m_autoRotate = new QCheckBox(QStringLiteral("Auto-rotate"));
+	m_autoRotate->setChecked(true);
+	m_rotateTimer = new QTimer(this);
+	m_rotateTimer->setInterval(33);
 	connect(resetButton, &QPushButton::clicked, this, &ParticleView3D::resetCamera);
 	connect(m_showTrails, &QCheckBox::toggled, this, &ParticleView3D::onTrailsToggled);
+	connect(m_autoRotate, &QCheckBox::toggled, this, &ParticleView3D::onAutoRotateToggled);
+	connect(m_rotateTimer, &QTimer::timeout, this, &ParticleView3D::onAutoRotateTick);
 
 	auto* hint = new QLabel(QStringLiteral("Drag to rotate · scroll to zoom · right-drag to pan"));
 	hint->setStyleSheet(QStringLiteral("color: #64748b;"));
@@ -53,6 +60,7 @@ ParticleView3D::ParticleView3D(QWidget* parent)
 	auto* toolbar = new QHBoxLayout();
 	toolbar->addWidget(resetButton);
 	toolbar->addWidget(m_showTrails);
+	toolbar->addWidget(m_autoRotate);
 	toolbar->addStretch(1);
 	toolbar->addWidget(hint);
 
@@ -143,6 +151,9 @@ void ParticleView3D::configureDomain(double lengthX, double lengthY, double leng
 	}
 
 	resetCamera();
+	if (m_autoRotate->isChecked()) {
+		m_rotateTimer->start();
+	}
 }
 
 void ParticleView3D::fillSeries(QScatter3DSeries* series, int species, const DATA_STRUCTS::Frame& frame) {
@@ -187,4 +198,24 @@ void ParticleView3D::onTrailsToggled(bool enabled) {
 	for (auto* series : m_trailSeries) {
 		series->setVisible(enabled);
 	}
+}
+
+void ParticleView3D::onAutoRotateToggled(bool enabled) {
+	if (enabled) {
+		m_rotateTimer->start();
+	} else {
+		m_rotateTimer->stop();
+	}
+}
+
+void ParticleView3D::onAutoRotateTick() {
+	if (m_scatter == nullptr) {
+		return;
+	}
+	auto* camera = m_scatter->scene()->activeCamera();
+	float xRot = camera->xRotation() + 0.6f;
+	if (xRot > 180.0f) {
+		xRot -= 360.0f;
+	}
+	camera->setXRotation(xRot);
 }

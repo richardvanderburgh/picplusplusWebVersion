@@ -72,6 +72,31 @@ QLineSeries* makeTimeCursor(QChart* chart, QAbstractAxis* axisX, QAbstractAxis* 
 	return cursor;
 }
 
+double lerpValue(double a, double b, double alpha) {
+	return a + (b - a) * alpha;
+}
+
+double lerpPeriodic(double a, double b, double alpha, double length) {
+	if (length <= 0.0) {
+		return lerpValue(a, b, alpha);
+	}
+	double delta = b - a;
+	while (delta > length * 0.5) {
+		delta -= length;
+	}
+	while (delta < -length * 0.5) {
+		delta += length;
+	}
+	double result = a + delta * alpha;
+	while (result < 0.0) {
+		result += length;
+	}
+	while (result >= length) {
+		result -= length;
+	}
+	return result;
+}
+
 double markerSizeForCount(int particleCount) {
 	if (particleCount > 4000) {
 		return 2.5;
@@ -404,16 +429,55 @@ void ChartPanel::renderResults(const nlohmann::json& result) {
 }
 
 void ChartPanel::showFrame(int frameIndex) {
+	showPlaybackPosition(static_cast<double>(frameIndex));
+}
+
+int ChartPanel::frameCount() const {
+	return static_cast<int>(m_frames.size());
+}
+
+double ChartPanel::continuousTime(double continuousIndex) const {
 	if (m_frames.empty()) {
-		return;
+		return 0.0;
 	}
-	const int clamped = std::clamp(frameIndex, 0, static_cast<int>(m_frames.size()) - 1);
-	const auto& frame = m_frames[static_cast<size_t>(clamped)];
-	const DATA_STRUCTS::Frame* previousFrame = nullptr;
-	if (clamped > 0) {
-		previousFrame = &m_frames[static_cast<size_t>(clamped - 1)];
+	const double maxIndex = static_cast<double>(m_frames.size() - 1);
+	continuousIndex = std::clamp(continuousIndex, 0.0, maxIndex);
+	const int i0 = static_cast<int>(std::floor(continuousIndex));
+	const int i1 = std::min(i0 + 1, static_cast<int>(m_frames.size()) - 1);
+	const double alpha = continuousIndex - static_cast<double>(i0);
+	return lerpValue(frameTime(i0), frameTime(i1), alpha);
+}
+
+DATA_STRUCTS::Frame ChartPanel::interpolateFrames(
+	const DATA_STRUCTS::Frame& a, const DATA_STRUCTS::Frame& b, double alpha) const {
+	DATA_STRUCTS::Frame out = a;
+	const size_t count = std::min(a.particles.size(), b.particles.size());
+	out.particles.resize(count);
+	for (size_t i = 0; i < count; ++i) {
+		const auto& pa = a.particles[i];
+		const auto& pb = b.particles[i];
+		auto& particle = out.particles[i];
+		particle = pa;
+		particle.position = lerpPeriodic(pa.position, pb.position, alpha, m_params.spatialLength);
+		particle.velocity = lerpValue(pa.velocity, pb.velocity, alpha);
+		if (m_is3D) {
+			particle.positionY = lerpPeriodic(pa.positionY, pb.positionY, alpha, m_params.spatialLengthY);
+			particle.positionZ = lerpPeriodic(pa.positionZ, pb.positionZ, alpha, m_params.spatialLengthZ);
+			particle.velocityY = lerpValue(pa.velocityY, pb.velocityY, alpha);
+			particle.velocityZ = lerpValue(pa.velocityZ, pb.velocityZ, alpha);
+		}
 	}
 
+	const size_t fieldCount = std::min(a.electricField.size(), b.electricField.size());
+	out.electricField.resize(fieldCount);
+	for (size_t i = 0; i < fieldCount; ++i) {
+		out.electricField[i] = lerpValue(a.electricField[i], b.electricField[i], alpha);
+	}
+	return out;
+}
+
+void ChartPanel::displayFrame(
+	const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame, double time) {
 	if (m_is3D) {
 		updateParticleView3D(frame, previousFrame);
 		updateProjectionPlots(frame, previousFrame);
@@ -421,11 +485,33 @@ void ChartPanel::showFrame(int frameIndex) {
 		updatePhasePlot(frame, previousFrame);
 	}
 	updateFieldPlot(frame);
-
-	const double time = frameTime(clamped);
 	updateTimeCursors(time);
 	updateChartTitles(time);
-	m_currentFrameIndex = clamped;
+}
+
+void ChartPanel::showPlaybackPosition(double continuousIndex) {
+	if (m_frames.empty()) {
+		return;
+	}
+	const double maxIndex = static_cast<double>(m_frames.size() - 1);
+	continuousIndex = std::clamp(continuousIndex, 0.0, maxIndex);
+	const int i0 = static_cast<int>(std::floor(continuousIndex));
+	const int i1 = std::min(i0 + 1, static_cast<int>(m_frames.size()) - 1);
+	const double alpha = continuousIndex - static_cast<double>(i0);
+
+	const DATA_STRUCTS::Frame* previousFrame = nullptr;
+	if (i0 > 0) {
+		previousFrame = &m_frames[static_cast<size_t>(i0 - 1)];
+	}
+
+	if (alpha < 1e-4 || i0 == i1) {
+		displayFrame(m_frames[static_cast<size_t>(i0)], previousFrame, frameTime(i0));
+	} else {
+		const auto blended = interpolateFrames(
+			m_frames[static_cast<size_t>(i0)], m_frames[static_cast<size_t>(i1)], alpha);
+		displayFrame(blended, &m_frames[static_cast<size_t>(i0)], continuousTime(continuousIndex));
+	}
+	m_currentFrameIndex = i0;
 }
 
 void ChartPanel::updateParticleView3D(const DATA_STRUCTS::Frame& frame, const DATA_STRUCTS::Frame* previousFrame) {
